@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Members</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>body{display:flex;}</style>
+</head>
+<body>
+<script src="sidebar.js"></script>
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">Members</span>
+    <div class="topbar-search">
+      <i class="ti ti-search"></i>
+      <input type="text" placeholder="Search by name, OSCA ID, barangay...">
+    </div>
+    <div class="topbar-actions">
+      <select class="filter-select">
+        <option>All barangays</option>
+        <option>Brgy 1</option><option>Brgy 2</option><option>Brgy 3</option>
+        <option>Brgy 4</option><option>Brgy 5</option>
+      </select>
+      <select class="filter-select">
+        <option>All status</option>
+        <option>Complete</option><option>Incomplete</option><option>Urgent</option>
+      </select>
+      <button class="btn btn-ghost btn-sm"><i class="ti ti-download"></i> Export</button>
+      <button class="btn btn-navy btn-sm" onclick="location.href='register.html'"><i class="ti ti-plus"></i> Register</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="stats-grid stats-3">
+      <div class="stat-card">
+        <div class="stat-label"><i class="ti ti-users"></i> Total members</div>
+        <div class="stat-value">1,284</div>
+        <div class="stat-sub">All barangays</div>
+      </div>
+      <div class="stat-card teal">
+        <div class="stat-label"><i class="ti ti-circle-check"></i> Complete</div>
+        <div class="stat-value">1,109</div>
+        <div class="stat-sub">86% of total</div>
+      </div>
+      <div class="stat-card coral">
+        <div class="stat-label"><i class="ti ti-alert-circle"></i> Incomplete</div>
+        <div class="stat-value">175</div>
+        <div class="stat-sub">9 urgent cases</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">All members</div>
+          <div class="card-subtitle">Click a member to view full profile</div>
+        </div>
+        <div class="card-actions">
+          <select class="filter-select">
+            <option>Sort: Name A-Z</option>
+            <option>Sort: Recently added</option>
+            <option>Sort: Age (oldest)</option>
+          </select>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>OSCA ID</th><th>Name</th><th>Age</th><th>Sex</th>
+            <th>Barangay</th><th>Civil Status</th><th>Milestone</th>
+            <th>Reg. Status</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-muted">2024-001</td>
+            <td class="td-bold">Juan dela Cruz</td>
+            <td class="td-muted">81</td><td class="td-muted">M</td>
+            <td class="td-muted">Brgy 2</td><td class="td-muted">Widowed</td>
+            <td><span class="badge badge-urgent">80+</span></td>
+            <td><span class="badge badge-ok">Complete</span></td>
+            <td><button class="btn btn-ghost btn-sm btn-icon" onclick="location.href='member-detail.html'" title="View"><i class="ti ti-eye"></i></button></td>
+          </tr>
+          <tr>
+            <td class="td-muted">2023-087</td>
+            <td class="td-bold">Maria Santos</td>
+            <td class="td-muted">72</td><td class="td-muted">F</td>
+            <td class="td-muted">Brgy 5</td><td class="td-muted">Married</td>
+            <td>—</td>
+            <td><span class="badge badge-ok">Complete</span></td>
+            <td><button class="btn btn-ghost btn-sm btn-icon" onclick="location.href='member-detail.html'" title="View"><i class="ti ti-eye"></i></button></td>
+          </tr>
+          <tr>
+            <td class="td-muted">2025-012</td>
+            <td class="td-bold">Rosario Mendoza</td>
+            <td class="td-muted">68</td><td class="td-muted">F</td>
+            <td class="td-muted">Brgy 4</td><td class="td-muted">Widowed</td>
+            <td>—</td>
+            <td><span class="badge badge-miss">Missing ID</span></td>
+            <td><button class="btn btn-ghost btn-sm btn-icon" onclick="location.href='member-detail.html'" title="View"><i class="ti ti-eye"></i></button></td>
+          </tr>
+          <tr>
+            <td class="td-muted">2024-033</td>
+            <td class="td-bold">Pedro Ramos</td>
+            <td class="td-muted">85</td><td class="td-muted">M</td>
+            <td class="td-muted">Brgy 1</td><td class="td-muted">Widowed</td>
+            <td><span class="badge badge-urgent">80+</span></td>
+            <td><span class="badge badge-urgent">Urgent</span></td>
+            <td><button class="btn btn-ghost btn-sm btn-icon" onclick="location.href='member-detail.html'" title="View"><i class="ti ti-eye"></i></button></td>
+          </tr>
+          <tr>
+            <td class="td-muted">2022-114</td>
+            <td class="td-bold">Lourdes Garcia</td>
+            <td class="td-muted">76</td><td class="td-muted">F</td>
+            <td class="td-muted">Brgy 3</td><td class="td-muted">Married</td>
+            <td>—</td>
+            <td><span class="badge badge-ok">Complete</span></td>
+            <td><button class="btn btn-ghost btn-sm btn-icon" onclick="location.href='member-detail.html'" title="View"><i class="ti ti-eye"></i></button></td>
+          </tr>
+          <tr>
+            <td class="td-muted">2023-055</td>
+            <td class="td-bold">Felipe Torres</td>
+            <td class="td-muted">70</td><td class="td-muted">M</td>
+            <td class="td-muted">Brgy 2</td><td class="td-muted">Married</td>
+            <td>—</td>
+            <td><span class="badge badge-pend">Pending</span></td>
+            <td><button class="btn btn-ghost btn-sm btn-icon" onclick="location.href='member-detail.html'" title="View"><i class="ti ti-eye"></i></button></td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:.5px solid var(--gray-200);">
+        <span style="font-size:12px;color:var(--gray-500)">Showing 6 of 1,284 members</span>
+        <div style="display:flex;gap:4px;">
+          <button class="btn btn-ghost btn-sm"><i class="ti ti-chevron-left"></i></button>
+          <button class="btn btn-navy btn-sm">1</button>
+          <button class="btn btn-ghost btn-sm">2</button>
+          <button class="btn btn-ghost btn-sm">3</button>
+          <button class="btn btn-ghost btn-sm"><i class="ti ti-chevron-right"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>renderSidebar('members');</script>
+</body>
+</html>

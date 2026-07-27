@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Senior Citizen Portal</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body style="background:var(--gray-100)">
+
+<nav class="portal-nav">
+  <div class="portal-brand">
+    <div class="sb-logo-icon" style="width:26px;height:26px;"><i class="ti ti-archive" style="font-size:13px;color:var(--gold-dark)"></i></div>
+    <span style="color:var(--white);font-size:14px;font-weight:500;font-family:var(--font-display)">Arkheion</span>
+    <span style="color:var(--teal-100);font-size:11px;"> — OSCA Carmen</span>
+  </div>
+  <div class="portal-navlinks">
+    <a class="active" href="portal-home.html">Home</a>
+    <a href="portal-records.html">My records</a>
+    <a href="portal-home.html">Services</a>
+    <a href="portal-faq.html">FAQ</a>
+    <a href="portal-faq.html">Contact</a>
+  </div>
+  <div class="portal-user">
+    <div class="portal-avatar">JC</div>
+    <span class="portal-uname">Juan dela Cruz</span>
+    <button class="btn btn-ghost btn-sm" style="margin-left:8px;" onclick="location.href='login.html'"><i class="ti ti-logout"></i></button>
+  </div>
+</nav>
+
+<div class="portal-hero">
+  <div>
+    <h2>Welcome back, Lolo Juan 👋</h2>
+    <p>OSCA ID: 2024-001 &nbsp;·&nbsp; Brgy 2, Carmen &nbsp;·&nbsp; Member since 2024</p>
+  </div>
+  <div class="portal-status">
+    <p>Registration status</p>
+    <span class="badge badge-miss">Missing document</span>
+  </div>
+</div>
+
+<div class="portal-content">
+  <div>
+    <p class="section-heading">Your services</p>
+    <p class="section-sub">Track your grocery, pension, and medicine assistance.</p>
+    <div class="svc-grid">
+
+      <div class="svc-card">
+        <div class="svc-head">
+          <div class="svc-icon" style="background:var(--teal-50)"><i class="ti ti-shopping-cart" style="color:var(--navy)"></i></div>
+          <div>
+            <div class="svc-title">Groceries</div>
+            <div class="svc-sub">Monthly grocery assistance</div>
+          </div>
+        </div>
+        <div class="svc-body">
+          <div class="svc-row"><span class="svc-label">Status</span><span class="badge badge-pend">Pending</span></div>
+          <div class="svc-row"><span class="svc-label">Next schedule</span><span class="svc-value">July 15, 2026</span></div>
+          <div class="svc-row"><span class="svc-label">Your barangay</span><span class="svc-value">Brgy 2</span></div>
+          <div class="svc-row"><span class="svc-label">Last received</span><span class="svc-value">June 12, 2026</span></div>
+        </div>
+        <button class="svc-btn" style="background:var(--navy);color:var(--gold);">
+          <i class="ti ti-eye"></i> Track my grocery
+        </button>
+      </div>
+
+      <div class="svc-card">
+        <div class="svc-head">
+          <div class="svc-icon" style="background:var(--amber-100)"><i class="ti ti-cash" style="color:var(--gold-dark)"></i></div>
+          <div>
+            <div class="svc-title">Pension</div>
+            <div class="svc-sub">Monthly social pension</div>
+          </div>
+        </div>
+        <div class="svc-body">
+          <div class="svc-row"><span class="svc-label">Status</span><span class="badge badge-proc">Unclaimed</span></div>
+          <div class="svc-row"><span class="svc-label">Amount</span><span class="svc-value">₱500.00</span></div>
+          <div class="svc-row"><span class="svc-label">Claim period</span><span class="svc-value">July 1–31, 2026</span></div>
+          <div class="svc-row"><span class="svc-label">Last claimed</span><span class="svc-value">June 5, 2026</span></div>
+        </div>
+        <button class="svc-btn" style="background:var(--amber-600);color:var(--amber-100);">
+          <i class="ti ti-eye"></i> View pension details
+        </button>
+      </div>
+
+      <div class="svc-card">
+        <div class="svc-head">
+          <div class="svc-icon" style="background:var(--blue-50)"><i class="ti ti-pill" style="color:var(--blue-900)"></i></div>
+          <div>
+            <div class="svc-title">Medicine</div>
+            <div class="svc-sub">Medicine purchase booklet</div>
+          </div>
+        </div>
+        <div class="svc-body">
+          <div class="svc-row"><span class="svc-label">Status</span><span class="badge badge-ok">Received</span></div>
+          <div class="svc-row"><span class="svc-label">Last received</span><span class="svc-value">June 28, 2026</span></div>
+          <div class="svc-row"><span class="svc-label">Next release</span><span class="svc-value">July 28, 2026</span></div>
+          <div class="svc-row"><span class="svc-label">Booklet no.</span><span class="svc-value">MB-10613</span></div>
+        </div>
+        <button class="svc-btn" style="background:var(--blue-900);color:var(--blue-50);">
+          <i class="ti ti-book"></i> View medicine booklet
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="two-equal">
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="ti ti-file-check" style="margin-right:6px;color:var(--navy-light)"></i>Registration requirements</div>
+      </div>
+      <div style="padding:14px 16px;">
+        <div class="req-item">
+          <div class="req-check ok"><i class="ti ti-check"></i></div>
+          <div>
+            <p style="font-size:13px;font-weight:500;color:var(--gray-900)">Birth certificate (PSA)</p>
+            <p style="font-size:11px;color:var(--gray-400)">Authenticated by Philippine Statistics Authority</p>
+          </div>
+        </div>
+        <div class="req-item">
+          <div class="req-check miss"><i class="ti ti-x"></i></div>
+          <div>
+            <p class="req-miss" style="font-size:13px;">Valid government ID — missing</p>
+            <p style="font-size:11px;color:var(--gray-400)">PhilSys, passport, driver's license, etc.</p>
+          </div>
+        </div>
+        <div class="req-item">
+          <div class="req-check ok"><i class="ti ti-check"></i></div>
+          <div>
+            <p style="font-size:13px;font-weight:500;color:var(--gray-900)">2x2 ID photo (5.08cm x 5.08cm)</p>
+            <p style="font-size:11px;color:var(--gray-400)">Recent photo, white background</p>
+          </div>
+        </div>
+        <div class="req-item">
+          <div class="req-check ok"><i class="ti ti-check"></i></div>
+          <div>
+            <p style="font-size:13px;font-weight:500;color:var(--gray-900)">Full body photo (A4 bond paper)</p>
+            <p style="font-size:11px;color:var(--gray-400)">Printed on A4 size paper</p>
+          </div>
+        </div>
+        <div class="req-item">
+          <div class="req-check ok"><i class="ti ti-check"></i></div>
+          <div>
+            <p style="font-size:13px;font-weight:500;color:var(--gray-900)">LCE endorsement letter</p>
+            <p style="font-size:11px;color:var(--gray-400)">Issued by Local Chief Executive</p>
+          </div>
+        </div>
+        <div class="alert alert-coral" style="margin-top:12px;">
+          <i class="ti ti-alert-circle"></i>
+          Please bring a valid government ID (PhilSys, passport, or driver's license) to the OSCA Carmen office to complete your registration.
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="display:flex;flex-direction:column;">
+      <div class="chat-header">
+        <div class="chat-dot"></div>
+        <span class="chat-name">Arkheion Assistant</span>
+        <span class="chat-status">Online</span>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="msg bot">Hello Lolo Juan! I am your Arkheion assistant. How can I help you today? 😊</div>
+        <div class="msg usr">Kanus-a ang akong grocery?</div>
+        <div class="msg bot">Ang sunod nga grocery distribution sa <strong>Brgy 2</strong> is on <strong>July 15, 2026</strong> — 8:00 AM sa OSCA Carmen office. Siguruha nga naa ka nianang adlawa!</div>
+        <div class="msg usr">Unsa pa akong kulang?</div>
+        <div class="msg bot">Base sa imong rekord, kulang pa ang imong <strong>valid government ID</strong>. Pwede ka magdala og PhilSys card, passport, o driver's license para makompleto ang imong registration.</div>
+      </div>
+      <div class="quick-replies">
+        <div class="qr" onclick="sendMsg('Pension status ko?')">Pension status</div>
+        <div class="qr" onclick="sendMsg('Kanus-a ang medicine?')">Medicine schedule</div>
+        <div class="qr" onclick="sendMsg('Unsa ang oras sa opisina?')">Office hours</div>
+        <div class="qr" onclick="sendMsg('Gusto ko makigtalk sa staff.')">Talk to staff</div>
+      </div>
+      <div class="chat-input-row">
+        <input class="chat-input" type="text" id="chatInput" placeholder="Type your question here (Bisaya or English)..." onkeydown="if(event.key==='Enter')sendMsg()">
+        <button class="chat-send-btn" onclick="sendMsg()"><i class="ti ti-send"></i></button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const responses = {
+    'pension':       'Ang imong pension para sa Hulyo 2026 is <strong>unclaimed pa</strong>. Claim period: July 1–31, 2026. Punta sa OSCA Carmen office para makuha ang ₱500.00 nga pension. Magdala og valid ID.',
+    'medicine':      'Ang imong sunod nga medicine release is <strong>July 28, 2026</strong>. Ang imong booklet no. is MB-10613. Makuha kini sa OSCA Carmen office.',
+    'grocery':       'Ang sunod grocery distribution sa <strong>Brgy 2</strong> is <strong>July 15, 2026</strong> — 8:00 AM. Naa sa OSCA Carmen office. Siguruha nga naa ka nianang adlawa.',
+    'opisina':       'Ang OSCA Carmen office bukas <strong>Monday–Friday, 8:00 AM–5:00 PM</strong>. Naa sa Carmen Municipal Hall, Davao del Norte. Closed sa weekends ug public holidays.',
+    'oras':          'Ang OSCA Carmen office bukas <strong>Monday–Friday, 8:00 AM–5:00 PM</strong>. Closed sa weekends ug public holidays.',
+    'requirements':  'Para sa registration, kinahanglan nimo: ✅ Birth certificate (PSA), ❌ Valid government ID (kulang pa), ✅ 2x2 ID photo, ✅ Full body photo (A4), ✅ LCE endorsement letter.',
+    'kulang':        'Kulang pa ang imong <strong>valid government ID</strong>. Pwede ka magdala og PhilSys card, passport, driver\'s license, o bisan unsang government-issued ID.',
+    'staff':         'Sige, i-connect tika sa staff namo. Palihug tawagan ang OSCA Carmen office: <strong>(082) xxx-xxxx</strong>, o bisita sa opisina Monday–Friday, 8AM–5PM.',
+    'default':       'Pasensya, dili ko kasabtan ang imong pangutana. Pwede ka mag-click sa mga quick reply buttons sa ibabaw, o tawagan ang OSCA Carmen office: (082) xxx-xxxx para sa dugang tabang.'
+  };
+
+  function sendMsg(text) {
+    const input = document.getElementById('chatInput');
+    const msg   = text || input.value.trim();
+    if (!msg) return;
+
+    const msgs = document.getElementById('chatMessages');
+
+    // User message
+    const userDiv = document.createElement('div');
+    userDiv.className = 'msg usr';
+    userDiv.textContent = msg;
+    msgs.appendChild(userDiv);
+    input.value = '';
+    msgs.scrollTop = msgs.scrollHeight;
+
+    // Typing indicator
+    const typing = document.createElement('div');
+    typing.className = 'msg bot';
+    typing.innerHTML = '<i class="ti ti-dots" style="animation:pulse 1s infinite"></i> Typing...';
+    msgs.appendChild(typing);
+    msgs.scrollTop = msgs.scrollHeight;
+
+    setTimeout(() => {
+      typing.remove();
+      const botDiv = document.createElement('div');
+      botDiv.className = 'msg bot';
+      const lower = msg.toLowerCase();
+      let reply = responses.default;
+      for (const key in responses) {
+        if (lower.includes(key)) { reply = responses[key]; break; }
+      }
+      botDiv.innerHTML = reply;
+      msgs.appendChild(botDiv);
+      msgs.scrollTop = msgs.scrollHeight;
+    }, 1000);
+  }
+</script>
+</body>
+</html>

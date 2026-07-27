@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Pension Tracking</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>body{display:flex;}</style>
+</head>
+<body>
+<script src="sidebar.js"></script>
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">Social pension — July 2026</span>
+    <div class="topbar-actions" style="margin-left:auto;">
+      <button class="btn btn-ghost btn-sm"><i class="ti ti-download"></i> Export payroll</button>
+      <button class="btn btn-navy btn-sm" onclick="openModal('modal-claim')"><i class="ti ti-check"></i> Mark claimed</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="stats-grid stats-3">
+      <div class="stat-card amber">
+        <div class="stat-label"><i class="ti ti-circle-check"></i> Claimed</div>
+        <div class="stat-value">754</div>
+        <div class="stat-sub">₱377,000 total released</div>
+      </div>
+      <div class="stat-card coral">
+        <div class="stat-label"><i class="ti ti-clock"></i> Unclaimed</div>
+        <div class="stat-value">530</div>
+        <div class="stat-sub">₱265,000 still pending</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><i class="ti ti-cash"></i> Amount per member</div>
+        <div class="stat-value" style="font-size:20px;">₱500</div>
+        <div class="stat-sub">Monthly social pension (DSWD)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Pension claim list — July 2026</div>
+          <div class="card-subtitle">Mark senior citizens as they claim their pension</div>
+        </div>
+        <div class="card-actions">
+          <select class="filter-select">
+            <option>All barangays</option>
+            <option>Brgy 1</option><option>Brgy 2</option>
+          </select>
+          <select class="filter-select">
+            <option>All status</option>
+            <option>Claimed</option><option>Unclaimed</option>
+          </select>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr><th>OSCA ID</th><th>Name</th><th>Barangay</th><th>Amount</th><th>Status</th><th>Date claimed</th><th>Claimed by</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-muted">2024-001</td><td class="td-bold">Juan dela Cruz</td><td class="td-muted">Brgy 2</td>
+            <td class="td-muted">₱500</td><td><span class="badge badge-ok">Claimed</span></td>
+            <td class="td-muted">Jul 5, 2026</td><td class="td-muted">Self</td>
+            <td><button class="btn btn-ghost btn-sm btn-icon"><i class="ti ti-eye"></i></button></td>
+          </tr>
+          <tr>
+            <td class="td-muted">2024-033</td><td class="td-bold">Pedro Ramos</td><td class="td-muted">Brgy 1</td>
+            <td class="td-muted">₱500</td><td><span class="badge badge-pend">Unclaimed</span></td>
+            <td class="td-muted">—</td><td class="td-muted">—</td>
+            <td><button class="btn btn-navy btn-sm" onclick="openModal('modal-claim')"><i class="ti ti-check"></i> Mark</button></td>
+          </tr>
+          <tr>
+            <td class="td-muted">2022-114</td><td class="td-bold">Lourdes Garcia</td><td class="td-muted">Brgy 3</td>
+            <td class="td-muted">₱500</td><td><span class="badge badge-urgent">Urgent</span></td>
+            <td class="td-muted">—</td><td class="td-muted">—</td>
+            <td><button class="btn btn-navy btn-sm" onclick="openModal('modal-claim')"><i class="ti ti-check"></i> Mark</button></td>
+          </tr>
+          <tr>
+            <td class="td-muted">2023-087</td><td class="td-bold">Maria Santos</td><td class="td-muted">Brgy 5</td>
+            <td class="td-muted">₱500</td><td><span class="badge badge-ok">Claimed</span></td>
+            <td class="td-muted">Jul 7, 2026</td><td class="td-muted">Son</td>
+            <td><button class="btn btn-ghost btn-sm btn-icon"><i class="ti ti-eye"></i></button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-claim" onclick="if(event.target===this)closeModal('modal-claim')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Mark pension as claimed</span>
+      <button class="modal-close" onclick="closeModal('modal-claim')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>Senior citizen</label><input type="text" value="Pedro Ramos — 2024-033" readonly></div>
+      <div class="form-group"><label>Amount</label><input type="text" value="₱500.00" readonly></div>
+      <div class="form-2col">
+        <div class="form-group"><label>Date claimed</label><input type="date" value="2026-07-09"></div>
+        <div class="form-group"><label>Claimed by</label><select><option>Self</option><option>Authorized representative</option></select></div>
+      </div>
+      <div class="form-group"><label>Remarks (optional)</label><textarea placeholder="Any notes..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-claim')">Cancel</button>
+      <button class="btn btn-navy" onclick="closeModal('modal-claim');showToast('Pension marked as claimed for Pedro Ramos.')"><i class="ti ti-check"></i> Confirm claimed</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>renderSidebar('pension');</script>
+</body>
+</html>

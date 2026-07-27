@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Search Records</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>body{display:flex;}</style>
+</head>
+<body>
+<script src="sidebar.js"></script>
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">Search records</span>
+  </div>
+
+  <div class="content">
+    <div class="card" style="padding:16px;">
+      <div style="display:flex;align-items:center;gap:10px;background:var(--teal-50);border:1.5px solid var(--teal-100);border-radius:var(--radius);padding:0 14px;height:46px;margin-bottom:12px;">
+        <i class="ti ti-search" style="font-size:18px;color:var(--navy)"></i>
+        <input id="main-search" type="text" placeholder="Search by name, barangay, year, OSCA ID, or document type..." style="border:none;background:none;outline:none;font-size:14px;color:var(--navy);flex:1;font-family:var(--font-body);" onkeydown="if(event.key==='Enter')doSearch()">
+        <button class="btn btn-navy" onclick="doSearch()">Search</button>
+      </div>
+      <div class="filter-bar">
+        <select class="filter-select">
+          <option>All document types</option>
+          <option>OSCA Form No. 1</option>
+          <option>PSA Birth Certificate</option>
+          <option>PhilSys ID</option>
+          <option>NCSC Annex A</option>
+          <option>Medicine booklet</option>
+        </select>
+        <select class="filter-select">
+          <option>All barangays</option>
+          <option>Brgy 1</option><option>Brgy 2</option><option>Brgy 3</option>
+        </select>
+        <select class="filter-select">
+          <option>All years</option>
+          <option>2026</option><option>2025</option><option>2024</option><option>2023</option>
+        </select>
+        <select class="filter-select">
+          <option>All status</option>
+          <option>Verified</option><option>Pending</option><option>Missing</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="clearFilters()"><i class="ti ti-x"></i> Clear</button>
+      </div>
+    </div>
+
+    <div class="card" id="results-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title" id="results-title">Search results</div>
+          <div class="card-subtitle" id="results-sub">Enter a query above to search records</div>
+        </div>
+        <button class="btn btn-ghost btn-sm"><i class="ti ti-download"></i> Export results</button>
+      </div>
+      <div id="results-body">
+        <div class="empty-state">
+          <i class="ti ti-search"></i>
+          <h4>Start your search</h4>
+          <p>Type a name, OSCA ID, barangay, or document type above to find records.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+  renderSidebar('search');
+
+  const sampleResults = [
+    { osca: '2024-001', name: 'Juan dela Cruz', type: 'OSCA Form No. 1',        cls: 'Registration form',    brgy: 'Brgy 2', year: '2024', status: 'ok',   statusLabel: 'Verified' },
+    { osca: '2024-001', name: 'Juan dela Cruz', type: 'PSA Birth Certificate',  cls: 'Birth certificate',    brgy: 'Brgy 2', year: '2024', status: 'ok',   statusLabel: 'Verified' },
+    { osca: '2024-001', name: 'Juan dela Cruz', type: 'NCSC Annex A',           cls: 'NCSC application',     brgy: 'Brgy 2', year: '2025', status: 'proc', statusLabel: 'For validation' },
+    { osca: '2023-087', name: 'Maria Santos',   type: 'PhilSys ID',             cls: 'Government ID',        brgy: 'Brgy 5', year: '2023', status: 'ok',   statusLabel: 'Verified' },
+  ];
+
+  function doSearch() {
+    const q = document.getElementById('main-search').value.trim();
+    if (!q) return;
+
+    document.getElementById('results-title').textContent = 'Search results';
+    document.getElementById('results-sub').textContent = `Showing ${sampleResults.length} results for "${q}"`;
+
+    const rows = sampleResults.map(r => `
+      <tr style="cursor:pointer" onclick="location.href='member-detail.html'">
+        <td class="td-muted">${r.osca}</td>
+        <td class="td-bold">${r.name}</td>
+        <td class="td-muted">${r.type}</td>
+        <td><span class="badge badge-${r.status === 'ok' ? 'ok' : 'proc'}">${r.cls}</span></td>
+        <td class="td-muted">${r.brgy}</td>
+        <td class="td-muted">${r.year}</td>
+        <td><span class="badge badge-${r.status}">${r.statusLabel}</span></td>
+        <td><button class="btn btn-ghost btn-sm btn-icon"><i class="ti ti-eye"></i></button></td>
+      </tr>`).join('');
+
+    document.getElementById('results-body').innerHTML = `
+      <table>
+        <thead><tr><th>OSCA ID</th><th>Name</th><th>Document</th><th>NLP Classification</th><th>Brgy</th><th>Year</th><th>Status</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  function clearFilters() {
+    document.getElementById('main-search').value = '';
+    document.getElementById('results-title').textContent = 'Search results';
+    document.getElementById('results-sub').textContent = 'Enter a query above to search records';
+    document.getElementById('results-body').innerHTML = `
+      <div class="empty-state">
+        <i class="ti ti-search"></i>
+        <h4>Start your search</h4>
+        <p>Type a name, OSCA ID, barangay, or document type above to find records.</p>
+      </div>`;
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Medicine Booklet</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>body{display:flex;}</style>
+</head>
+<body>
+<script src="sidebar.js"></script>
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">Medicine purchase booklets</span>
+    <div class="topbar-search">
+      <i class="ti ti-search"></i>
+      <input type="text" placeholder="Search by name or OSCA ID...">
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-navy btn-sm" onclick="openModal('modal-new-booklet')"><i class="ti ti-plus"></i> New booklet</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="stats-grid stats-3">
+      <div class="stat-card">
+        <div class="stat-label"><i class="ti ti-book"></i> Active booklets</div>
+        <div class="stat-value">1,156</div>
+        <div class="stat-sub">Issued to registered members</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-label"><i class="ti ti-pill"></i> Active prescriptions</div>
+        <div class="stat-value">342</div>
+        <div class="stat-sub">With remaining balance</div>
+      </div>
+      <div class="stat-card coral">
+        <div class="stat-label"><i class="ti ti-alert-triangle"></i> Expiring soon</div>
+        <div class="stat-value">28</div>
+        <div class="stat-sub">Within 7 days</div>
+      </div>
+    </div>
+
+    <!-- Booklet detail view -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Juan dela Cruz — Booklet MB-10613</div>
+          <div class="card-subtitle">OSCA ID: 2024-001 · Brgy 2, Carmen · Issued: Jan 5, 2024</div>
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-ghost btn-sm"><i class="ti ti-printer"></i> Print booklet</button>
+          <button class="btn btn-navy btn-sm" onclick="openModal('modal-prescription')"><i class="ti ti-plus"></i> Add prescription</button>
+        </div>
+      </div>
+
+      <div class="detail-grid" style="border-bottom:.5px solid var(--gray-200);">
+        <div class="detail-field">
+          <span class="detail-label">OSCA ID</span>
+          <span class="detail-value">2024-001</span>
+        </div>
+        <div class="detail-field">
+          <span class="detail-label">Booklet number</span>
+          <span class="detail-value">MB-10613</span>
+        </div>
+        <div class="detail-field">
+          <span class="detail-label">Date issued</span>
+          <span class="detail-value">January 5, 2024</span>
+        </div>
+        <div class="detail-field">
+          <span class="detail-label">Address</span>
+          <span class="detail-value">Brgy 2, Carmen</span>
+        </div>
+        <div class="detail-field">
+          <span class="detail-label">Place issued</span>
+          <span class="detail-value">OSCA Carmen</span>
+        </div>
+        <div class="detail-field">
+          <span class="detail-label">Booklet status</span>
+          <span class="badge badge-ok">Active</span>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Medicine</th><th>Qty prescribed</th>
+            <th>1st filling</th><th>2nd filling</th><th>3rd filling</th>
+            <th>Balance</th><th>Physician</th><th>PTR No.</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-bold">Amlodipine 5mg</td>
+            <td class="td-muted">30 tabs</td>
+            <td class="td-muted">10 tabs — Jun 5</td>
+            <td class="td-muted">10 tabs — Jun 20</td>
+            <td class="td-muted">—</td>
+            <td><span class="badge badge-amber" style="background:var(--amber-100);color:var(--gold-dark);">10 left</span></td>
+            <td class="td-muted">Dr. Cruz</td>
+            <td class="td-muted">PTR-001</td>
+          </tr>
+          <tr>
+            <td class="td-bold">Metformin 500mg</td>
+            <td class="td-muted">60 tabs</td>
+            <td class="td-muted">30 tabs — Jun 5</td>
+            <td class="td-muted">20 tabs — Jun 25</td>
+            <td class="td-muted">—</td>
+            <td><span class="badge badge-amber" style="background:var(--amber-100);color:var(--gold-dark);">10 left</span></td>
+            <td class="td-muted">Dr. Cruz</td>
+            <td class="td-muted">PTR-001</td>
+          </tr>
+          <tr>
+            <td class="td-bold">Losartan 50mg</td>
+            <td class="td-muted">30 tabs</td>
+            <td class="td-muted">30 tabs — Jun 28</td>
+            <td class="td-muted">—</td>
+            <td class="td-muted">—</td>
+            <td><span class="badge badge-ok">Full</span></td>
+            <td class="td-muted">Dr. Santos</td>
+            <td class="td-muted">PTR-002</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add prescription -->
+<div class="modal-overlay" id="modal-prescription" onclick="if(event.target===this)closeModal('modal-prescription')">
+  <div class="modal" style="width:560px;">
+    <div class="modal-header">
+      <span class="modal-title">Add prescription</span>
+      <button class="modal-close" onclick="closeModal('modal-prescription')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-2col">
+        <div class="form-group">
+          <label>Medicine name <span class="required">*</span></label>
+          <input type="text" placeholder="e.g. Amlodipine 5mg">
+        </div>
+        <div class="form-group">
+          <label>Quantity prescribed <span class="required">*</span></label>
+          <input type="number" placeholder="e.g. 30">
+        </div>
+      </div>
+      <div class="form-2col">
+        <div class="form-group">
+          <label>Physician name <span class="required">*</span></label>
+          <input type="text" placeholder="Dr. Full Name">
+        </div>
+        <div class="form-group">
+          <label>PTR number <span class="required">*</span></label>
+          <input type="text" placeholder="e.g. PTR-001">
+        </div>
+      </div>
+      <div class="form-2col">
+        <div class="form-group">
+          <label>Prescription date</label>
+          <input type="date">
+        </div>
+        <div class="form-group">
+          <label>Expiry date</label>
+          <input type="date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Physician address</label>
+        <input type="text" placeholder="Clinic address">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-prescription')">Cancel</button>
+      <button class="btn btn-navy" onclick="closeModal('modal-prescription');showToast('Prescription added successfully!')"><i class="ti ti-plus"></i> Add prescription</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: New booklet -->
+<div class="modal-overlay" id="modal-new-booklet" onclick="if(event.target===this)closeModal('modal-new-booklet')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Issue new medicine booklet</span>
+      <button class="modal-close" onclick="closeModal('modal-new-booklet')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Senior citizen <span class="required">*</span></label>
+        <input type="text" placeholder="Search by name or OSCA ID...">
+      </div>
+      <div class="form-2col">
+        <div class="form-group">
+          <label>Date issued</label>
+          <input type="date">
+        </div>
+        <div class="form-group">
+          <label>Place issued</label>
+          <input type="text" value="OSCA Carmen" readonly>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-new-booklet')">Cancel</button>
+      <button class="btn btn-navy" onclick="closeModal('modal-new-booklet');showToast('Medicine booklet issued successfully!')"><i class="ti ti-book"></i> Issue booklet</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>renderSidebar('medicine');</script>
+</body>
+</html>

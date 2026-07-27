@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Register New Member</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body{display:flex;}
+    .photo-upload { width:90px; height:110px; border:2px dashed var(--gray-200); border-radius:var(--radius); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; cursor:pointer; background:var(--gray-50); transition:all .15s; flex-shrink:0; }
+    .photo-upload:hover { border-color:var(--navy); background:var(--teal-50); }
+    .photo-upload i { font-size:24px; color:var(--gray-400); }
+    .photo-upload span { font-size:10px; color:var(--gray-400); text-align:center; }
+  </style>
+</head>
+<body>
+<script src="sidebar.js"></script>
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">Register new member</span>
+    <div class="topbar-actions" style="margin-left:auto;">
+      <button class="btn btn-ghost" onclick="location.href='members.html'"><i class="ti ti-x"></i> Cancel</button>
+      <button class="btn btn-navy" onclick="saveRecord()"><i class="ti ti-device-floppy"></i> Save member</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="alert alert-teal">
+      <i class="ti ti-info-circle"></i>
+      OSCA ID and Registration Certificate No. will be automatically generated upon saving. Fields marked <span style="color:var(--coral-600);font-weight:600">*</span> are required.
+    </div>
+
+    <div class="card">
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab(this,'tab-personal')">Personal info</div>
+        <div class="tab" onclick="switchTab(this,'tab-family')">Family composition</div>
+        <div class="tab" onclick="switchTab(this,'tab-association')">Association</div>
+        <div class="tab" onclick="switchTab(this,'tab-documents')">Documents</div>
+      </div>
+
+      <!-- TAB 1: Personal info -->
+      <div id="tab-personal" class="card-body" style="display:flex;flex-direction:column;gap:16px;">
+        <div style="display:flex;gap:16px;align-items:flex-start;">
+          <div class="photo-upload" onclick="document.getElementById('photo-input').click()">
+            <i class="ti ti-camera"></i>
+            <span>Upload ID photo</span>
+            <input type="file" id="photo-input" accept="image/*" style="display:none" onchange="previewPhoto(this)">
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:12px;">
+            <div class="form-section-title"><i class="ti ti-user"></i> Personal information</div>
+            <div class="form-3col">
+              <div class="form-group">
+                <label>Last name <span class="required">*</span></label>
+                <input type="text" id="last-name" placeholder="e.g. Dela Cruz">
+              </div>
+              <div class="form-group">
+                <label>First name <span class="required">*</span></label>
+                <input type="text" id="first-name" placeholder="e.g. Juan">
+              </div>
+              <div class="form-group">
+                <label>Middle name</label>
+                <input type="text" id="middle-name" placeholder="e.g. Santos">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-4col">
+          <div class="form-group">
+            <label>Date of birth <span class="required">*</span></label>
+            <input type="date" id="dob" onchange="computeAge()">
+          </div>
+          <div class="form-group">
+            <label>Age</label>
+            <input type="number" id="age" placeholder="Auto-computed" readonly>
+          </div>
+          <div class="form-group">
+            <label>Sex <span class="required">*</span></label>
+            <select id="sex">
+              <option value="">Select</option>
+              <option>Male</option>
+              <option>Female</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Civil status <span class="required">*</span></label>
+            <select id="civil-status">
+              <option value="">Select</option>
+              <option>Single</option>
+              <option>Married</option>
+              <option>Widowed</option>
+              <option>Others</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-2col">
+          <div class="form-group">
+            <label>Place of birth <span class="required">*</span></label>
+            <input type="text" id="pob" placeholder="e.g. Carmen, Davao del Norte">
+          </div>
+          <div class="form-group">
+            <label>Annual income</label>
+            <input type="number" id="income" placeholder="e.g. 60000">
+          </div>
+        </div>
+
+        <div class="form-section-title"><i class="ti ti-map-pin"></i> Address</div>
+        <div class="form-3col">
+          <div class="form-group" style="grid-column:span 2;">
+            <label>Complete address <span class="required">*</span></label>
+            <input type="text" id="address" placeholder="House no., street name">
+          </div>
+          <div class="form-group">
+            <label>Barangay <span class="required">*</span></label>
+            <select id="barangay">
+              <option value="">Select barangay</option>
+              <option>Brgy 1</option><option>Brgy 2</option><option>Brgy 3</option>
+              <option>Brgy 4</option><option>Brgy 5</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-section-title"><i class="ti ti-school"></i> Background</div>
+        <div class="form-3col">
+          <div class="form-group">
+            <label>Educational attainment</label>
+            <select>
+              <option>No formal education</option>
+              <option>Elementary</option>
+              <option>High school</option>
+              <option>College</option>
+              <option>Vocational</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Occupation</label>
+            <input type="text" placeholder="e.g. Retired, Farmer">
+          </div>
+          <div class="form-group">
+            <label>Other skills</label>
+            <input type="text" placeholder="e.g. Weaving, Farming">
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: Family -->
+      <div id="tab-family" class="card-body" style="display:none;flex-direction:column;gap:12px;">
+        <div class="form-section-title"><i class="ti ti-users"></i> Family composition</div>
+        <div id="family-list" style="display:flex;flex-direction:column;gap:8px;">
+          <div class="form-4col" style="align-items:center;">
+            <div class="form-group"><label>Name</label><input type="text" placeholder="Full name"></div>
+            <div class="form-group"><label>Relation</label><select><option>Son</option><option>Daughter</option><option>Spouse</option><option>Sibling</option></select></div>
+            <div class="form-group"><label>Age</label><input type="number" placeholder="Age"></div>
+            <div class="form-group"><label>Occupation</label><input type="text" placeholder="Occupation"></div>
+          </div>
+        </div>
+        <button class="btn btn-teal btn-sm" style="width:fit-content;" onclick="addFamilyRow()">
+          <i class="ti ti-plus"></i> Add family member
+        </button>
+      </div>
+
+      <!-- TAB 3: Association -->
+      <div id="tab-association" class="card-body" style="display:none;flex-direction:column;gap:12px;">
+        <div class="form-section-title"><i class="ti ti-building-community"></i> Membership to Sr. Citizens Association</div>
+        <div class="form-2col">
+          <div class="form-group">
+            <label>Name of association</label>
+            <input type="text" placeholder="e.g. Carmen Senior Citizens Association">
+          </div>
+          <div class="form-group">
+            <label>Address of association</label>
+            <input type="text" placeholder="Association address">
+          </div>
+        </div>
+        <div class="form-2col">
+          <div class="form-group">
+            <label>Date of membership</label>
+            <input type="date">
+          </div>
+          <div class="form-group">
+            <label>Position in association</label>
+            <input type="text" placeholder="e.g. Member, Secretary">
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: Documents -->
+      <div id="tab-documents" class="card-body" style="display:none;flex-direction:column;gap:14px;">
+        <div class="form-section-title"><i class="ti ti-file-check"></i> Required documents (OSCA Form No. 1)</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div id="docs-list">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:.5px solid var(--gray-200);">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="req-check miss" id="chk-id"><i class="ti ti-x"></i></div>
+                <div>
+                  <p style="font-size:13px;font-weight:500;color:var(--gray-900)">Valid government ID</p>
+                  <p style="font-size:11px;color:var(--gray-400)">PhilSys, passport, driver's license, etc.</p>
+                </div>
+              </div>
+              <label class="btn btn-ghost btn-sm" style="cursor:pointer;">
+                <i class="ti ti-upload"></i> Upload
+                <input type="file" style="display:none" onchange="markUploaded('chk-id', this)">
+              </label>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:.5px solid var(--gray-200);">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="req-check ok" id="chk-birth"><i class="ti ti-check"></i></div>
+                <div>
+                  <p style="font-size:13px;font-weight:500;color:var(--gray-900)">PSA Birth certificate</p>
+                  <p style="font-size:11px;color:var(--gray-400)">Authenticated by Philippine Statistics Authority</p>
+                </div>
+              </div>
+              <span class="badge badge-ok">Uploaded</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:.5px solid var(--gray-200);">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="req-check miss" id="chk-photo"><i class="ti ti-x"></i></div>
+                <div>
+                  <p style="font-size:13px;font-weight:500;color:var(--gray-900)">2x2 ID photo</p>
+                  <p style="font-size:11px;color:var(--gray-400)">5.08cm x 5.08cm, recent photo</p>
+                </div>
+              </div>
+              <label class="btn btn-ghost btn-sm" style="cursor:pointer;">
+                <i class="ti ti-upload"></i> Upload
+                <input type="file" accept="image/*" style="display:none" onchange="markUploaded('chk-photo', this)">
+              </label>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:.5px solid var(--gray-200);">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="req-check miss" id="chk-fullbody"><i class="ti ti-x"></i></div>
+                <div>
+                  <p style="font-size:13px;font-weight:500;color:var(--gray-900)">Full body photo (A4)</p>
+                  <p style="font-size:11px;color:var(--gray-400)">Printed on A4 size bond or photo paper</p>
+                </div>
+              </div>
+              <label class="btn btn-ghost btn-sm" style="cursor:pointer;">
+                <i class="ti ti-upload"></i> Upload
+                <input type="file" accept="image/*" style="display:none" onchange="markUploaded('chk-fullbody', this)">
+              </label>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="req-check miss" id="chk-lce"><i class="ti ti-x"></i></div>
+                <div>
+                  <p style="font-size:13px;font-weight:500;color:var(--gray-900)">LCE endorsement letter</p>
+                  <p style="font-size:11px;color:var(--gray-400)">Issued by Local Chief Executive</p>
+                </div>
+              </div>
+              <label class="btn btn-ghost btn-sm" style="cursor:pointer;">
+                <i class="ti ti-upload"></i> Upload
+                <input type="file" style="display:none" onchange="markUploaded('chk-lce', this)">
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:8px;">
+      <button class="btn btn-ghost" onclick="location.href='members.html'"><i class="ti ti-x"></i> Cancel</button>
+      <button class="btn btn-navy" onclick="saveRecord()"><i class="ti ti-device-floppy"></i> Save member</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  renderSidebar('members');
+
+  function switchTab(el, tabId) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('[id^="tab-"]').forEach(t => t.style.display = 'none');
+    el.classList.add('active');
+    document.getElementById(tabId).style.display = 'flex';
+  }
+
+  function computeAge() {
+    const dob = new Date(document.getElementById('dob').value);
+    if (!dob) return;
+    const age = Math.floor((new Date() - dob) / (365.25 * 24 * 60 * 60 * 1000));
+    document.getElementById('age').value = age;
+  }
+
+  function addFamilyRow() {
+    const list = document.getElementById('family-list');
+    const row = document.createElement('div');
+    row.className = 'form-4col';
+    row.style.alignItems = 'center';
+    row.innerHTML = `
+      <div class="form-group"><label>Name</label><input type="text" placeholder="Full name"></div>
+      <div class="form-group"><label>Relation</label><select><option>Son</option><option>Daughter</option><option>Spouse</option><option>Sibling</option></select></div>
+      <div class="form-group"><label>Age</label><input type="number" placeholder="Age"></div>
+      <div class="form-group"><label>Occupation</label><input type="text" placeholder="Occupation"></div>
+    `;
+    list.appendChild(row);
+  }
+
+  function markUploaded(checkId, input) {
+    if (!input.files[0]) return;
+    const chk = document.getElementById(checkId);
+    chk.className = 'req-check ok';
+    chk.innerHTML = '<i class="ti ti-check"></i>';
+    const btn = input.parentElement;
+    btn.outerHTML = `<span class="badge badge-ok">Uploaded</span>`;
+  }
+
+  function previewPhoto(input) {
+    if (!input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const box = input.parentElement;
+      box.style.backgroundImage = `url(${e.target.result})`;
+      box.style.backgroundSize = 'cover';
+      box.style.backgroundPosition = 'center';
+      box.querySelector('i').style.display = 'none';
+      box.querySelector('span').style.display = 'none';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+
+  function saveRecord() {
+    const required = ['last-name','first-name','dob','sex','civil-status','address','barangay','pob'];
+    let allFilled = true;
+    required.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el?.value) {
+        el?.style && (el.style.borderColor = 'var(--coral-600)');
+        allFilled = false;
+      } else {
+        el?.style && (el.style.borderColor = '');
+      }
+    });
+    if (!allFilled) {
+      showToast('Please fill in all required fields.', 'error');
+      return;
+    }
+    showToast('Member registered successfully! OSCA ID: 2026-' + Math.floor(Math.random()*1000).toString().padStart(3,'0'));
+    setTimeout(() => location.href = 'members.html', 2000);
+  }
+</script>
+</body>
+</html>

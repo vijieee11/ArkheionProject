@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { display:flex; }
+    .summary-item { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:.5px solid var(--gray-200); }
+    .summary-item:last-child { border-bottom:none; }
+    .summary-icon { width:36px; height:36px; border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .summary-icon i { font-size:18px; }
+    .summary-label { font-size:12px; color:var(--gray-600); }
+    .summary-val   { font-family:var(--font-display); font-size:14px; font-weight:600; color:var(--gray-900); }
+  </style>
+</head>
+<body>
+<script src="sidebar.js"></script>
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">Dashboard</span>
+    <div class="topbar-search">
+      <i class="ti ti-search"></i>
+      <input type="text" placeholder="Search by name, barangay, OSCA ID..." onkeydown="if(event.key==='Enter')location.href='search.html'">
+    </div>
+    <div class="topbar-actions">
+      <div class="topbar-icon-btn"><i class="ti ti-bell"></i></div>
+      <div class="topbar-avatar">HS</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- Page header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <h1 style="font-family:var(--font-display);font-size:20px;font-weight:600;color:var(--gray-900)">Good morning, Head Staff 👋</h1>
+        <p style="font-size:13px;color:var(--gray-600);margin-top:3px">OSCA Carmen — July 27, 2026</p>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" onclick="location.href='reports.html'"><i class="ti ti-download"></i> Export report</button>
+        <button class="btn btn-navy" onclick="location.href='register.html'"><i class="ti ti-plus"></i> New member</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid stats-4">
+      <div class="stat-card" style="cursor:pointer" onclick="location.href='members.html'">
+        <div class="stat-label"><i class="ti ti-users"></i> Total members</div>
+        <div class="stat-value">1,284</div>
+        <div class="stat-sub">Carmen, Davao del Norte</div>
+      </div>
+      <div class="stat-card teal" style="cursor:pointer" onclick="location.href='grocery.html'">
+        <div class="stat-label"><i class="ti ti-shopping-cart"></i> Groceries released</div>
+        <div class="stat-value">891</div>
+        <div class="stat-sub">393 pending this month</div>
+      </div>
+      <div class="stat-card amber" style="cursor:pointer" onclick="location.href='pension.html'">
+        <div class="stat-label"><i class="ti ti-cash"></i> Pension claimed</div>
+        <div class="stat-value">754</div>
+        <div class="stat-sub">530 unclaimed this month</div>
+      </div>
+      <div class="stat-card coral" style="cursor:pointer" onclick="location.href='members.html'">
+        <div class="stat-label"><i class="ti ti-alert-circle"></i> Incomplete reg.</div>
+        <div class="stat-value">47</div>
+        <div class="stat-sub">9 urgent cases</div>
+      </div>
+    </div>
+
+    <!-- Two column -->
+    <div class="two-col">
+      <!-- Recent applications -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Recent applications</div>
+            <div class="card-subtitle">Registration, grocery, pension, medicine</div>
+          </div>
+          <select class="filter-select">
+            <option>All processes</option>
+            <option>Registration</option>
+            <option>Grocery</option>
+            <option>Pension</option>
+            <option>Medicine</option>
+          </select>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Name</th><th>OSCA ID</th><th>Brgy</th><th>Process</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr style="cursor:pointer" onclick="location.href='member-detail.html'">
+              <td class="td-bold">Juan dela Cruz</td><td class="td-muted">2024-001</td><td class="td-muted">Brgy 2</td><td class="td-muted">Registration</td><td><span class="badge badge-ok">Complete</span></td>
+            </tr>
+            <tr style="cursor:pointer" onclick="location.href='grocery.html'">
+              <td class="td-bold">Maria Santos</td><td class="td-muted">2023-087</td><td class="td-muted">Brgy 5</td><td class="td-muted">Grocery</td><td><span class="badge badge-ok">Released</span></td>
+            </tr>
+            <tr style="cursor:pointer" onclick="location.href='pension.html'">
+              <td class="td-bold">Pedro Ramos</td><td class="td-muted">2024-033</td><td class="td-muted">Brgy 1</td><td class="td-muted">Pension</td><td><span class="badge badge-urgent">Urgent</span></td>
+            </tr>
+            <tr style="cursor:pointer" onclick="location.href='medicine.html'">
+              <td class="td-bold">Lourdes Garcia</td><td class="td-muted">2022-114</td><td class="td-muted">Brgy 3</td><td class="td-muted">Medicine</td><td><span class="badge badge-proc">Processing</span></td>
+            </tr>
+            <tr style="cursor:pointer" onclick="location.href='members.html'">
+              <td class="td-bold">Rosario Mendoza</td><td class="td-muted">2025-012</td><td class="td-muted">Brgy 4</td><td class="td-muted">Registration</td><td><span class="badge badge-miss">Missing ID</span></td>
+            </tr>
+            <tr style="cursor:pointer" onclick="location.href='grocery.html'">
+              <td class="td-bold">Felipe Torres</td><td class="td-muted">2023-055</td><td class="td-muted">Brgy 2</td><td class="td-muted">Grocery</td><td><span class="badge badge-pend">Pending</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Right column -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <!-- Monthly summary -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">This month's summary</div></div>
+          <div class="summary-item">
+            <div class="summary-icon" style="background:var(--teal-50)"><i class="ti ti-shopping-cart" style="color:var(--navy)"></i></div>
+            <div style="flex:1">
+              <div class="summary-label">Grocery distribution</div>
+              <div class="summary-val">891 / 1,284</div>
+              <div class="progress-bar"><div class="progress-fill fill-navy" style="width:69%"></div></div>
+            </div>
+            <span style="font-size:12px;font-weight:500;color:var(--navy)">69%</span>
+          </div>
+          <div class="summary-item">
+            <div class="summary-icon" style="background:var(--amber-100)"><i class="ti ti-cash" style="color:var(--gold-dark)"></i></div>
+            <div style="flex:1">
+              <div class="summary-label">Pension claims</div>
+              <div class="summary-val">754 / 1,284</div>
+              <div class="progress-bar"><div class="progress-fill fill-amber" style="width:59%"></div></div>
+            </div>
+            <span style="font-size:12px;font-weight:500;color:var(--amber-600)">59%</span>
+          </div>
+          <div class="summary-item">
+            <div class="summary-icon" style="background:var(--coral-50)"><i class="ti ti-pill" style="color:var(--coral-900)"></i></div>
+            <div style="flex:1">
+              <div class="summary-label">Medicine assistance</div>
+              <div class="summary-val">612 / 1,284</div>
+              <div class="progress-bar"><div class="progress-fill fill-coral" style="width:48%"></div></div>
+            </div>
+            <span style="font-size:12px;font-weight:500;color:var(--coral-600)">48%</span>
+          </div>
+        </div>
+
+        <!-- Map preview -->
+        <div class="card" style="cursor:pointer" onclick="location.href='map.html'">
+          <div class="card-header">
+            <div class="card-title">Senior citizen map</div>
+            <span style="font-size:11px;color:var(--navy-light);display:flex;align-items:center;gap:4px"><i class="ti ti-external-link" style="font-size:13px"></i>View full map</span>
+          </div>
+          <div class="map-box" style="height:160px;">
+            <div class="map-grid"></div>
+            <i class="ti ti-map-pin map-pin pin-ok" style="top:18%;left:26%"></i>
+            <i class="ti ti-map-pin map-pin pin-ok" style="top:36%;left:50%"></i>
+            <i class="ti ti-map-pin map-pin pin-inc" style="top:55%;left:20%"></i>
+            <i class="ti ti-map-pin map-pin pin-ok" style="top:22%;left:65%"></i>
+            <i class="ti ti-map-pin map-pin pin-urg" style="top:62%;left:56%"></i>
+            <i class="ti ti-map-pin map-pin pin-ok" style="top:42%;left:74%"></i>
+            <i class="ti ti-map-pin map-pin pin-inc" style="top:70%;left:38%"></i>
+            <div class="map-legend">
+              <span style="color:var(--navy)">● Complete</span>
+              <span style="color:var(--amber-600)">● Incomplete</span>
+              <span style="color:var(--coral-600)">● Urgent</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alerts section -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Notifications & alerts</div>
+        <span class="badge badge-urgent">3 urgent</span>
+      </div>
+      <div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;">
+        <div class="alert alert-coral">
+          <i class="ti ti-alert-circle"></i>
+          <div><strong>Pedro Ramos (2024-033)</strong> — Pension unclaimed for 2 months. Possible home visit needed.</div>
+        </div>
+        <div class="alert alert-amber">
+          <i class="ti ti-clock"></i>
+          <div><strong>9 members</strong> have incomplete registration requirements. <a href="members.html" style="color:var(--amber-600);text-decoration:underline;font-weight:500">View list →</a></div>
+        </div>
+        <div class="alert alert-teal">
+          <i class="ti ti-calendar"></i>
+          <div><strong>Next grocery distribution</strong> — Brgy 2 on July 15, 2026. 8:00 AM at OSCA Carmen office.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>renderSidebar('dashboard');</script>
+</body>
+</html>

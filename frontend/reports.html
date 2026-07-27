@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Reports</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>body{display:flex;}</style>
+</head>
+<body>
+<script src="sidebar.js"></script>
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">Reports</span>
+    <div class="topbar-actions" style="margin-left:auto;">
+      <select class="filter-select">
+        <option>July 2026</option><option>June 2026</option><option>May 2026</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="alert alert-teal">
+      <i class="ti ti-info-circle"></i>
+      All reports are auto-generated from the system database. Click "Download" to export in the required format for DSWD, NCSC, or LGU submission.
+    </div>
+
+    <div class="grid-auto">
+      <div class="card">
+        <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:var(--radius-sm);background:var(--teal-50);display:flex;align-items:center;justify-content:center;">
+            <i class="ti ti-users" style="font-size:20px;color:var(--navy)"></i>
+          </div>
+          <div>
+            <p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900);">Masterlist report</p>
+            <p style="font-size:12px;color:var(--gray-500);margin-top:3px;">All registered members by barangay</p>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-sm btn-full" onclick="showToast('Downloading PDF...')"><i class="ti ti-file-type-pdf"></i> PDF</button>
+            <button class="btn btn-ghost btn-sm btn-full" onclick="showToast('Downloading Excel...')"><i class="ti ti-file-spreadsheet"></i> Excel</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:var(--radius-sm);background:var(--amber-100);display:flex;align-items:center;justify-content:center;">
+            <i class="ti ti-cash" style="font-size:20px;color:var(--gold-dark)"></i>
+          </div>
+          <div>
+            <p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900);">Pension payroll</p>
+            <p style="font-size:12px;color:var(--gray-500);margin-top:3px;">Monthly pension report for DSWD</p>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-sm btn-full" onclick="showToast('Downloading PDF...')"><i class="ti ti-file-type-pdf"></i> PDF</button>
+            <button class="btn btn-ghost btn-sm btn-full" onclick="showToast('Downloading Excel...')"><i class="ti ti-file-spreadsheet"></i> Excel</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:var(--radius-sm);background:var(--coral-50);display:flex;align-items:center;justify-content:center;">
+            <i class="ti ti-shopping-cart" style="font-size:20px;color:var(--coral-900)"></i>
+          </div>
+          <div>
+            <p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900);">Grocery distribution</p>
+            <p style="font-size:12px;color:var(--gray-500);margin-top:3px;">Monthly distribution report by barangay</p>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-sm btn-full" onclick="showToast('Downloading PDF...')"><i class="ti ti-file-type-pdf"></i> PDF</button>
+            <button class="btn btn-ghost btn-sm btn-full" onclick="showToast('Downloading Excel...')"><i class="ti ti-file-spreadsheet"></i> Excel</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:var(--radius-sm);background:var(--blue-50);display:flex;align-items:center;justify-content:center;">
+            <i class="ti ti-file-text" style="font-size:20px;color:var(--blue-900)"></i>
+          </div>
+          <div>
+            <p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900);">NCSC Annex A list</p>
+            <p style="font-size:12px;color:var(--gray-500);margin-top:3px;">80+ members benefit report for NCSC</p>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-sm btn-full" onclick="showToast('Downloading PDF...')"><i class="ti ti-file-type-pdf"></i> PDF</button>
+            <button class="btn btn-ghost btn-sm btn-full" onclick="showToast('Downloading Excel...')"><i class="ti ti-file-spreadsheet"></i> Excel</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:var(--radius-sm);background:var(--teal-50);display:flex;align-items:center;justify-content:center;">
+            <i class="ti ti-pill" style="font-size:20px;color:var(--navy)"></i>
+          </div>
+          <div>
+            <p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900);">Medicine summary</p>
+            <p style="font-size:12px;color:var(--gray-500);margin-top:3px;">Medicine utilization and booklet report</p>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-sm btn-full" onclick="showToast('Downloading PDF...')"><i class="ti ti-file-type-pdf"></i> PDF</button>
+            <button class="btn btn-ghost btn-sm btn-full" onclick="showToast('Downloading Excel...')"><i class="ti ti-file-spreadsheet"></i> Excel</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:var(--radius-sm);background:var(--amber-100);display:flex;align-items:center;justify-content:center;">
+            <i class="ti ti-chart-bar" style="font-size:20px;color:var(--gold-dark)"></i>
+          </div>
+          <div>
+            <p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900);">Analytics summary</p>
+            <p style="font-size:12px;color:var(--gray-500);margin-top:3px;">Overall statistics and trends</p>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-sm btn-full" onclick="showToast('Downloading PDF...')"><i class="ti ti-file-type-pdf"></i> PDF</button>
+            <button class="btn btn-ghost btn-sm btn-full" onclick="showToast('Downloading Excel...')"><i class="ti ti-file-spreadsheet"></i> Excel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>renderSidebar('reports');</script>
+</body>
+</html>

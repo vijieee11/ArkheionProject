@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Login</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { display:flex; align-items:center; justify-content:center; min-height:100vh; }
+    .login-page { display:flex; width:860px; min-height:500px; border-radius:var(--radius-lg); overflow:hidden; box-shadow:var(--shadow); }
+    .login-left { width:320px; flex-shrink:0; background:var(--navy); padding:40px 36px; display:flex; flex-direction:column; }
+    .login-brand { display:flex; align-items:center; gap:12px; margin-bottom:28px; }
+    .login-brand-icon { width:40px; height:40px; border-radius:50%; background:var(--gold); display:flex; align-items:center; justify-content:center; }
+    .login-brand-icon i { font-size:20px; color:var(--gold-dark); }
+    .login-brand-name { font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--white); }
+    .login-tag { display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,.1); padding:5px 10px; border-radius:20px; font-size:11px; color:var(--teal-100); margin-bottom:16px; width:fit-content; }
+    .login-left h2 { font-family:var(--font-display); font-size:24px; font-weight:700; color:var(--white); line-height:1.3; margin-bottom:12px; }
+    .login-left p { font-size:13px; color:var(--teal-100); line-height:1.7; flex:1; }
+    .login-footer { font-size:11px; color:rgba(255,255,255,.3); margin-top:28px; }
+    .login-right { flex:1; background:var(--white); padding:44px 40px; display:flex; flex-direction:column; justify-content:center; gap:18px; }
+    .login-heading h3 { font-family:var(--font-display); font-size:20px; font-weight:600; color:var(--gray-900); margin-bottom:4px; }
+    .login-heading p { font-size:13px; color:var(--gray-600); }
+    .acc-pick { display:flex; gap:10px; }
+    .acc-opt { flex:1; border:1.5px solid var(--gray-200); border-radius:var(--radius); padding:14px 10px; text-align:center; cursor:pointer; transition:all .15s; background:var(--white); }
+    .acc-opt:hover { border-color:var(--navy-light); }
+    .acc-opt.selected { border-color:var(--navy); background:var(--teal-50); }
+    .acc-opt i { font-size:22px; display:block; margin-bottom:6px; color:var(--gray-400); }
+    .acc-opt.selected i { color:var(--navy); }
+    .acc-opt-label { font-size:12px; font-weight:500; color:var(--gray-600); display:block; margin-bottom:2px; }
+    .acc-opt.selected .acc-opt-label { color:var(--navy); }
+    .acc-opt-sub { font-size:11px; color:var(--gray-400); }
+    .login-btn { height:42px; background:var(--navy); color:var(--gold); border:none; border-radius:var(--radius-sm); font-size:14px; font-weight:600; font-family:var(--font-display); cursor:pointer; width:100%; transition:opacity .15s; }
+    .login-btn:hover { opacity:.88; }
+    .login-hint { font-size:12px; color:var(--gray-400); text-align:center; line-height:1.8; }
+    .login-hint a { color:var(--navy-light); text-decoration:underline; cursor:pointer; }
+    .login-error { background:var(--coral-50); border:.5px solid #F5C4B3; color:var(--coral-900); border-radius:var(--radius-sm); padding:9px 12px; font-size:12px; display:flex; align-items:center; gap:8px; display:none; }
+  </style>
+</head>
+<body>
+<div class="login-page">
+  <div class="login-left">
+    <div class="login-brand">
+      <div class="login-brand-icon"><i class="ti ti-archive"></i></div>
+      <span class="login-brand-name">Arkheion</span>
+    </div>
+    <div class="login-tag"><i class="ti ti-map-pin"></i> OSCA Carmen, Davao del Norte</div>
+    <h2>Senior citizen welfare, made smarter.</h2>
+    <p>An intelligent document management platform for the Office of Senior Citizens Affairs — Carmen, Davao del Norte.</p>
+    <p class="login-footer">© 2026 Arkheion · Capstone Project · IT Department</p>
+  </div>
+  <div class="login-right">
+    <div class="login-heading">
+      <h3>Sign in to Arkheion</h3>
+      <p>Choose your account type to continue</p>
+    </div>
+    <div class="acc-pick">
+      <div class="acc-opt selected" id="acc-staff" onclick="selectAcc('staff')">
+        <i class="ti ti-users"></i>
+        <span class="acc-opt-label">Staff</span>
+        <span class="acc-opt-sub">Head or Regular</span>
+      </div>
+      <div class="acc-opt" id="acc-senior" onclick="selectAcc('senior')">
+        <i class="ti ti-user-heart"></i>
+        <span class="acc-opt-label">Senior / Family</span>
+        <span class="acc-opt-sub">Use OSCA ID</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label id="uname-label">Username</label>
+      <input type="text" id="uname-input" placeholder="Enter your username" onkeydown="if(event.key==='Enter')handleLogin()">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="pw-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')handleLogin()">
+    </div>
+    <div class="login-error" id="login-error">
+      <i class="ti ti-alert-circle"></i>
+      <span id="error-msg">Invalid username or password.</span>
+    </div>
+    <button class="login-btn" id="login-btn" onclick="handleLogin()">Sign in</button>
+    <p class="login-hint">
+      Senior citizen? Use your <a>OSCA ID number</a> as your username.<br>
+      Forgot your password? <a>Contact the OSCA office.</a>
+    </p>
+  </div>
+</div>
+<script>
+  let currentType = 'staff';
+
+  function selectAcc(type) {
+    currentType = type;
+    document.getElementById('acc-staff').classList.toggle('selected', type === 'staff');
+    document.getElementById('acc-senior').classList.toggle('selected', type === 'senior');
+    const label = document.getElementById('uname-label');
+    const input = document.getElementById('uname-input');
+    label.textContent = type === 'senior' ? 'OSCA ID number' : 'Username';
+    input.placeholder = type === 'senior' ? 'e.g. 2024-001' : 'Enter your username';
+  }
+
+  function handleLogin() {
+    const user = document.getElementById('uname-input').value.trim();
+    const pass = document.getElementById('pw-input').value;
+    const btn  = document.getElementById('login-btn');
+    const err  = document.getElementById('login-error');
+
+    if (!user || !pass) {
+      document.getElementById('error-msg').textContent = 'Please enter your username and password.';
+      err.style.display = 'flex';
+      return;
+    }
+
+    btn.textContent = 'Signing in...';
+    btn.disabled = true;
+    err.style.display = 'none';
+
+    // Simulate login — replace with actual API call
+    setTimeout(() => {
+      // Demo credentials
+      const staffAccounts = {
+        'osca_head':   { role: 'head_staff',    mustChange: true  },
+        'osca_staff1': { role: 'regular_staff',  mustChange: true  },
+        'osca_staff2': { role: 'regular_staff',  mustChange: false },
+      };
+      const seniorAccounts = {
+        '2024-001': { role: 'senior', name: 'Juan dela Cruz' },
+        '2023-087': { role: 'senior', name: 'Maria Santos' },
+      };
+
+      if (currentType === 'staff' && staffAccounts[user]) {
+        const acc = staffAccounts[user];
+        localStorage.setItem('ark_username', user);
+        localStorage.setItem('ark_role',     acc.role);
+        localStorage.setItem('ark_token',    'demo-token-' + Date.now());
+        window.location.href = acc.mustChange ? 'change-password.html' : 'dashboard.html';
+      } else if (currentType === 'senior' && seniorAccounts[user]) {
+        const acc = seniorAccounts[user];
+        localStorage.setItem('ark_username', acc.name);
+        localStorage.setItem('ark_role',     acc.role);
+        localStorage.setItem('ark_token',    'demo-token-' + Date.now());
+        window.location.href = 'portal-home.html';
+      } else {
+        document.getElementById('error-msg').textContent = 'Invalid username or password. Please try again.';
+        err.style.display = 'flex';
+        btn.textContent = 'Sign in';
+        btn.disabled = false;
+      }
+    }, 800);
+  }
+</script>
+</body>
+</html>

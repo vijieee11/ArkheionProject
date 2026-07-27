@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — My Records</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body style="background:var(--gray-100)">
+
+<nav class="portal-nav">
+  <div class="portal-brand">
+    <div class="sb-logo-icon" style="width:26px;height:26px;"><i class="ti ti-archive" style="font-size:13px;color:var(--gold-dark)"></i></div>
+    <span style="color:var(--white);font-size:14px;font-weight:500;font-family:var(--font-display)">Arkheion</span>
+    <span style="color:var(--teal-100);font-size:11px;"> — OSCA Carmen</span>
+  </div>
+  <div class="portal-navlinks">
+    <a href="portal-home.html">Home</a>
+    <a class="active" href="portal-records.html">My records</a>
+    <a href="portal-home.html">Services</a>
+    <a href="portal-faq.html">FAQ</a>
+    <a href="portal-faq.html">Contact</a>
+  </div>
+  <div class="portal-user">
+    <div class="portal-avatar">JC</div>
+    <span class="portal-uname">Juan dela Cruz</span>
+    <button class="btn btn-ghost btn-sm" style="margin-left:8px;" onclick="location.href='login.html'"><i class="ti ti-logout"></i></button>
+  </div>
+</nav>
+
+<div class="portal-content">
+  <!-- Personal info -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="ti ti-user" style="margin-right:6px;color:var(--navy-light)"></i>Personal information</div>
+      <span class="badge badge-ok">OSCA Form No. 1</span>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-field"><span class="detail-label">OSCA ID</span><span class="detail-value">2024-001</span></div>
+      <div class="detail-field"><span class="detail-label">Registration certificate no.</span><span class="detail-value">RC-2024-001</span></div>
+      <div class="detail-field"><span class="detail-label">Registration date</span><span class="detail-value">March 10, 2024</span></div>
+      <div class="detail-field"><span class="detail-label">Full name</span><span class="detail-value">Juan Santos dela Cruz</span></div>
+      <div class="detail-field"><span class="detail-label">Date of birth</span><span class="detail-value">January 5, 1945</span></div>
+      <div class="detail-field"><span class="detail-label">Age</span><span class="detail-value">81 years old</span></div>
+      <div class="detail-field"><span class="detail-label">Sex</span><span class="detail-value">Male</span></div>
+      <div class="detail-field"><span class="detail-label">Civil status</span><span class="detail-value">Widowed</span></div>
+      <div class="detail-field"><span class="detail-label">Place of birth</span><span class="detail-value">Carmen, Davao del Norte</span></div>
+      <div class="detail-field" style="grid-column:span 2;"><span class="detail-label">Address</span><span class="detail-value">123 Brgy 2, Carmen, Davao del Norte</span></div>
+      <div class="detail-field"><span class="detail-label">Milestone age</span><span class="badge badge-urgent">80+ (NCSC eligible)</span></div>
+    </div>
+  </div>
+
+  <!-- Document history -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="ti ti-files" style="margin-right:6px;color:var(--navy-light)"></i>Document history</div>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Document</th><th>Type</th><th>Upload date</th><th>NLP Classification</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><i class="ti ti-file-type-pdf" style="color:var(--coral-600);margin-right:6px"></i>birth_cert_juan.pdf</td>
+          <td class="td-muted">PSA Birth Certificate</td>
+          <td class="td-muted">Mar 10, 2024</td>
+          <td><span class="badge badge-ok">Birth certificate</span></td>
+          <td><span class="badge badge-ok">Verified</span></td>
+        </tr>
+        <tr>
+          <td><i class="ti ti-photo" style="color:var(--blue-900);margin-right:6px"></i>photo_2x2_juan.jpg</td>
+          <td class="td-muted">2x2 ID Photo</td>
+          <td class="td-muted">Mar 10, 2024</td>
+          <td><span class="badge badge-ok">ID photo</span></td>
+          <td><span class="badge badge-ok">Verified</span></td>
+        </tr>
+        <tr>
+          <td><i class="ti ti-photo" style="color:var(--blue-900);margin-right:6px"></i>fullbody_juan.jpg</td>
+          <td class="td-muted">Full body photo (A4)</td>
+          <td class="td-muted">Mar 10, 2024</td>
+          <td><span class="badge badge-ok">Full body photo</span></td>
+          <td><span class="badge badge-ok">Verified</span></td>
+        </tr>
+        <tr>
+          <td><i class="ti ti-file-type-pdf" style="color:var(--coral-600);margin-right:6px"></i>lce_endorsement.pdf</td>
+          <td class="td-muted">LCE Endorsement Letter</td>
+          <td class="td-muted">Mar 10, 2024</td>
+          <td><span class="badge badge-ok">LCE endorsement</span></td>
+          <td><span class="badge badge-ok">Verified</span></td>
+        </tr>
+        <tr>
+          <td><span style="color:var(--gray-400);">— Not yet uploaded —</span></td>
+          <td class="td-muted">Valid Government ID</td>
+          <td class="td-muted">—</td>
+          <td>—</td>
+          <td><span class="badge badge-miss">Missing</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Service history -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="ti ti-history" style="margin-right:6px;color:var(--navy-light)"></i>Service history</div>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Service</th><th>Period</th><th>Status</th><th>Date</th><th>Claimed by</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><i class="ti ti-shopping-cart" style="color:var(--navy);margin-right:6px"></i><span class="td-bold">Grocery</span></td>
+          <td class="td-muted">June 2026</td>
+          <td><span class="badge badge-ok">Received</span></td>
+          <td class="td-muted">Jun 12, 2026</td>
+          <td class="td-muted">Self</td>
+        </tr>
+        <tr>
+          <td><i class="ti ti-cash" style="color:var(--amber-600);margin-right:6px"></i><span class="td-bold">Pension</span></td>
+          <td class="td-muted">June 2026</td>
+          <td><span class="badge badge-ok">Claimed</span></td>
+          <td class="td-muted">Jun 5, 2026</td>
+          <td class="td-muted">Self</td>
+        </tr>
+        <tr>
+          <td><i class="ti ti-pill" style="color:var(--blue-900);margin-right:6px"></i><span class="td-bold">Medicine</span></td>
+          <td class="td-muted">June 2026</td>
+          <td><span class="badge badge-ok">Received</span></td>
+          <td class="td-muted">Jun 28, 2026</td>
+          <td class="td-muted">Self</td>
+        </tr>
+        <tr>
+          <td><i class="ti ti-shopping-cart" style="color:var(--navy);margin-right:6px"></i><span class="td-bold">Grocery</span></td>
+          <td class="td-muted">July 2026</td>
+          <td><span class="badge badge-pend">Pending</span></td>
+          <td class="td-muted">—</td>
+          <td class="td-muted">—</td>
+        </tr>
+        <tr>
+          <td><i class="ti ti-cash" style="color:var(--amber-600);margin-right:6px"></i><span class="td-bold">Pension</span></td>
+          <td class="td-muted">July 2026</td>
+          <td><span class="badge badge-proc">Unclaimed</span></td>
+          <td class="td-muted">—</td>
+          <td class="td-muted">—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</body>
+</html>

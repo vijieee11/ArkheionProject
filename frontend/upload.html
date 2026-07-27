@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Upload Documents</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>body{display:flex;}</style>
+</head>
+<body>
+<script src="sidebar.js"></script>
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">Upload documents</span>
+  </div>
+
+  <div class="content">
+    <div class="two-col">
+
+      <!-- Upload panel -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Upload new document</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
+            <div class="form-group">
+              <label>Senior citizen <span class="required">*</span></label>
+              <input type="text" id="member-search" placeholder="Type name or OSCA ID to search...">
+            </div>
+            <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--navy)'" ondragleave="this.style.borderColor=''" ondrop="handleDrop(event)">
+              <i class="ti ti-cloud-upload"></i>
+              <h4>Drop files here or click to upload</h4>
+              <p>PDF, DOCX, JPG, PNG — max 10MB per file</p>
+              <button class="btn btn-navy" onclick="event.stopPropagation();document.getElementById('file-input').click()">
+                <i class="ti ti-folder-open"></i> Choose file
+              </button>
+              <input type="file" id="file-input" style="display:none" accept=".pdf,.docx,.jpg,.jpeg,.png" onchange="handleFile(this)">
+            </div>
+            <div class="alert alert-teal">
+              <i class="ti ti-brain"></i>
+              <div><strong>NLP auto-classification</strong> — The system will automatically classify the document type and extract key information (name, birthdate, ID number) after upload using spaCy and HuggingFace Transformers.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent uploads -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Recent uploads</div>
+            <span class="badge badge-ok">3 today</span>
+          </div>
+          <table>
+            <thead>
+              <tr><th>File</th><th>Senior citizen</th><th>NLP classification</th><th>Confidence</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><i class="ti ti-file-type-pdf" style="color:var(--coral-600);margin-right:6px"></i><span class="td-muted">birth_cert_juan.pdf</span></td>
+                <td class="td-bold">Juan dela Cruz</td>
+                <td><span class="badge badge-ok">PSA Birth Certificate</span></td>
+                <td style="color:var(--navy-light);font-weight:500;">98%</td>
+              </tr>
+              <tr>
+                <td><i class="ti ti-photo" style="color:var(--blue-900);margin-right:6px"></i><span class="td-muted">philsys_maria.jpg</span></td>
+                <td class="td-bold">Maria Santos</td>
+                <td><span class="badge badge-ok">PhilSys ID</span></td>
+                <td style="color:var(--navy-light);font-weight:500;">95%</td>
+              </tr>
+              <tr>
+                <td><i class="ti ti-file-type-pdf" style="color:var(--coral-600);margin-right:6px"></i><span class="td-muted">annex_a_rosario.pdf</span></td>
+                <td class="td-bold">Rosario Mendoza</td>
+                <td><span class="badge badge-pend">NCSC Annex A</span></td>
+                <td style="color:var(--navy-light);font-weight:500;">91%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- NLP result panel -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="card" id="nlp-result">
+          <div class="card-header">
+            <div class="card-title">NLP extraction result</div>
+          </div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:12px;" id="nlp-content">
+            <div class="empty-state" style="padding:30px;">
+              <i class="ti ti-file-search"></i>
+              <h4>No document uploaded yet</h4>
+              <p>Upload a document to see the NLP classification and extracted information.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+  renderSidebar('upload');
+
+  function handleFile(input) {
+    if (!input.files[0]) return;
+    const file = input.files[0];
+    simulateNLP(file.name);
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('drop-zone').style.borderColor = '';
+    const file = e.dataTransfer.files[0];
+    if (file) simulateNLP(file.name);
+  }
+
+  function simulateNLP(filename) {
+    const nlpContent = document.getElementById('nlp-content');
+    nlpContent.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--teal-50);border-radius:var(--radius-sm);">
+        <i class="ti ti-loader-2" style="font-size:20px;color:var(--navy);animation:spin 1s linear infinite;"></i>
+        <div>
+          <p style="font-size:13px;font-weight:500;color:var(--navy)">Processing document...</p>
+          <p style="font-size:11px;color:var(--navy-light)">Running NLP classification and entity extraction</p>
+        </div>
+      </div>
+    `;
+    setTimeout(() => {
+      nlpContent.innerHTML = `
+        <div style="background:var(--teal-50);border-radius:var(--radius-sm);padding:10px 12px;">
+          <p style="font-size:11px;color:var(--navy-mid);margin-bottom:4px;font-weight:500;">Document classified as:</p>
+          <p style="font-size:14px;font-weight:600;color:var(--navy);">PSA Birth Certificate</p>
+          <p style="font-size:11px;color:var(--navy-light);">Confidence: 98% · Processed by HuggingFace Transformers</p>
+        </div>
+        <div>
+          <p style="font-size:12px;font-weight:600;color:var(--gray-700);margin-bottom:8px;">Extracted entities (NER via spaCy):</p>
+          <div style="display:flex;flex-direction:column;gap:0;">
+            ${[
+              ['Full name',       'Juan Santos dela Cruz'],
+              ['Date of birth',   'January 5, 1945'],
+              ['Place of birth',  'Carmen, Davao del Norte'],
+              ['Document type',   'PSA Birth Certificate'],
+              ['PSA Reference',   'PSA-2024-XXXXXXX'],
+            ].map(([l,v]) => `
+              <div style="display:flex;justify-content:space-between;font-size:12px;padding:7px 0;border-bottom:.5px solid var(--gray-200);">
+                <span style="color:var(--gray-500);">${l}</span>
+                <span style="font-weight:500;color:var(--gray-900);">${v}</span>
+              </div>`).join('')}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px;">
+          <button class="btn btn-navy btn-full" onclick="showToast('Document saved successfully!')">
+            <i class="ti ti-circle-check"></i> Confirm and save
+          </button>
+          <button class="btn btn-ghost btn-full">
+            <i class="ti ti-edit"></i> Edit extracted data
+          </button>
+        </div>
+      `;
+    }, 1800);
+  }
+</script>
+<style>@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}</style>
+</body>
+</html>

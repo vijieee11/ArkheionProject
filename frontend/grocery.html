@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Grocery Distribution</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>body{display:flex;}</style>
+</head>
+<body>
+<script src="sidebar.js"></script>
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">Grocery distribution</span>
+    <div class="topbar-actions" style="margin-left:auto;">
+      <button class="btn btn-ghost btn-sm"><i class="ti ti-download"></i> Export list</button>
+      <button class="btn btn-ghost btn-sm" onclick="openModal('modal-schedule')"><i class="ti ti-calendar"></i> New schedule</button>
+      <button class="btn btn-navy btn-sm" onclick="openModal('modal-mark')"><i class="ti ti-check"></i> Mark received</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="stats-grid stats-3">
+      <div class="stat-card teal">
+        <div class="stat-label"><i class="ti ti-circle-check"></i> Released this month</div>
+        <div class="stat-value">891</div>
+        <div class="stat-sub">69% of 1,284 members</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-label"><i class="ti ti-clock"></i> Pending</div>
+        <div class="stat-value">393</div>
+        <div class="stat-sub">31% not yet released</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><i class="ti ti-calendar"></i> Next schedule</div>
+        <div class="stat-value" style="font-size:18px;">Jul 15</div>
+        <div class="stat-sub">Brgy 2 — 8:00 AM at OSCA Carmen</div>
+      </div>
+    </div>
+
+    <div class="alert alert-coral">
+      <i class="ti ti-alert-circle"></i>
+      <strong>5 senior citizens</strong> have not claimed grocery for 2+ months. Possible home visit needed.
+      <a href="map.html" style="margin-left:8px;color:var(--coral-900);text-decoration:underline;font-weight:500">View on map →</a>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Distribution list — July 2026</div>
+          <div class="card-subtitle">Click "Mark received" to record a claim</div>
+        </div>
+        <div class="card-actions">
+          <select class="filter-select">
+            <option>All barangays</option>
+            <option>Brgy 1</option><option>Brgy 2</option><option>Brgy 3</option>
+          </select>
+          <select class="filter-select">
+            <option>All status</option>
+            <option>Released</option><option>Pending</option><option>Urgent</option>
+          </select>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr><th>OSCA ID</th><th>Name</th><th>Barangay</th><th>Status</th><th>Date received</th><th>Received by</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-muted">2024-001</td><td class="td-bold">Juan dela Cruz</td><td class="td-muted">Brgy 2</td>
+            <td><span class="badge badge-ok">Released</span></td>
+            <td class="td-muted">Jul 5, 2026</td><td class="td-muted">Self</td>
+            <td><button class="btn btn-ghost btn-sm btn-icon" title="View details"><i class="ti ti-eye"></i></button></td>
+          </tr>
+          <tr>
+            <td class="td-muted">2023-087</td><td class="td-bold">Maria Santos</td><td class="td-muted">Brgy 5</td>
+            <td><span class="badge badge-pend">Pending</span></td>
+            <td class="td-muted">—</td><td class="td-muted">—</td>
+            <td><button class="btn btn-navy btn-sm" onclick="openModal('modal-mark')"><i class="ti ti-check"></i> Mark</button></td>
+          </tr>
+          <tr>
+            <td class="td-muted">2024-033</td><td class="td-bold">Pedro Ramos</td><td class="td-muted">Brgy 1</td>
+            <td><span class="badge badge-urgent">Urgent</span></td>
+            <td class="td-muted">—</td><td class="td-muted">—</td>
+            <td><button class="btn btn-navy btn-sm" onclick="openModal('modal-mark')"><i class="ti ti-check"></i> Mark</button></td>
+          </tr>
+          <tr>
+            <td class="td-muted">2022-114</td><td class="td-bold">Lourdes Garcia</td><td class="td-muted">Brgy 3</td>
+            <td><span class="badge badge-ok">Released</span></td>
+            <td class="td-muted">Jul 6, 2026</td><td class="td-muted">Daughter</td>
+            <td><button class="btn btn-ghost btn-sm btn-icon" title="View details"><i class="ti ti-eye"></i></button></td>
+          </tr>
+          <tr>
+            <td class="td-muted">2025-012</td><td class="td-bold">Rosario Mendoza</td><td class="td-muted">Brgy 4</td>
+            <td><span class="badge badge-pend">Pending</span></td>
+            <td class="td-muted">—</td><td class="td-muted">—</td>
+            <td><button class="btn btn-navy btn-sm" onclick="openModal('modal-mark')"><i class="ti ti-check"></i> Mark</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Mark received -->
+<div class="modal-overlay" id="modal-mark" onclick="if(event.target===this)closeModal('modal-mark')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Mark grocery as received</span>
+      <button class="modal-close" onclick="closeModal('modal-mark')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Senior citizen</label>
+        <input type="text" value="Maria Santos — 2023-087" readonly>
+      </div>
+      <div class="form-group">
+        <label>Date received</label>
+        <input type="date" value="2026-07-09">
+      </div>
+      <div class="form-group">
+        <label>Received by</label>
+        <select>
+          <option>Self</option>
+          <option>Authorized representative</option>
+          <option>Barangay official</option>
+        </select>
+      </div>
+      <div class="form-group" id="rep-name-group" style="display:none;">
+        <label>Representative name</label>
+        <input type="text" placeholder="Full name of representative">
+      </div>
+      <div class="form-group">
+        <label>Remarks (optional)</label>
+        <textarea placeholder="Any additional notes..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-mark')">Cancel</button>
+      <button class="btn btn-navy" onclick="confirmMark()"><i class="ti ti-check"></i> Confirm received</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: New schedule -->
+<div class="modal-overlay" id="modal-schedule" onclick="if(event.target===this)closeModal('modal-schedule')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">New distribution schedule</span>
+      <button class="modal-close" onclick="closeModal('modal-schedule')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Barangay</label>
+        <select><option>All barangays</option><option>Brgy 1</option><option>Brgy 2</option><option>Brgy 3</option></select>
+      </div>
+      <div class="form-2col">
+        <div class="form-group">
+          <label>Distribution date</label>
+          <input type="date">
+        </div>
+        <div class="form-group">
+          <label>Time</label>
+          <input type="time" value="08:00">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Period</label>
+        <input type="text" placeholder="e.g. July 2026">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-schedule')">Cancel</button>
+      <button class="btn btn-navy" onclick="closeModal('modal-schedule');showToast('Schedule saved successfully!')"><i class="ti ti-calendar"></i> Save schedule</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+  renderSidebar('grocery');
+  function confirmMark() {
+    closeModal('modal-mark');
+    showToast('Grocery marked as received for Maria Santos.');
+  }
+</script>
+</body>
+</html>
