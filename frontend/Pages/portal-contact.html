@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Contact</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body style="background:var(--gray-100)">
+
+<nav class="portal-nav">
+  <div class="portal-brand">
+    <div class="sb-logo-icon" style="width:26px;height:26px;"><i class="ti ti-archive" style="font-size:13px;color:var(--gold-dark)"></i></div>
+    <span style="color:var(--white);font-size:14px;font-weight:500;font-family:var(--font-display)">Arkheion</span>
+    <span style="color:var(--teal-100);font-size:11px;"> — OSCA Carmen</span>
+  </div>
+  <div class="portal-navlinks">
+    <a href="portal-home.html">Home</a>
+    <a href="portal-records.html">My records</a>
+    <a href="portal-services.html">Services</a>
+    <a href="portal-faq.html">FAQ</a>
+    <a class="active" href="portal-contact.html">Contact</a>
+  </div>
+  <div class="portal-user">
+    <div class="portal-avatar">JC</div>
+    <span class="portal-uname">Juan dela Cruz</span>
+    <button class="btn btn-ghost btn-sm" style="margin-left:8px;" onclick="location.href='login.html'"><i class="ti ti-logout"></i></button>
+  </div>
+</nav>
+
+<div class="portal-content">
+  <p class="section-heading">Contact OSCA Carmen</p>
+  <p class="section-sub">Reach out to the office, or send a message below.</p>
+
+  <div class="two-equal">
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-phone" style="margin-right:6px;color:var(--navy-light)"></i>Office details</div></div>
+      <div style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="detail-field"><span class="detail-label">Office location</span><span class="detail-value">Carmen Municipal Hall, Davao del Norte</span></div>
+        <div class="detail-field"><span class="detail-label">Office hours</span><span class="detail-value">Monday–Friday, 8:00 AM – 5:00 PM</span></div>
+        <div class="detail-field"><span class="detail-label">Contact number</span><span class="detail-value">(082) xxx-xxxx</span></div>
+        <div class="detail-field"><span class="detail-label">OSCA Head</span><span class="detail-value">Mario V. Solis</span></div>
+        <div class="detail-field"><span class="detail-label">Municipality</span><span class="detail-value">Carmen, Davao del Norte</span></div>
+        <div class="detail-field"><span class="detail-label">Email</span><span class="detail-value">osca@carmen.gov.ph</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">Send a message</div></div>
+      <div style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+        <div class="form-group"><label>Full name</label><input type="text" value="Juan dela Cruz" readonly></div>
+        <div class="form-group"><label>OSCA ID</label><input type="text" value="2024-001" readonly></div>
+        <div class="form-group"><label>Message</label><textarea placeholder="Type your concern here..."></textarea></div>
+        <button class="btn btn-navy" onclick="showToast('Message sent to OSCA Carmen office!')"><i class="ti ti-send"></i> Send message</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+function showToast(msg){
+  const toast = document.getElementById('toast');
+  toast.innerHTML = `<i class="ti ti-circle-check"></i> ${msg}`;
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>

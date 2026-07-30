@@ -122,8 +122,8 @@
         'osca_staff2': { role: 'regular_staff',  mustChange: false },
       };
       const seniorAccounts = {
-        '2024-001': { role: 'senior', name: 'Juan dela Cruz' },
-        '2023-087': { role: 'senior', name: 'Maria Santos' },
+        '2024-001': { role: 'senior', name: 'Juan dela Cruz', mustChange: true },
+        '2023-087': { role: 'senior', name: 'Maria Santos', mustChange: false },
       };
 
       if (currentType === 'staff' && staffAccounts[user]) {
@@ -137,7 +137,7 @@
         localStorage.setItem('ark_username', acc.name);
         localStorage.setItem('ark_role',     acc.role);
         localStorage.setItem('ark_token',    'demo-token-' + Date.now());
-        window.location.href = 'portal-home.html';
+        window.location.href = acc.mustChange ? 'senior-change-password.html' : 'portal-home.html';
       } else {
         document.getElementById('error-msg').textContent = 'Invalid username or password. Please try again.';
         err.style.display = 'flex';

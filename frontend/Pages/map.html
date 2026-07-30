@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Map View</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body{display:flex;}
+    .map-wrap{position:relative;height:520px;background:var(--gray-50);border-radius:var(--radius);overflow:hidden;}
+    .map-grid-full{position:absolute;inset:0;background-image:linear-gradient(var(--gray-200) 1px, transparent 1px), linear-gradient(90deg, var(--gray-200) 1px, transparent 1px);background-size:40px 40px;opacity:.5;}
+    .map-pin-full{position:absolute;font-size:26px;cursor:pointer;transform:translate(-50%,-100%);transition:transform .15s;}
+    .map-pin-full:hover{transform:translate(-50%,-100%) scale(1.15);}
+    .pin-ok{color:var(--navy);}
+    .pin-inc{color:var(--gold-dark);}
+    .pin-urg{color:var(--coral-600);}
+    .map-legend-full{position:absolute;bottom:14px;left:14px;background:var(--white);border-radius:var(--radius-sm);padding:10px 14px;box-shadow:var(--shadow);display:flex;gap:14px;font-size:12px;}
+    .pin-popup{position:absolute;background:var(--white);border-radius:var(--radius-sm);box-shadow:var(--shadow);padding:12px 14px;width:220px;font-size:12px;z-index:10;display:none;}
+    .pin-popup.open{display:block;}
+  </style>
+</head>
+<body>
+<script src="sidebar.js"></script>
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">Senior citizen map</span>
+    <div class="topbar-actions" style="margin-left:auto;">
+      <button class="btn btn-ghost btn-sm"><i class="ti ti-download"></i> Export map data</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="stats-grid stats-3">
+      <div class="stat-card teal">
+        <div class="stat-label"><i class="ti ti-circle-check"></i> Complete records</div>
+        <div class="stat-value">1,109</div>
+        <div class="stat-sub">86% of total members</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-label"><i class="ti ti-alert-triangle"></i> Incomplete records</div>
+        <div class="stat-value">166</div>
+        <div class="stat-sub">Missing requirements</div>
+      </div>
+      <div class="stat-card coral">
+        <div class="stat-label"><i class="ti ti-alert-circle"></i> Urgent cases</div>
+        <div class="stat-value">9</div>
+        <div class="stat-sub">Unclaimed pension/grocery 2+ months</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Barangay map — Carmen, Davao del Norte</div>
+          <div class="card-subtitle">Click a pin to view member details</div>
+        </div>
+        <div class="card-actions">
+          <select class="filter-select" id="brgy-filter" onchange="filterPins()">
+            <option value="all">All barangays</option>
+            <option value="Brgy 1">Brgy 1</option>
+            <option value="Brgy 2">Brgy 2</option>
+            <option value="Brgy 3">Brgy 3</option>
+            <option value="Brgy 4">Brgy 4</option>
+            <option value="Brgy 5">Brgy 5</option>
+          </select>
+          <select class="filter-select" id="status-filter" onchange="filterPins()">
+            <option value="all">All status</option>
+            <option value="ok">Complete</option>
+            <option value="inc">Incomplete</option>
+            <option value="urg">Urgent</option>
+          </select>
+        </div>
+      </div>
+      <div style="padding:16px;">
+        <div class="map-wrap" id="map-wrap">
+          <div class="map-grid-full"></div>
+          <!-- pins injected by JS -->
+          <div class="map-legend-full">
+            <span style="color:var(--navy)">● Complete</span>
+            <span style="color:var(--gold-dark)">● Incomplete</span>
+            <span style="color:var(--coral-600)">● Urgent</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+  renderSidebar('map');
+
+  const members = [
+    { name:'Juan dela Cruz',   osca:'2024-001', brgy:'Brgy 2', status:'ok',  top:'18%', left:'26%' },
+    { name:'Maria Santos',     osca:'2023-087', brgy:'Brgy 5', status:'ok',  top:'36%', left:'50%' },
+    { name:'Rosario Mendoza',  osca:'2025-012', brgy:'Brgy 4', status:'inc', top:'55%', left:'20%' },
+    { name:'Lourdes Garcia',   osca:'2022-114', brgy:'Brgy 3', status:'ok',  top:'22%', left:'65%' },
+    { name:'Pedro Ramos',      osca:'2024-033', brgy:'Brgy 1', status:'urg', top:'62%', left:'56%' },
+    { name:'Felipe Torres',    osca:'2023-055', brgy:'Brgy 2', status:'ok',  top:'42%', left:'74%' },
+  ];
+
+  function renderPins(filterBrgy='all', filterStatus='all'){
+    const wrap = document.getElementById('map-wrap');
+    wrap.querySelectorAll('.map-pin-full, .pin-popup').forEach(el => el.remove());
+
+    members.forEach((m, i) => {
+      if (filterBrgy !== 'all' && m.brgy !== filterBrgy) return;
+      if (filterStatus !== 'all' && m.status !== filterStatus) return;
+
+      const pin = document.createElement('i');
+      pin.className = `ti ti-map-pin-filled map-pin-full pin-${m.status}`;
+      pin.style.top = m.top;
+      pin.style.left = m.left;
+      pin.onclick = () => togglePopup(i);
+      wrap.appendChild(pin);
+
+      const popup = document.createElement('div');
+      popup.className = 'pin-popup';
+      popup.id = `popup-${i}`;
+      popup.style.top = m.top;
+      popup.style.left = m.left;
+      popup.innerHTML = `
+        <p style="font-weight:600;color:var(--gray-900);margin-bottom:4px;">${m.name}</p>
+        <p style="color:var(--gray-500);margin-bottom:2px;">OSCA ID: ${m.osca}</p>
+        <p style="color:var(--gray-500);margin-bottom:8px;">${m.brgy}</p>
+        <button class="btn btn-navy btn-sm btn-full" onclick="location.href='member-detail.html'">View profile</button>
+      `;
+      wrap.appendChild(popup);
+    });
+  }
+
+  function togglePopup(i){
+    document.querySelectorAll('.pin-popup').forEach(p => p.classList.remove('open'));
+    document.getElementById(`popup-${i}`).classList.add('open');
+  }
+
+  function filterPins(){
+    renderPins(document.getElementById('brgy-filter').value, document.getElementById('status-filter').value);
+  }
+
+  renderPins();
+</script>
+</body>
+</html>

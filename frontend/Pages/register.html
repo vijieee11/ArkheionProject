@@ -165,18 +165,8 @@
         <div class="form-section-title"><i class="ti ti-building-community"></i> Membership to Sr. Citizens Association</div>
         <div class="form-2col">
           <div class="form-group">
-            <label>Name of association</label>
-            <input type="text" placeholder="e.g. Carmen Senior Citizens Association">
-          </div>
-          <div class="form-group">
-            <label>Address of association</label>
-            <input type="text" placeholder="Association address">
-          </div>
-        </div>
-        <div class="form-2col">
-          <div class="form-group">
-            <label>Date of membership</label>
-            <input type="date">
+            <label>Association name</label>
+            <input type="text" placeholder="e.g. Brgy 2 Senior Citizens Association">
           </div>
           <div class="form-group">
             <label>Position in association</label>
@@ -187,6 +177,26 @@
 
       <!-- TAB 4: Documents -->
       <div id="tab-documents" class="card-body" style="display:none;flex-direction:column;gap:14px;">
+        <div class="form-section-title"><i class="ti ti-key"></i> Portal account credentials</div>
+        <div class="alert alert-teal">
+          <i class="ti ti-info-circle"></i>
+          A temporary password will be generated automatically when this member is saved. The senior citizen (or their representative) must change it on first login to the portal.
+        </div>
+        <div class="form-2col">
+          <div class="form-group">
+            <label>OSCA ID (portal username)</label>
+            <input type="text" id="gen-osca-id" placeholder="Auto-generated upon saving" readonly>
+          </div>
+          <div class="form-group">
+            <label>Temporary password</label>
+            <div style="display:flex;gap:6px;">
+              <input type="text" id="gen-temp-pw" placeholder="Auto-generated upon saving" readonly style="flex:1;">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="regeneratePassword()" title="Regenerate password"><i class="ti ti-refresh"></i></button>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:11px;color:var(--gray-500);margin-top:-8px;">Print or write down these credentials to give to the senior citizen — they cannot be recovered online and must be reset by staff if lost.</p>
+
         <div class="form-section-title"><i class="ti ti-file-check"></i> Required documents (OSCA Form No. 1)</div>
         <div style="display:flex;flex-direction:column;gap:10px;">
           <div id="docs-list">
@@ -275,6 +285,23 @@
     document.querySelectorAll('[id^="tab-"]').forEach(t => t.style.display = 'none');
     el.classList.add('active');
     document.getElementById(tabId).style.display = 'flex';
+    if (tabId === 'tab-documents' && !document.getElementById('gen-osca-id').value) {
+      generateCredentials();
+    }
+  }
+
+  function generateCredentials() {
+    const year = new Date().getFullYear();
+    const oscaId = year + '-' + Math.floor(Math.random()*900 + 100);
+    document.getElementById('gen-osca-id').value = oscaId;
+    regeneratePassword();
+  }
+
+  function regeneratePassword() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    let pw = '';
+    for (let i = 0; i < 8; i++) pw += chars[Math.floor(Math.random()*chars.length)];
+    document.getElementById('gen-temp-pw').value = pw;
   }
 
   function computeAge() {
@@ -337,8 +364,13 @@
       showToast('Please fill in all required fields.', 'error');
       return;
     }
-    showToast('Member registered successfully! OSCA ID: 2026-' + Math.floor(Math.random()*1000).toString().padStart(3,'0'));
-    setTimeout(() => location.href = 'members.html', 2000);
+    if (!document.getElementById('gen-osca-id').value) {
+      generateCredentials();
+    }
+    const oscaId = document.getElementById('gen-osca-id').value;
+    const tempPw = document.getElementById('gen-temp-pw').value;
+    alert('Member registered successfully!\n\nOSCA ID (username): ' + oscaId + '\nTemporary password: ' + tempPw + '\n\nPlease give these credentials to the senior citizen. They will be required to set a new password on first portal login.');
+    setTimeout(() => location.href = 'members.html', 500);
   }
 </script>
 </body>
