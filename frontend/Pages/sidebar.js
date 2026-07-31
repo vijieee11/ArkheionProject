@@ -37,6 +37,7 @@ function renderSidebar(activePage) {
       items: [
         { id: 'reports',  label: 'Reports',  icon: 'ti-chart-bar',    href: 'reports.html' },
         { id: 'audit',    label: 'Audit log',icon: 'ti-shield-check', href: 'audit.html', badge: '9' },
+        { id: 'genaccounts', label: 'Generate accounts', icon: 'ti-key', href: 'generate-accounts.html' },
         ...(role === 'head_staff' ? [
           { id: 'staffmgmt', label: 'Staff mgmt', icon: 'ti-users-group', href: 'staff-mgmt.html', badgeGold: 'HEAD' }
         ] : [])

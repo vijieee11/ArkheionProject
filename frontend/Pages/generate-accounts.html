@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Generate Portal Accounts</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>body{display:flex;}</style>
+</head>
+<body>
+<script src="sidebar.js"></script>
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">Generate portal accounts</span>
+    <div class="topbar-actions" style="margin-left:auto;">
+      <button class="btn btn-ghost btn-sm" id="export-btn" style="display:none;" onclick="exportCredentials()"><i class="ti ti-download"></i> Export credential list</button>
+      <button class="btn btn-navy btn-sm" onclick="generateSelected()"><i class="ti ti-key"></i> Generate for selected</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="alert alert-teal">
+      <i class="ti ti-info-circle"></i>
+      This is for <strong>existing members</strong> who already have an OSCA ID but do not yet have a portal account. Select members below, then click "Generate for selected" to create their login credentials.
+    </div>
+
+    <div class="stats-grid stats-3">
+      <div class="stat-card">
+        <div class="stat-label"><i class="ti ti-users"></i> Total members</div>
+        <div class="stat-value" id="stat-total">8</div>
+        <div class="stat-sub">All registered members</div>
+      </div>
+      <div class="stat-card coral">
+        <div class="stat-label"><i class="ti ti-user-off"></i> No portal account</div>
+        <div class="stat-value" id="stat-noaccount">6</div>
+        <div class="stat-sub">Cannot log in to portal yet</div>
+      </div>
+      <div class="stat-card teal">
+        <div class="stat-label"><i class="ti ti-circle-check"></i> Has portal account</div>
+        <div class="stat-value" id="stat-hasaccount">2</div>
+        <div class="stat-sub">Can already log in</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Members without portal accounts</div>
+          <div class="card-subtitle">Check the members you want to generate credentials for</div>
+        </div>
+        <div class="card-actions">
+          <select class="filter-select">
+            <option>All barangays</option>
+            <option>Brgy 1</option><option>Brgy 2</option><option>Brgy 3</option>
+            <option>Brgy 4</option><option>Brgy 5</option>
+          </select>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:36px;"><input type="checkbox" id="check-all" onclick="toggleAll(this)"></th>
+            <th>OSCA ID</th><th>Name</th><th>Barangay</th><th>Account status</th><th>Generated password</th>
+          </tr>
+        </thead>
+        <tbody id="member-tbody"></tbody>
+      </table>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:.5px solid var(--gray-200);">
+        <span style="font-size:12px;color:var(--gray-500)" id="selected-count">0 members selected</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: confirm generated credentials -->
+<div class="modal-overlay" id="modal-credentials" onclick="if(event.target===this)closeModal('modal-credentials')">
+  <div class="modal" style="width:560px;">
+    <div class="modal-header">
+      <span class="modal-title">Credentials generated</span>
+      <button class="modal-close" onclick="closeModal('modal-credentials')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-teal">
+        <i class="ti ti-info-circle"></i>
+        Please print or write down these credentials and give them to each senior citizen (or their authorized representative). They will be required to set their own password on first login.
+      </div>
+      <table>
+        <thead><tr><th>OSCA ID</th><th>Name</th><th>Temporary password</th></tr></thead>
+        <tbody id="modal-cred-tbody"></tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-credentials')">Close</button>
+      <button class="btn btn-navy" onclick="exportCredentials()"><i class="ti ti-download"></i> Export as list</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+  renderSidebar('members');
+
+  // Sample existing members — replace with real data from database once backend exists
+  let members = [
+    { osca:'2024-001', name:'Juan dela Cruz',    brgy:'Brgy 2', hasAccount:true,  pw:null },
+    { osca:'2023-087', name:'Maria Santos',      brgy:'Brgy 5', hasAccount:true,  pw:null },
+    { osca:'2024-033', name:'Pedro Ramos',       brgy:'Brgy 1', hasAccount:false, pw:null },
+    { osca:'2022-114', name:'Lourdes Garcia',    brgy:'Brgy 3', hasAccount:false, pw:null },
+    { osca:'2025-012', name:'Rosario Mendoza',   brgy:'Brgy 4', hasAccount:false, pw:null },
+    { osca:'2023-055', name:'Felipe Torres',     brgy:'Brgy 2', hasAccount:false, pw:null },
+    { osca:'2021-078', name:'Cristina Villareal',brgy:'Brgy 3', hasAccount:false, pw:null },
+    { osca:'2020-045', name:'Ambrosio Reyes',    brgy:'Brgy 1', hasAccount:false, pw:null },
+  ];
+
+  function renderTable() {
+    const tbody = document.getElementById('member-tbody');
+    tbody.innerHTML = '';
+    members.forEach((m, i) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${m.hasAccount ? '' : `<input type="checkbox" class="row-check" data-i="${i}">`}</td>
+        <td class="td-muted">${m.osca}</td>
+        <td class="td-bold">${m.name}</td>
+        <td class="td-muted">${m.brgy}</td>
+        <td>${m.hasAccount
+              ? '<span class="badge badge-ok">Has account</span>'
+              : '<span class="badge badge-miss">No account</span>'}</td>
+        <td class="td-muted">${m.pw ? `<span style="font-family:monospace;color:var(--navy);font-weight:600;">${m.pw}</span>` : '—'}</td>
+      `;
+      tbody.appendChild(row);
+    });
+    updateStats();
+    updateSelectedCount();
+  }
+
+  function updateStats() {
+    document.getElementById('stat-total').textContent = members.length;
+    document.getElementById('stat-noaccount').textContent = members.filter(m => !m.hasAccount).length;
+    document.getElementById('stat-hasaccount').textContent = members.filter(m => m.hasAccount).length;
+  }
+
+  function toggleAll(cb) {
+    document.querySelectorAll('.row-check').forEach(c => c.checked = cb.checked);
+    updateSelectedCount();
+  }
+
+  function updateSelectedCount() {
+    const n = document.querySelectorAll('.row-check:checked').length;
+    document.getElementById('selected-count').textContent = `${n} member${n===1?'':'s'} selected`;
+  }
+
+  document.addEventListener('change', e => {
+    if (e.target.classList.contains('row-check')) updateSelectedCount();
+  });
+
+  function genPassword() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    let pw = '';
+    for (let i = 0; i < 8; i++) pw += chars[Math.floor(Math.random()*chars.length)];
+    return pw;
+  }
+
+  function generateSelected() {
+    const checked = document.querySelectorAll('.row-check:checked');
+    if (checked.length === 0) {
+      showToast('Please select at least one member first.', 'error');
+      return;
+    }
+    const generated = [];
+    checked.forEach(cb => {
+      const i = parseInt(cb.dataset.i);
+      members[i].hasAccount = true;
+      members[i].pw = genPassword();
+      generated.push(members[i]);
+    });
+    renderTable();
+
+    const modalBody = document.getElementById('modal-cred-tbody');
+    modalBody.innerHTML = generated.map(m => `
+      <tr>
+        <td class="td-muted">${m.osca}</td>
+        <td class="td-bold">${m.name}</td>
+        <td style="font-family:monospace;color:var(--navy);font-weight:600;">${m.pw}</td>
+      </tr>
+    `).join('');
+    document.getElementById('export-btn').style.display = 'inline-flex';
+    openModal('modal-credentials');
+    showToast(`Portal accounts generated for ${generated.length} member(s).`);
+  }
+
+  function exportCredentials() {
+    const withPw = members.filter(m => m.pw);
+    let csv = 'OSCA ID,Name,Barangay,Temporary Password\n';
+    withPw.forEach(m => { csv += `${m.osca},${m.name},${m.brgy},${m.pw}\n`; });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'arkheion-portal-credentials.csv';
+    a.click();
+    showToast('Credential list exported.');
+  }
+
+  renderTable();
+</script>
+</body>
+</html>
