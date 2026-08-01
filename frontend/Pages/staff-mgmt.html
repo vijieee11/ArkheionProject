@@ -8,7 +8,7 @@
   <style>body{display:flex;}</style>
 </head>
 <body>
-<script src="sidebar.js"></script>
+<script src="sidebar-headstaff.js"></script>
 <div class="main">
   <div class="topbar">
     <span class="topbar-title">Staff management</span>
@@ -148,7 +148,7 @@
 
 <div class="toast" id="toast"></div>
 <script>
-  renderSidebar('staffmgmt', 'head_staff');
+  renderHeadStaffSidebar('staffmgmt');
 
   function confirmDeactivate(name) {
     if (confirm(`Are you sure you want to deactivate ${name}'s account? They will no longer be able to log in.`)) {

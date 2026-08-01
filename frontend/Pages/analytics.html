@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Analytics (Head Staff)</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body{display:flex;}
+    .bar-chart { display:flex; align-items:flex-end; gap:10px; height:160px; padding:16px; }
+    .bar-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; }
+    .bar { width:100%; border-radius:4px 4px 0 0; background:var(--navy); transition:height .3s; }
+    .bar-label { font-size:10px; color:var(--gray-500); }
+    .bar-value { font-size:11px; font-weight:600; color:var(--gray-900); }
+    .brgy-row { display:flex; align-items:center; gap:10px; padding:9px 16px; }
+    .brgy-name { width:60px; font-size:12px; font-weight:500; color:var(--gray-700); flex-shrink:0; }
+    .brgy-bar-track { flex:1; height:8px; background:var(--gray-100); border-radius:4px; overflow:hidden; }
+    .brgy-bar-fill { height:100%; border-radius:4px; }
+    .brgy-pct { width:36px; text-align:right; font-size:11px; font-weight:500; color:var(--gray-600); }
+    .staff-row { display:flex; align-items:center; gap:12px; padding:10px 16px; border-bottom:.5px solid var(--gray-200); }
+    .staff-row:last-child { border-bottom:none; }
+    .staff-avatar-sm { width:32px; height:32px; border-radius:50%; background:var(--teal-50); color:var(--navy); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; flex-shrink:0; }
+  </style>
+</head>
+<body>
+<script src="sidebar-headstaff.js"></script>
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">Analytics — Head Staff overview</span>
+    <div class="topbar-actions" style="margin-left:auto;">
+      <select class="filter-select">
+        <option>Last 6 months</option>
+        <option>This year</option>
+        <option>Last 12 months</option>
+      </select>
+      <button class="btn btn-ghost btn-sm"><i class="ti ti-download"></i> Export report</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="alert alert-amber">
+      <i class="ti ti-lock"></i>
+      This analytics view is only visible to <strong>Head Staff</strong> accounts.
+    </div>
+
+    <div class="stats-grid stats-4">
+      <div class="stat-card">
+        <div class="stat-label"><i class="ti ti-users"></i> Total members</div>
+        <div class="stat-value">1,284</div>
+        <div class="stat-sub">+38 this month</div>
+      </div>
+      <div class="stat-card teal">
+        <div class="stat-label"><i class="ti ti-shopping-cart"></i> Avg. grocery release rate</div>
+        <div class="stat-value">71%</div>
+        <div class="stat-sub">+4% vs last month</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-label"><i class="ti ti-cash"></i> Avg. pension claim rate</div>
+        <div class="stat-value">62%</div>
+        <div class="stat-sub">-3% vs last month</div>
+      </div>
+      <div class="stat-card coral">
+        <div class="stat-label"><i class="ti ti-alert-circle"></i> Total urgent cases</div>
+        <div class="stat-value">9</div>
+        <div class="stat-sub">Across all barangays</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <!-- Monthly trend chart -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Monthly distribution trend</div>
+            <div class="card-subtitle">Grocery releases per month</div>
+          </div>
+        </div>
+        <div class="bar-chart" id="trend-chart"></div>
+      </div>
+
+      <!-- Barangay comparison -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Backlog by barangay</div>
+            <div class="card-subtitle">% of members with incomplete requirements</div>
+          </div>
+        </div>
+        <div style="padding:8px 0;" id="brgy-list"></div>
+      </div>
+    </div>
+
+    <!-- Staff productivity -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Staff productivity</div>
+          <div class="card-subtitle">Records processed this month, per staff member</div>
+        </div>
+      </div>
+      <div id="staff-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  renderHeadStaffSidebar('analytics');
+
+  // Sample data — replace with real aggregated data from the database once backend exists
+  const trendData = [
+    { month:'Feb', value:610 },
+    { month:'Mar', value:655 },
+    { month:'Apr', value:690 },
+    { month:'May', value:720 },
+    { month:'Jun', value:760 },
+    { month:'Jul', value:891 },
+  ];
+
+  const brgyData = [
+    { name:'Brgy 1', pct:22, color:'var(--coral-600)' },
+    { name:'Brgy 2', pct:9,  color:'var(--navy)' },
+    { name:'Brgy 3', pct:14, color:'var(--gold-dark)' },
+    { name:'Brgy 4', pct:31, color:'var(--coral-600)' },
+    { name:'Brgy 5', pct:6,  color:'var(--navy)' },
+  ];
+
+  const staffData = [
+    { name:'Head Staff',      username:'osca_head',   count:412, initials:'HS' },
+    { name:'Regular Staff 1', username:'osca_staff1', count:356, initials:'RS' },
+    { name:'Regular Staff 2', username:'osca_staff2', count:198, initials:'RS' },
+  ];
+
+  function renderTrend() {
+    const max = Math.max(...trendData.map(d => d.value));
+    const el = document.getElementById('trend-chart');
+    el.innerHTML = trendData.map(d => `
+      <div class="bar-col">
+        <span class="bar-value">${d.value}</span>
+        <div class="bar" style="height:${(d.value/max*120).toFixed(0)}px;"></div>
+        <span class="bar-label">${d.month}</span>
+      </div>
+    `).join('');
+  }
+
+  function renderBrgy() {
+    const el = document.getElementById('brgy-list');
+    el.innerHTML = brgyData.map(b => `
+      <div class="brgy-row">
+        <span class="brgy-name">${b.name}</span>
+        <div class="brgy-bar-track"><div class="brgy-bar-fill" style="width:${b.pct}%;background:${b.color};"></div></div>
+        <span class="brgy-pct">${b.pct}%</span>
+      </div>
+    `).join('');
+  }
+
+  function renderStaff() {
+    const max = Math.max(...staffData.map(s => s.count));
+    const el = document.getElementById('staff-list');
+    el.innerHTML = staffData.map(s => `
+      <div class="staff-row">
+        <div class="staff-avatar-sm">${s.initials}</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:500;color:var(--gray-900);">${s.name}</div>
+          <div style="font-size:11px;color:var(--gray-400);">${s.username}</div>
+        </div>
+        <div style="width:160px;">
+          <div class="progress-bar"><div class="progress-fill fill-navy" style="width:${(s.count/max*100).toFixed(0)}%"></div></div>
+        </div>
+        <span style="width:70px;text-align:right;font-size:12px;font-weight:600;color:var(--navy);">${s.count} records</span>
+      </div>
+    `).join('');
+  }
+
+  renderTrend();
+  renderBrgy();
+  renderStaff();
+</script>
+</body>
+</html>
