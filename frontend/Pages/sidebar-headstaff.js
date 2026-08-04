@@ -31,7 +31,7 @@ function renderHeadStaffSidebar(activePage) {
       section: 'System',
       items: [
         { id: 'settings', label: 'System settings', icon: 'ti-settings',  href: 'settings.html' },
-        { id: 'reports',  label: 'Reports',          icon: 'ti-file-text', href: 'reports.html' },
+        { id: 'reports',  label: 'Reports',          icon: 'ti-file-text', href: 'hs-reports.html' },
       ]
     }
   ];
