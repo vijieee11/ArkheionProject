@@ -16,7 +16,7 @@ function renderHeadStaffSidebar(activePage) {
     {
       section: 'Requests',
       items: [
-        { id: 'approvals', label: 'Pending approvals', icon: 'ti-checklist',   href: 'approvals.html', badge: '5' },
+        { id: 'approvals', label: 'Pending approvals', icon: 'ti-checklist',   href: 'hs-pending-approval.html', badge: '5' },
         { id: 'requests',  label: 'Staff requests',    icon: 'ti-inbox',       href: 'requests.html' },
       ]
     },
@@ -70,7 +70,7 @@ function renderHeadStaffSidebar(activePage) {
       <div class="sb-avatar" style="background:var(--gold);color:var(--navy);">${initials}</div>
       <div>
         <div class="sb-uname">${username}</div>
-        <div class="sb-urole" style="color:var(--gold-dark);font-weight:600;">Head Staff</div>
+        <div class="sb-urole" style="color:var(white);font-weight:600;">Head Staff</div>
       </div>
     </div>
   </nav>`;
