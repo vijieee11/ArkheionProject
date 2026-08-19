@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Pending Approvals</title>
+  <link rel="stylesheet" href="output.css">
+  <style>
+    .approvals-table th { padding: 12px 16px; font-size: 11.5px; }
+    .approvals-table td { padding: 15px 16px; font-size: 13px; }
+    .approvals-table th:first-child, .approvals-table td:first-child { width: 34%; }
+    .btn-lightgreen { background: var(--teal-50); color: var(--navy); border: 1.5px solid var(--navy-light); }
+    .btn-lightgreen:hover { opacity: .85; }
+    .approvals-table .btn { height: 32px; padding: 0 14px; font-size: 12.5px; }
+    .btn-approve { background: var(--teal-50); color: var(--navy); border: 1.5px solid var(--navy-light); }
+    .btn-approve:hover { opacity: .85; }
+  </style>
+</head>
+<body>
+<script src="sidebar-headstaff.js"></script>
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">Pending Approvals</span>
+    <div class="topbar-actions" style="margin-left:auto;">
+      <button class="btn btn-ghost btn-sm" onclick="location.href='audit.html'"><i class="ti ti-shield-check"></i> Audit log</button>
+      <button class="btn btn-navy btn-sm" onclick="location.href='headstaff.html'"><i class="ti ti-plus"></i> Add staff</button>
+      <div class="topbar-avatar" style="background:var(--gold);color:var(--navy);">HS</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div>
+      <h1 style="font-family:var(--font-display);font-size:20px;font-weight:600;color:var(--gray-900)">Record actions waiting for your sign-off</h1>
+      <p style="font-size:13px;color:var(--gray-600);margin-top:3px">OSCA Carmen — 5 actions need review before they touch member records</p>
+    </div>
+
+    <!-- Key stats -->
+    <div class="stats-grid stats-4">
+      <div class="stat-card">
+        <div class="stat-label"><i class="ti ti-inbox-in"></i> Pending approvals</div>
+        <div class="stat-value" style="color:#e74c3c;">5</div>
+        <div class="stat-sub">Awaiting your review</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><i class="ti ti-trash"></i> Delete requests</div>
+        <div class="stat-value">2</div>
+        <div class="stat-sub">Part of this week's queue</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><i class="ti ti-edit"></i> Benefit corrections</div>
+        <div class="stat-value">2</div>
+        <div class="stat-sub">Part of this week's queue</div>
+      </div>
+      <div class="stat-card teal">
+        <div class="stat-label"><i class="ti ti-circle-check"></i> Approved today</div>
+        <div class="stat-value">4</div>
+        <div class="stat-sub">Processed today</div>
+      </div>
+    </div>
+
+    <!-- Requests table -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">All record actions</div>
+          <div class="card-subtitle">Sorted by date submitted, oldest first</div>
+        </div>
+        <div class="topbar-search" style="max-width:280px;">
+          <i class="ti ti-search"></i>
+          <input type="text" placeholder="Search staff or record">
+        </div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active">All (5)</div>
+        <div class="tab">Delete record</div>
+        <div class="tab">Benefit correction</div>
+        <div class="tab">Staff deactivation</div>
+      </div>
+
+      <table class="approvals-table">
+        <thead>
+          <tr><th>Request</th><th>Type</th><th>Requested by</th><th>Submitted</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="td-bold">Delete duplicate entry — Perlita Domingo</div>
+              <div class="td-muted" style="font-size:11.5px;margin-top:2px;">REQ-2026-0801 · Duplicate member record</div>
+            </td>
+            <td><span class="badge badge-miss">Delete record</span></td>
+            <td class="td-muted">Regular Staff 1</td>
+            <td class="td-muted">Jul 24, 2026</td>
+            <td><span class="badge badge-pend">Awaiting review</span></td>
+            <td>
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-lightgreen" onclick="showToast('Request REQ-2026-0801 approved')">Approve</button>
+                <button class="btn btn-coral" onclick="showToast('Request REQ-2026-0801 rejected','error')">Reject</button>
+                <button class="btn btn-ghost">View</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="td-bold">Fix pension status — Herminio Salcedo</div>
+              <div class="td-muted" style="font-size:11.5px;margin-top:2px;">REQ-2026-0802 · Pension status was mismarked "inactive"</div>
+            </td>
+            <td><span class="badge badge-ok">Benefit correction</span></td>
+            <td class="td-muted">Regular Staff 3</td>
+            <td class="td-muted">Jul 25, 2026</td>
+            <td><span class="badge badge-pend">Awaiting review</span></td>
+            <td>
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-lightgreen" onclick="showToast('Request REQ-2026-0802 approved')">Approve</button>
+                <button class="btn btn-coral" onclick="showToast('Request REQ-2026-0802 rejected','error')">Reject</button>
+                <button class="btn btn-ghost">View</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="td-bold">Deactivate account — Regular Staff 4</div>
+              <div class="td-muted" style="font-size:11.5px;margin-top:2px;">REQ-2026-0803 · No login activity for 90+ days</div>
+            </td>
+            <td><span class="badge badge-inact">Staff deactivation</span></td>
+            <td class="td-muted">System (auto-flagged)</td>
+            <td class="td-muted">Jul 25, 2026</td>
+            <td><span class="badge badge-pend">Awaiting review</span></td>
+            <td>
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-lightgreen" onclick="showToast('Request REQ-2026-0803 approved')">Approve</button>
+                <button class="btn btn-coral" onclick="showToast('Request REQ-2026-0803 rejected','error')">Reject</button>
+                <button class="btn btn-ghost">View</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="td-bold">Delete duplicate entry — Rosario Fabian</div>
+              <div class="td-muted" style="font-size:11.5px;margin-top:2px;">REQ-2026-0804 · Duplicate OSCA ID record</div>
+            </td>
+            <td><span class="badge badge-miss">Delete record</span></td>
+            <td class="td-muted">Regular Staff 2</td>
+            <td class="td-muted">Jul 26, 2026</td>
+            <td><span class="badge badge-pend">Awaiting review</span></td>
+            <td>
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-lightgreen" onclick="showToast('Request REQ-2026-0804 approved')">Approve</button>
+                <button class="btn btn-coral" onclick="showToast('Request REQ-2026-0804 rejected','error')">Reject</button>
+                <button class="btn btn-ghost">View</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="td-bold">Fix grocery benefit status — Teodora Ibarra</div>
+              <div class="td-muted" style="font-size:11.5px;margin-top:2px;">REQ-2026-0805 · Benefit marked "released" but not yet claimed</div>
+            </td>
+            <td><span class="badge badge-ok">Benefit correction</span></td>
+            <td class="td-muted">Regular Staff 1</td>
+            <td class="td-muted">Jul 27, 2026</td>
+            <td><span class="badge badge-pend">Awaiting review</span></td>
+            <td>
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-lightgreen" onclick="showToast('Request REQ-2026-0805 approved')">Approve</button>
+                <button class="btn btn-coral" onclick="showToast('Request REQ-2026-0805 rejected','error')">Reject</button>
+                <button class="btn btn-ghost">View</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="display:flex;justify-content:space-between;padding:10px 16px;font-size:11px;color:var(--gray-500);border-top:.5px solid var(--gray-200);">
+        <span>Showing 5 of 5 pending record actions</span>
+        <span>Oldest submitted 3 days ago</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+  renderHeadStaffSidebar('approvals');
+</script>
+</body>
+</html>

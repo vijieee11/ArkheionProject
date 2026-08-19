@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Official Reports (Head Staff)</title>
+  <link rel="stylesheet" href="output.css">
+  <style>body{display:flex;}</style>
+</head>
+<body>
+<script src="sidebar-headstaff.js"></script>
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">Official reports — for submission</span>
+    <div class="topbar-actions" style="margin-left:auto;">
+      <select class="filter-select">
+        <option>July 2026</option><option>June 2026</option><option>May 2026</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="alert alert-amber">
+      <i class="ti ti-stamp"></i>
+      Official compiled reports for submission to <strong>DSWD, NCSC, or the LGU</strong>. Each export requires your sign-off as Head Staff and is logged in the audit trail. For quick day-to-day printouts, staff can use the regular Reports page.
+    </div>
+
+    <div class="grid-auto">
+      <div class="card">
+        <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:var(--radius-sm);background:var(--blue-50);display:flex;align-items:center;justify-content:center;">
+            <i class="ti ti-file-text" style="font-size:20px;color:var(--blue-900)"></i>
+          </div>
+          <div>
+            <p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900);">NCSC Annex A list</p>
+            <p style="font-size:12px;color:var(--gray-500);margin-top:3px;">80+ members benefit report — for NCSC submission</p>
+          </div>
+          <span class="badge badge-ok">Ready to sign</span>
+          <button class="btn btn-navy btn-sm btn-full" onclick="openSignModal('NCSC Annex A list')"><i class="ti ti-stamp"></i> Sign & export</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:var(--radius-sm);background:var(--amber-100);display:flex;align-items:center;justify-content:center;">
+            <i class="ti ti-cash" style="font-size:20px;color:var(--gold-dark)"></i>
+          </div>
+          <div>
+            <p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900);">Official pension payroll</p>
+            <p style="font-size:12px;color:var(--gray-500);margin-top:3px;">Compiled monthly pension report — for DSWD</p>
+          </div>
+          <span class="badge badge-ok">Ready to sign</span>
+          <button class="btn btn-navy btn-sm btn-full" onclick="openSignModal('Official pension payroll')"><i class="ti ti-stamp"></i> Sign & export</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:var(--radius-sm);background:var(--teal-50);display:flex;align-items:center;justify-content:center;">
+            <i class="ti ti-users" style="font-size:20px;color:var(--navy)"></i>
+          </div>
+          <div>
+            <p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900);">Official masterlist</p>
+            <p style="font-size:12px;color:var(--gray-500);margin-top:3px;">All registered members — for LGU submission</p>
+          </div>
+          <span class="badge badge-ok">Ready to sign</span>
+          <button class="btn btn-navy btn-sm btn-full" onclick="openSignModal('Official masterlist')"><i class="ti ti-stamp"></i> Sign & export</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:var(--radius-sm);background:var(--coral-50);display:flex;align-items:center;justify-content:center;">
+            <i class="ti ti-chart-bar" style="font-size:20px;color:var(--coral-900)"></i>
+          </div>
+          <div>
+            <p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900);">Quarterly analytics summary</p>
+            <p style="font-size:12px;color:var(--gray-500);margin-top:3px;">Overall statistics and trends — for LGU review</p>
+          </div>
+          <span class="badge badge-pend">Compiling data</span>
+          <button class="btn btn-ghost btn-sm btn-full" disabled><i class="ti ti-clock"></i> Not yet ready</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submission history -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Submission history</div>
+          <div class="card-subtitle">Reports signed and exported by Head Staff</div>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Report</th><th>Signed by</th><th>Date signed</th><th>Recipient</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-bold">NCSC Annex A list — June 2026</td>
+            <td class="td-muted">Head Staff</td>
+            <td class="td-muted">Jul 2, 2026</td>
+            <td class="td-muted">NCSC</td>
+            <td><span class="badge badge-ok">Submitted</span></td>
+          </tr>
+          <tr>
+            <td class="td-bold">Official pension payroll — June 2026</td>
+            <td class="td-muted">Head Staff</td>
+            <td class="td-muted">Jul 1, 2026</td>
+            <td class="td-muted">DSWD</td>
+            <td><span class="badge badge-ok">Submitted</span></td>
+          </tr>
+          <tr>
+            <td class="td-bold">Official masterlist — Q2 2026</td>
+            <td class="td-muted">Head Staff</td>
+            <td class="td-muted">Jun 30, 2026</td>
+            <td class="td-muted">LGU Carmen</td>
+            <td><span class="badge badge-ok">Submitted</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Sign & export -->
+<div class="modal-overlay" id="modal-sign" onclick="if(event.target===this)closeModal('modal-sign')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Sign & export report</span>
+      <button class="modal-close" onclick="closeModal('modal-sign')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Report</label>
+        <input type="text" id="sign-report-name" readonly>
+      </div>
+      <div class="form-group">
+        <label>Recipient agency</label>
+        <select id="sign-recipient" onchange="prefillEmail()">
+          <option>DSWD</option>
+          <option>NCSC</option>
+          <option>LGU Carmen</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Send to email address</label>
+        <input type="email" id="sign-email" placeholder="e.g. records@dswd.gov.ph">
+      </div>
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="sign-email-toggle" checked style="width:auto;margin-right:6px;">
+          Email a copy to the recipient after signing
+        </label>
+      </div>
+      <div class="alert alert-teal">
+        <i class="ti ti-info-circle"></i>
+        Signing this report confirms you have reviewed its contents. This action will be recorded in the audit log with your name and timestamp.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-sign')">Cancel</button>
+      <button class="btn btn-navy" onclick="confirmSign()"><i class="ti ti-stamp"></i> Confirm & sign</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+  renderHeadStaffSidebar('reports');
+
+  const agencyEmails = {
+    'DSWD': 'records@dswd.gov.ph',
+    'NCSC': 'ncsc.carmen@ncsc.gov.ph',
+    'LGU Carmen': 'osca@carmen.gov.ph',
+  };
+
+  function openSignModal(reportName) {
+    document.getElementById('sign-report-name').value = reportName;
+    prefillEmail();
+    openModal('modal-sign');
+  }
+
+  function prefillEmail() {
+    const agency = document.getElementById('sign-recipient').value;
+    document.getElementById('sign-email').value = agencyEmails[agency] || '';
+  }
+
+  function confirmSign() {
+    const name  = document.getElementById('sign-report-name').value;
+    const email = document.getElementById('sign-email').value;
+    const sendEmail = document.getElementById('sign-email-toggle').checked;
+    closeModal('modal-sign');
+    if (sendEmail && email) {
+      showToast(`"${name}" signed, exported, and emailed to ${email}.`);
+    } else {
+      showToast(`"${name}" signed and exported successfully.`);
+    }
+  }
+</script>
+</body>
+</html>

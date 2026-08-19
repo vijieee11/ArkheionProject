@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Audit Log</title>
+  <link rel="stylesheet" href="output.css">
+  <style>
+    body{display:flex;}
+    .audit-table th { padding: 13px 18px; font-size: 12px; }
+    .audit-table td { padding: 17px 18px; font-size: 13.5px; border: .5px solid var(--gray-200); border-left:none; border-right:none; }
+    .audit-badge { display:inline-block; font-size:12px; font-weight:600; padding:5px 12px; border-radius:6px; border:1.5px solid; }
+    .audit-badge.b-login  { background:var(--teal-50);   color:var(--navy);      border-color:var(--teal-100); }
+    .audit-badge.b-create { background:var(--blue-50);   color:var(--blue-900);  border-color:#B5D4F4; }
+    .audit-badge.b-upload { background:var(--teal-50);   color:var(--navy);      border-color:var(--teal-100); }
+    .audit-badge.b-edit   { background:var(--amber-100); color:var(--amber-600); border-color:var(--gold); }
+    .audit-badge.b-search { background:var(--blue-50);   color:var(--blue-900);  border-color:#B5D4F4; }
+    .audit-badge.b-approve{ background:var(--teal-50);   color:var(--navy);      border-color:var(--teal-100); }
+  </style>
+</head>
+<body>
+<script src="sidebar-headstaff.js"></script>
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">Audit log — RA 10173 compliance</span>
+    <div class="topbar-actions" style="margin-left:auto;">
+      <button class="btn btn-ghost btn-sm"><i class="ti ti-download"></i> Export log</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="alert alert-blue">
+      <i class="ti ti-shield-check"></i>
+      All staff actions are automatically logged in compliance with Republic Act No. 10173 (Data Privacy Act of 2012). Logs cannot be deleted or modified.
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">All activity logs</div>
+          <div class="card-subtitle">July 27, 2026</div>
+        </div>
+        <div class="card-actions">
+          <select class="filter-select">
+            <option>All actions</option>
+            <option>Login/Logout</option>
+            <option>Create</option>
+            <option>Edit</option>
+            <option>Delete</option>
+            <option>Upload</option>
+            <option>Search</option>
+            <option>Approve</option>
+          </select>
+          <select class="filter-select">
+            <option>All staff</option>
+            <option>osca_head</option>
+            <option>osca_staff1</option>
+            <option>osca_staff2</option>
+          </select>
+          <input type="date" class="filter-select" value="2026-07-27">
+        </div>
+      </div>
+      <table class="audit-table">
+        <thead>
+          <tr><th>Timestamp</th><th>Staff</th><th>Action</th><th>Module</th><th>Description</th><th>IP address</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-muted" style="white-space:nowrap">Jul 27 — 9:02 AM</td>
+            <td class="td-bold">osca_head</td>
+            <td><span class="audit-badge b-login">Login</span></td>
+            <td class="td-muted">System</td>
+            <td class="td-muted">Head Staff logged in successfully</td>
+            <td class="td-muted">192.168.1.1</td>
+          </tr>
+          <tr>
+            <td class="td-muted" style="white-space:nowrap">Jul 27 — 9:15 AM</td>
+            <td class="td-bold">osca_staff1</td>
+            <td><span class="audit-badge b-create">Create</span></td>
+            <td class="td-muted">Members</td>
+            <td class="td-muted">Registered new member: Rosario Mendoza (2025-012)</td>
+            <td class="td-muted">192.168.1.2</td>
+          </tr>
+          <tr>
+            <td class="td-muted" style="white-space:nowrap">Jul 27 — 9:30 AM</td>
+            <td class="td-bold">osca_staff1</td>
+            <td><span class="audit-badge b-upload">Upload</span></td>
+            <td class="td-muted">Documents</td>
+            <td class="td-muted">Uploaded PSA birth certificate for Juan dela Cruz (2024-001)</td>
+            <td class="td-muted">192.168.1.2</td>
+          </tr>
+          <tr>
+            <td class="td-muted" style="white-space:nowrap">Jul 27 — 10:00 AM</td>
+            <td class="td-bold">osca_head</td>
+            <td><span class="audit-badge b-edit">Edit</span></td>
+            <td class="td-muted">Pension</td>
+            <td class="td-muted">Marked pension as claimed: Pedro Ramos (2024-033) — July 2026</td>
+            <td class="td-muted">192.168.1.1</td>
+          </tr>
+          <tr>
+            <td class="td-muted" style="white-space:nowrap">Jul 27 — 10:45 AM</td>
+            <td class="td-bold">osca_staff1</td>
+            <td><span class="audit-badge b-search">Search</span></td>
+            <td class="td-muted">Records</td>
+            <td class="td-muted">Searched records: "Juan dela Cruz"</td>
+            <td class="td-muted">192.168.1.2</td>
+          </tr>
+          <tr>
+            <td class="td-muted" style="white-space:nowrap">Jul 27 — 11:20 AM</td>
+            <td class="td-bold">osca_head</td>
+            <td><span class="audit-badge b-approve">Approve</span></td>
+            <td class="td-muted">Members</td>
+            <td class="td-muted">Approved registration of Maria Santos (2023-087) — documents verified</td>
+            <td class="td-muted">192.168.1.1</td>
+          </tr>
+          <tr>
+            <td class="td-muted" style="white-space:nowrap">Jul 27 — 11:45 AM</td>
+            <td class="td-bold">osca_staff2</td>
+            <td><span class="audit-badge b-login">Login</span></td>
+            <td class="td-muted">System</td>
+            <td class="td-muted">Regular Staff 2 logged in (first login — password change required)</td>
+            <td class="td-muted">192.168.1.3</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:.5px solid var(--gray-200);">
+        <span style="font-size:12px;color:var(--gray-500)">Showing 7 of 248 log entries today</span>
+        <div style="display:flex;gap:4px;">
+          <button class="btn btn-ghost btn-sm"><i class="ti ti-chevron-left"></i></button>
+          <button class="btn btn-navy btn-sm">1</button>
+          <button class="btn btn-ghost btn-sm">2</button>
+          <button class="btn btn-ghost btn-sm">3</button>
+          <button class="btn btn-ghost btn-sm"><i class="ti ti-chevron-right"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>renderHeadStaffSidebar('audit');</script>
+</body>
+</html>

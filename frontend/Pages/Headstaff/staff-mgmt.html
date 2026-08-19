@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Manage Staff</title>
+  <link rel="stylesheet" href="output.css">
+  <style>
+    body{display:flex;}
+    .approvals-table th { padding: 13px 18px; font-size: 12px; }
+    .approvals-table td { padding: 17px 18px; font-size: 13.5px; }
+    .approvals-table .btn { height: 32px; padding: 0 14px; font-size: 12.5px; }
+    .approvals-table .btn-icon { width: 32px; height: 32px; }
+    .btn-approve { background: var(--teal-50); color: var(--navy); border: 1.5px solid var(--navy-light); }
+    .btn-approve:hover { opacity: .85; }
+    .badge-admin { background: var(--navy); color: var(--gold); }
+    .rbac-grid { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:12px; }
+    .rbac-item { padding:14px 16px; border-radius:var(--radius-sm); background:var(--gray-50); border:.5px solid var(--gray-200); }
+    .rbac-role { font-size:13.5px; font-weight:600; color:var(--gray-900); margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+    .rbac-desc { font-size:12.5px; color:var(--gray-500); line-height:1.6; }
+    .filter-row { display:flex; align-items:center; gap:8px; }
+    tbody tr.row-inactive { background: var(--gray-100); }
+    tbody tr.row-inactive .td-bold { color: var(--gray-500); }
+    tbody tr.row-inactive .td-muted { color: var(--gray-400); }
+  </style>
+</head>
+<body>
+<script src="sidebar-headstaff.js"></script>
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">Manage Staff</span>
+    <div class="topbar-actions" style="margin-left:auto;">
+      <button class="btn btn-navy btn-sm" onclick="openModal('modal-add-staff')"><i class="ti ti-plus"></i> Add new staff</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="alert alert-amber">
+      <i class="ti ti-lock"></i>
+      This page is only visible to the <strong>Head Staff</strong> account. Regular staff cannot access or see this section. Accounts are <strong>deactivated</strong>, never deleted — this keeps their history intact in the audit log.
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid stats-4">
+      <div class="stat-card">
+        <div class="stat-label"><i class="ti ti-users"></i> Total staff</div>
+        <div class="stat-value">5</div>
+        <div class="stat-sub">All accounts</div>
+      </div>
+      <div class="stat-card teal">
+        <div class="stat-label"><i class="ti ti-circle-check"></i> Active</div>
+        <div class="stat-value">4</div>
+        <div class="stat-sub">Currently enabled</div>
+      </div>
+      <div class="stat-card coral">
+        <div class="stat-label"><i class="ti ti-user-off"></i> Inactive</div>
+        <div class="stat-value">1</div>
+        <div class="stat-sub">Deactivated accounts</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-label"><i class="ti ti-shield-lock"></i> Admins</div>
+        <div class="stat-value">1</div>
+        <div class="stat-sub">Full system access</div>
+      </div>
+    </div>
+
+    <!-- RBAC reference -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Roles & access levels</div>
+          <div class="card-subtitle">What each role can do in the system</div>
+        </div>
+      </div>
+      <div style="padding:14px 16px;">
+        <div class="rbac-grid">
+          <div class="rbac-item">
+            <div class="rbac-role"><span class="badge badge-admin">Admin</span></div>
+            <div class="rbac-desc">Full system access — manages staff accounts, roles, and system settings.</div>
+          </div>
+          <div class="rbac-item">
+            <div class="rbac-role"><span class="badge badge-hs">Head Staff</span></div>
+            <div class="rbac-desc">Reviews and approves records, staff requests, and signs official reports.</div>
+          </div>
+          <div class="rbac-item">
+            <div class="rbac-role"><span class="badge badge-rs">Regular Staff</span></div>
+            <div class="rbac-desc">Handles document processing, searching, and member verification.</div>
+          </div>
+          <div class="rbac-item">
+            <div class="rbac-role"><span class="badge badge-inact">Viewer</span></div>
+            <div class="rbac-desc">View-only access — can browse records but cannot edit or process them.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Staff table -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">All staff accounts</div>
+          <div class="card-subtitle">Manage staff access and permissions</div>
+        </div>
+        <div class="filter-row">
+          <div class="topbar-search" style="max-width:220px;">
+            <i class="ti ti-search"></i>
+            <input type="text" id="staff-search" placeholder="Search name or username" oninput="applyFilters()">
+          </div>
+          <select class="filter-select" id="filter-role" onchange="applyFilters()">
+            <option value="">All roles</option>
+            <option value="Admin">Admin</option>
+            <option value="Head Staff">Head Staff</option>
+            <option value="Regular Staff">Regular Staff</option>
+            <option value="Viewer">Viewer</option>
+          </select>
+          <select class="filter-select" id="filter-status" onchange="applyFilters()">
+            <option value="">All statuses</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+      <table class="approvals-table">
+        <thead>
+          <tr><th>Name</th><th>Username / email</th><th>Role</th><th>Status</th><th>Date created</th><th>Last login</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="staff-tbody"></tbody>
+      </table>
+      <div style="display:flex;justify-content:space-between;padding:10px 16px;font-size:11px;color:var(--gray-500);border-top:.5px solid var(--gray-200);">
+        <span id="staff-count-label">Showing 5 of 5 staff accounts</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add staff -->
+<div class="modal-overlay" id="modal-add-staff" onclick="if(event.target===this)closeModal('modal-add-staff')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Add new staff account</span>
+      <button class="modal-close" onclick="closeModal('modal-add-staff')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>Full name <span class="required">*</span></label><input type="text" placeholder="e.g. Maria Fernandez"></div>
+      <div class="form-group"><label>Username / email <span class="required">*</span></label><input type="text" placeholder="e.g. osca_staff4"></div>
+      <div class="form-group"><label>Temporary password <span class="required">*</span></label><input type="password" placeholder="Set initial password"></div>
+      <div class="form-2col">
+        <div class="form-group"><label>Role <span class="required">*</span></label>
+          <select>
+            <option>Regular Staff</option>
+            <option>Head Staff</option>
+            <option>Viewer</option>
+            <option>Admin</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Account status</label>
+          <select>
+            <option>Active</option>
+            <option>Inactive</option>
+          </select>
+        </div>
+      </div>
+      <div class="alert alert-teal"><i class="ti ti-info-circle"></i>The staff member will be required to change this password on their first login.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-staff')">Cancel</button>
+      <button class="btn btn-navy" onclick="closeModal('modal-add-staff');showToast('Staff account created successfully!')"><i class="ti ti-plus"></i> Create account</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Edit staff -->
+<div class="modal-overlay" id="modal-edit-staff" onclick="if(event.target===this)closeModal('modal-edit-staff')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Edit staff account</span>
+      <button class="modal-close" onclick="closeModal('modal-edit-staff')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>Full name</label><input type="text" id="edit-name"></div>
+      <div class="form-group"><label>Username / email</label><input type="text" id="edit-username"></div>
+      <div class="form-2col">
+        <div class="form-group"><label>Role</label>
+          <select id="edit-role">
+            <option>Regular Staff</option>
+            <option>Head Staff</option>
+            <option>Viewer</option>
+            <option>Admin</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Status</label>
+          <select id="edit-status">
+            <option>Active</option>
+            <option>Inactive</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit-staff')">Cancel</button>
+      <button class="btn btn-navy" onclick="closeModal('modal-edit-staff');showToast('Staff account updated successfully!')"><i class="ti ti-device-floppy"></i> Save changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Reset password -->
+<div class="modal-overlay" id="modal-reset-pw" onclick="if(event.target===this)closeModal('modal-reset-pw')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Reset password</span>
+      <button class="modal-close" onclick="closeModal('modal-reset-pw')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-amber"><i class="ti ti-alert-triangle"></i>This will reset the staff member's password. They will be required to change it on next login.</div>
+      <div class="form-group"><label>New temporary password <span class="required">*</span></label><input type="password" placeholder="Set new temporary password"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-reset-pw')">Cancel</button>
+      <button class="btn btn-navy" onclick="closeModal('modal-reset-pw');showToast('Password reset successfully!')"><i class="ti ti-key"></i> Reset password</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+  renderHeadStaffSidebar('staffmgmt');
+
+  const staff = [
+    { name:'Maria Fernandez',  username:'mfernandez',   role:'Admin',          status:'Active',   created:'Jan 15, 2026', lastLogin:'Jul 27, 2026 — 9:02 AM' },
+    { name:'Head Staff',       username:'osca_head',    role:'Head Staff',     status:'Active',   created:'Jul 1, 2025',  lastLogin:'Jul 27, 2026 — 9:02 AM' },
+    { name:'Wyndell Joshua A. Camacho',  username:'osca_staff1',  role:'Regular Staff',  status:'Active',   created:'Jul 1, 2026',  lastLogin:'Jul 26, 2026 — 2:15 PM' },
+    { name:'Clent VJ C. Lumanda',  username:'osca_staff2',  role:'Regular Staff',  status:'Active',   created:'Jul 20, 2026', lastLogin:'Never' },
+    { name:'Regular Staff 3',  username:'osca_staff3',  role:'Regular Staff',  status:'Inactive', created:'Mar 1, 2025',  lastLogin:'May 15, 2026 — 4:40 PM' },
+  ];
+
+  const roleBadge = { 'Admin':'badge-admin', 'Head Staff':'badge-hs', 'Regular Staff':'badge-rs', 'Viewer':'badge-inact' };
+  const statusBadge = { 'Active':'badge-ok', 'Inactive':'badge-inact' };
+
+  function renderStaffTable(list) {
+    const tbody = document.getElementById('staff-tbody');
+    tbody.innerHTML = list.map((s, i) => `
+      <tr class="${s.status === 'Inactive' ? 'row-inactive' : ''}">
+        <td class="td-bold">${s.name}</td>
+        <td class="td-muted">${s.username}</td>
+        <td><span class="badge ${roleBadge[s.role]}">${s.role}</span></td>
+        <td><span class="badge ${statusBadge[s.status]}">${s.status}</span></td>
+        <td class="td-muted">${s.created}</td>
+        <td class="td-muted">${s.lastLogin}</td>
+        <td>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-sm btn-icon" title="Edit" onclick="openEditModal(${i})"><i class="ti ti-edit"></i></button>
+            <button class="btn btn-ghost btn-sm btn-icon" title="Reset password" onclick="openModal('modal-reset-pw')"><i class="ti ti-key"></i></button>
+            ${s.status === 'Active'
+              ? `<button class="btn btn-coral btn-sm btn-icon" title="Deactivate" onclick="confirmDeactivate('${s.name}')"><i class="ti ti-user-off"></i></button>`
+              : `<button class="btn btn-approve btn-sm btn-icon" title="Activate" onclick="confirmActivate('${s.name}')"><i class="ti ti-user-check"></i></button>`}
+          </div>
+        </td>
+      </tr>
+    `).join('');
+    document.getElementById('staff-count-label').textContent = `Showing ${list.length} of ${staff.length} staff accounts`;
+  }
+
+  function applyFilters() {
+    const q = document.getElementById('staff-search').value.toLowerCase().trim();
+    const role = document.getElementById('filter-role').value;
+    const status = document.getElementById('filter-status').value;
+    const filtered = staff.filter(s => {
+      const matchesQ = !q || s.name.toLowerCase().includes(q) || s.username.toLowerCase().includes(q);
+      const matchesRole = !role || s.role === role;
+      const matchesStatus = !status || s.status === status;
+      return matchesQ && matchesRole && matchesStatus;
+    });
+    renderStaffTable(filtered);
+  }
+
+  function openEditModal(i) {
+    const s = staff[i];
+    document.getElementById('edit-name').value = s.name;
+    document.getElementById('edit-username').value = s.username;
+    document.getElementById('edit-role').value = s.role;
+    document.getElementById('edit-status').value = s.status;
+    openModal('modal-edit-staff');
+  }
+
+  function confirmDeactivate(name) {
+    if (confirm(`Are you sure you want to deactivate ${name}'s account? They will no longer be able to log in, but their history stays in the audit log.`)) {
+      showToast(`${name}'s account has been deactivated.`);
+    }
+  }
+
+  function confirmActivate(name) {
+    if (confirm(`Reactivate ${name}'s account? They will be able to log in again.`)) {
+      showToast(`${name}'s account has been activated.`);
+    }
+  }
+
+  renderStaffTable(staff);
+</script>
+</body>
+</html>

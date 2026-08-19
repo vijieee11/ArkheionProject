@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Staff Requests</title>
+  <link rel="stylesheet" href="output.css">
+  <style>
+    .approvals-table th { padding: 12px 16px; font-size: 11.5px; }
+    .approvals-table td { padding: 15px 16px; font-size: 13px; }
+    .approvals-table th:first-child, .approvals-table td:first-child { width: 34%; }
+    .btn-lightgreen { background: var(--teal-50); color: var(--navy); border: 1.5px solid var(--navy-light); }
+    .btn-lightgreen:hover { opacity: .85; }
+    .approvals-table .btn { height: 32px; padding: 0 14px; font-size: 12.5px; width: 100%; justify-content: center; }
+    .btn-approve { background: var(--teal-50); color: var(--navy); border: 1.5px solid var(--navy-light); }
+    .btn-approve:hover { opacity: .85; }
+    .action-grid { display: grid; grid-template-columns: 150px 90px 70px; gap: 8px; }
+  </style>
+</head>
+<body>
+<script src="sidebar-headstaff.js"></script>
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">Staff Requests</span>
+    <div class="topbar-actions" style="margin-left:auto;">
+      <button class="btn btn-ghost btn-sm" onclick="location.href='audit.html'"><i class="ti ti-shield-check"></i> Audit log</button>
+      <button class="btn btn-navy btn-sm" onclick="location.href='headstaff.html'"><i class="ti ti-plus"></i> Add staff</button>
+      <div class="topbar-avatar" style="background:var(--gold);color:var(--navy);">HS</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div>
+      <h1 style="font-family:var(--font-display);font-size:20px;font-weight:600;color:var(--gray-900)">Requests from your staff</h1>
+      <p style="font-size:13px;color:var(--gray-600);margin-top:3px">OSCA Carmen — 4 requests need action, oldest submitted 2 days ago</p>
+    </div>
+
+    <!-- Key stats -->
+    <div class="stats-grid stats-4">
+      <div class="stat-card">
+        <div class="stat-label"><i class="ti ti-inbox-in"></i> Pending requests</div>
+        <div class="stat-value" style="color:#e74c3c;">4</div>
+        <div class="stat-sub">Awaiting your action</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><i class="ti ti-key"></i> Password resets</div>
+        <div class="stat-value">2</div>
+        <div class="stat-sub">Part of this week's queue</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><i class="ti ti-lock-open"></i> Access requests</div>
+        <div class="stat-value">1</div>
+        <div class="stat-sub">Part of this week's queue</div>
+      </div>
+      <div class="stat-card teal">
+        <div class="stat-label"><i class="ti ti-circle-check"></i> Resolved today</div>
+        <div class="stat-value">3</div>
+        <div class="stat-sub">Processed today</div>
+      </div>
+    </div>
+
+    <!-- Requests table -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">All staff requests</div>
+          <div class="card-subtitle">Sorted by date submitted, oldest first</div>
+        </div>
+        <div class="topbar-search" style="max-width:280px;">
+          <i class="ti ti-search"></i>
+          <input type="text" placeholder="Search staff name">
+        </div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active">All (4)</div>
+        <div class="tab">Password reset</div>
+        <div class="tab">Access</div>
+        <div class="tab">Schedule/Leave</div>
+      </div>
+
+      <table class="approvals-table">
+        <thead>
+          <tr><th>Request</th><th>Type</th><th>Staff member</th><th>Submitted</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="td-bold">Forgot login password</div>
+              <div class="td-muted" style="font-size:11.5px;margin-top:2px;">SR-2026-0301 · Password reset</div>
+            </td>
+            <td><span class="badge badge-miss">Password reset</span></td>
+            <td class="td-muted">Regular Staff 1</td>
+            <td class="td-muted">Jul 25, 2026</td>
+            <td><span class="badge badge-pend">Awaiting action</span></td>
+            <td>
+              <div class="action-grid">
+                <button class="btn btn-lightgreen" onclick="showToast('Password reset for SR-2026-0301 sent')">Reset password</button>
+                <button class="btn btn-coral" onclick="showToast('Request SR-2026-0301 declined','error')">Decline</button>
+                <button class="btn btn-ghost">View</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="td-bold">Forgot login password</div>
+              <div class="td-muted" style="font-size:11.5px;margin-top:2px;">SR-2026-0302 · Password reset</div>
+            </td>
+            <td><span class="badge badge-miss">Password reset</span></td>
+            <td class="td-muted">Regular Staff 3</td>
+            <td class="td-muted">Jul 25, 2026</td>
+            <td><span class="badge badge-pend">Awaiting action</span></td>
+            <td>
+              <div class="action-grid">
+                <button class="btn btn-lightgreen" onclick="showToast('Password reset for SR-2026-0302 sent')">Reset password</button>
+                <button class="btn btn-coral" onclick="showToast('Request SR-2026-0302 declined','error')">Decline</button>
+                <button class="btn btn-ghost">View</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="td-bold">Access to Records module</div>
+              <div class="td-muted" style="font-size:11.5px;margin-top:2px;">SR-2026-0303 · Access request</div>
+            </td>
+            <td><span class="badge badge-ok">Access</span></td>
+            <td class="td-muted">Regular Staff 2</td>
+            <td class="td-muted">Jul 26, 2026</td>
+            <td><span class="badge badge-pend">Awaiting action</span></td>
+            <td>
+              <div class="action-grid">
+                <button class="btn btn-lightgreen" onclick="showToast('Access granted for SR-2026-0303')">Grant access</button>
+                <button class="btn btn-coral" onclick="showToast('Request SR-2026-0303 declined','error')">Decline</button>
+                <button class="btn btn-ghost">View</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="td-bold">Leave — family emergency</div>
+              <div class="td-muted" style="font-size:11.5px;margin-top:2px;">SR-2026-0304 · Schedule/Leave</div>
+            </td>
+            <td><span class="badge badge-pend">Schedule/Leave</span></td>
+            <td class="td-muted">Regular Staff 1</td>
+            <td class="td-muted">Jul 27, 2026</td>
+            <td><span class="badge badge-pend">Awaiting action</span></td>
+            <td>
+              <div class="action-grid">
+                <button class="btn btn-lightgreen" onclick="showToast('Leave approved for SR-2026-0304')">Approve</button>
+                <button class="btn btn-coral" onclick="showToast('Request SR-2026-0304 declined','error')">Decline</button>
+                <button class="btn btn-ghost">View</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="display:flex;justify-content:space-between;padding:10px 16px;font-size:11px;color:var(--gray-500);border-top:.5px solid var(--gray-200);">
+        <span>Showing 4 of 4 staff requests</span>
+        <span>Oldest submitted 2 days ago</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+  renderHeadStaffSidebar('requests');
+</script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Head Staff Dashboard</title>
+  <link rel="stylesheet" href="output.css">
+  <style>
+    body{display:flex;}
+    .req-row { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:.5px solid var(--gray-200); }
+    .req-row:last-child{border-bottom:none;}
+    .req-icon { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .brgy-row { display:flex; align-items:center; gap:10px; padding:9px 16px; }
+    .brgy-name { width:60px; font-size:12px; font-weight:500; color:var(--gray-700); flex-shrink:0; }
+    .brgy-bar-track { flex:1; height:8px; background:var(--gray-100); border-radius:4px; overflow:hidden; }
+    .brgy-bar-fill { height:100%; border-radius:4px; }
+    .brgy-pct { width:36px; text-align:right; font-size:11px; font-weight:500; color:var(--gray-600); }
+    .staff-avatar-sm { width:32px; height:32px; border-radius:50%; background:var(--teal-50); color:var(--navy); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; flex-shrink:0; }
+  </style>
+</head>
+<body>
+<script src="sidebar-headstaff.js"></script>
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">Head Staff Dashboard</span>
+    <div class="topbar-actions" style="margin-left:auto;">
+      <button class="btn btn-ghost btn-sm" onclick="location.href='audit.html'"><i class="ti ti-shield-check"></i> Audit log</button>
+      <button class="btn btn-navy btn-sm" onclick="location.href='staff-mgmt.html'"><i class="ti ti-plus"></i> Add staff</button>
+      <div class="topbar-avatar" style="background:var(--gold);color:var(--navy);">HS</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div>
+      <h1 style="font-family:var(--font-display);font-size:20px;font-weight:600;color:var(--gray-900)">Welcome, Head Staff 👋</h1>
+      <p style="font-size:13px;color:var(--gray-600);margin-top:3px">OSCA Carmen — Administrative overview, July 27, 2026</p>
+    </div>
+
+    <!-- Key stats — one row, only what needs attention -->
+    <div class="stats-grid stats-3">
+      <div class="stat-card" style="cursor:pointer" onclick="location.href='hs-pending-approval.html'">
+        <div class="stat-label"><i class="ti ti-checklist"></i> Pending approvals</div>
+        <div class="stat-value" style="color: #e74c3c;">5</div>
+        <div class="stat-sub">Awaiting your review</div>
+      </div>
+      <div class="stat-card teal" style="cursor:pointer" onclick="location.href='staff-mgmt.html'">
+        <div class="stat-label"><i class="ti ti-users-group"></i> Active staff</div>
+        <div class="stat-value">3</div>
+        <div class="stat-sub">2 regular, 1 head</div>
+      </div>
+      <div class="stat-card coral" style="cursor:pointer" onclick="location.href='../members.html'">
+        <div class="stat-label"><i class="ti ti-map-pin"></i> Highest backlog barangay</div>
+        <div class="stat-value" style="font-size:18px;">Brgy 4 — 31%</div>
+        <div class="stat-sub">Incomplete requirements</div>
+      </div>
+    </div>
+
+    <!-- Hero chart -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Monthly benefit release rate</div>
+          <div class="card-subtitle">Grocery vs pension — January to December 2026</div>
+        </div>
+        <div style="display:flex;gap:14px;font-size:12px;">
+          <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:50%;background:var(--navy);display:inline-block;"></span> Grocery</span>
+          <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:50%;background:var(--gold-dark);display:inline-block;"></span> Pension</span>
+        </div>
+      </div>
+      <div style="padding:16px;">
+        <svg id="rate-line-chart" viewBox="0 0 900 240" style="width:100%;height:260px;"></svg>
+      </div>
+    </div>
+
+    <!-- Two-column: approvals + staff productivity -->
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Pending approvals</div>
+            <div class="card-subtitle">Actions waiting for your sign-off</div>
+          </div>
+          <span style="font-size:11px;color:var(--navy-light);cursor:pointer" onclick="location.href='hs-pending-approval.html'">View all →</span>
+        </div>
+        <div>
+          <div class="req-row">
+            <div class="req-icon" style="background:var(--coral-50)"><i class="ti ti-trash" style="color:var(--coral-600)"></i></div>
+            <div style="flex:1;">
+              <p style="font-size:13px;font-weight:500;color:var(--gray-900)">Delete record request</p>
+              <p style="font-size:11px;color:var(--gray-400)">Regular Staff 1 — Duplicate entry for Felipe Torres</p>
+            </div>
+            <span class="badge badge-pend">Pending</span>
+          </div>
+          <div class="req-row">
+            <div class="req-icon" style="background:var(--amber-100)"><i class="ti ti-edit" style="color:var(--gold-dark)"></i></div>
+            <div style="flex:1;">
+              <p style="font-size:13px;font-weight:500;color:var(--gray-900)">Benefit status correction</p>
+              <p style="font-size:11px;color:var(--gray-400)">Regular Staff 2 — Pension marked claimed in error</p>
+            </div>
+            <span class="badge badge-pend">Pending</span>
+          </div>
+          <div class="req-row">
+            <div class="req-icon" style="background:var(--coral-50)"><i class="ti ti-user-off" style="color:var(--coral-600)"></i></div>
+            <div style="flex:1;">
+              <p style="font-size:13px;font-weight:500;color:var(--gray-900)">Staff deactivation request</p>
+              <p style="font-size:11px;color:var(--gray-400)">System — Regular Staff 2 inactive for 30+ days</p>
+            </div>
+            <span class="badge badge-pend">Pending</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Staff productivity</div>
+            <div class="card-subtitle">Records processed this month</div>
+          </div>
+          <span style="font-size:11px;color:var(--navy-light);cursor:pointer" onclick="location.href='staff-mgmt.html'">Manage →</span>
+        </div>
+        <div id="staff-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  renderHeadStaffSidebar('hs-dashboard');
+
+  const staffData = [
+    { name:'Head Staff',      username:'osca_head',   count:412, initials:'HS', status:'Active', lastLogin:'Jul 27, 2026 — 9:02 AM' },
+    { name:'Regular Staff 1', username:'osca_staff1', count:356, initials:'RS', status:'Active', lastLogin:'Jul 26, 2026 — 2:15 PM' },
+    { name:'Regular Staff 2', username:'osca_staff2', count:198, initials:'RS', status:'First login', lastLogin:'Never' },
+  ];
+
+  const rateData = [
+    { month:'Jan', grocery:58, pension:50 },
+    { month:'Feb', grocery:61, pension:52 },
+    { month:'Mar', grocery:63, pension:55 },
+    { month:'Apr', grocery:65, pension:54 },
+    { month:'May', grocery:66, pension:58 },
+    { month:'Jun', grocery:68, pension:60 },
+    { month:'Jul', grocery:71, pension:62 },
+    { month:'Aug', grocery:70, pension:63 },
+    { month:'Sep', grocery:72, pension:61 },
+    { month:'Oct', grocery:74, pension:64 },
+    { month:'Nov', grocery:75, pension:66 },
+    { month:'Dec', grocery:77, pension:68 },
+  ];
+
+  function renderRateChart() {
+    const svg = document.getElementById('rate-line-chart');
+    const w = 900, h = 240, padL = 36, padR = 12, padT = 16, padB = 28;
+    const chartW = w - padL - padR, chartH = h - padT - padB;
+    const n = rateData.length;
+    const xStep = chartW / (n - 1);
+    const yMax = 100;
+
+    const xFor = i => padL + i * xStep;
+    const yFor = v => padT + chartH - (v / yMax) * chartH;
+
+    let svgHtml = '';
+
+    [0,25,50,75,100].forEach(v => {
+      const y = yFor(v);
+      svgHtml += `<line x1="${padL}" y1="${y}" x2="${w-padR}" y2="${y}" stroke="var(--gray-200)" stroke-width="1"/>`;
+      svgHtml += `<text x="${padL-8}" y="${y+3}" font-size="10" fill="var(--gray-400)" text-anchor="end">${v}%</text>`;
+    });
+
+    rateData.forEach((d,i) => {
+      svgHtml += `<text x="${xFor(i)}" y="${h-8}" font-size="10" fill="var(--gray-500)" text-anchor="middle">${d.month}</text>`;
+    });
+
+    function linePath(key) {
+      return rateData.map((d,i) => `${i===0?'M':'L'}${xFor(i).toFixed(1)},${yFor(d[key]).toFixed(1)}`).join(' ');
+    }
+
+    svgHtml += `<path d="${linePath('grocery')}" fill="none" stroke="var(--navy)" stroke-width="2.5"/>`;
+    rateData.forEach((d,i) => {
+      svgHtml += `<circle cx="${xFor(i)}" cy="${yFor(d.grocery)}" r="3.5" fill="var(--navy)"/>`;
+    });
+
+    svgHtml += `<path d="${linePath('pension')}" fill="none" stroke="var(--gold-dark)" stroke-width="2.5"/>`;
+    rateData.forEach((d,i) => {
+      svgHtml += `<circle cx="${xFor(i)}" cy="${yFor(d.pension)}" r="3.5" fill="var(--gold-dark)"/>`;
+    });
+
+    svg.innerHTML = svgHtml;
+  }
+
+  function renderStaff() {
+    const max = Math.max(...staffData.map(s => s.count));
+    const el = document.getElementById('staff-list');
+    el.innerHTML = staffData.map(s => `
+      <div class="req-row">
+        <div class="staff-avatar-sm">${s.initials}</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:500;color:var(--gray-900);">${s.name}</div>
+          <div style="font-size:11px;color:var(--gray-400);">Last login: ${s.lastLogin}</div>
+        </div>
+        <div style="width:120px;">
+          <div class="progress-bar"><div class="progress-fill fill-navy" style="width:${(s.count/max*100).toFixed(0)}%"></div></div>
+        </div>
+        <span style="width:66px;text-align:right;font-size:12px;font-weight:600;color:var(--navy);">${s.count}</span>
+      </div>
+    `).join('');
+  }
+
+  renderRateChart();
+  renderStaff();
+</script>
+</body>
+</html>
