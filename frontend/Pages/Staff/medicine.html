@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Arkheion — Medicine Booklet</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="../styles.css">
   <style>body{display:flex;}</style>
 </head>
 <body>
-<script src="sidebar.js"></script>
+<script src="../sidebar.js"></script>
 <div class="main">
   <div class="topbar">
     <span class="topbar-title">Medicine purchase booklets</span>
@@ -40,7 +40,6 @@
       </div>
     </div>
 
-    <!-- Booklet detail view -->
     <div class="card">
       <div class="card-header">
         <div>
@@ -125,7 +124,6 @@
   </div>
 </div>
 
-<!-- Modal: Add prescription -->
 <div class="modal-overlay" id="modal-prescription" onclick="if(event.target===this)closeModal('modal-prescription')">
   <div class="modal" style="width:560px;">
     <div class="modal-header">
@@ -175,7 +173,6 @@
   </div>
 </div>
 
-<!-- Modal: New booklet -->
 <div class="modal-overlay" id="modal-new-booklet" onclick="if(event.target===this)closeModal('modal-new-booklet')">
   <div class="modal">
     <div class="modal-header">
