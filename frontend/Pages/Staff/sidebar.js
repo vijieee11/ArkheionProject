@@ -1,7 +1,3 @@
-// sidebar.js — Shared sidebar for all staff pages
-// Usage: <script src="sidebar.js"></script>
-// Then call: renderSidebar('dashboard') at bottom of body
-
 function renderSidebar(activePage) {
   const role     = localStorage.getItem('ark_role') || 'regular_staff';
   const username = localStorage.getItem('ark_username') || 'Staff';
@@ -9,36 +5,24 @@ function renderSidebar(activePage) {
   const roleLabel = role === 'head_staff' ? 'Head Staff' : 'Regular Staff';
 
   const navGroups = [
-    {
-      section: 'Main',
-      items: [
-        { id: 'dashboard', label: 'Dashboard',     icon: 'ti-layout-dashboard', href: 'Pages/Headstaff/dashboard.html' },
-        { id: 'members',   label: 'Members',       icon: 'ti-users',            href: 'members.html' },
-      ]
-    },
-    {
-      section: 'Services',
-      items: [
-        { id: 'grocery',  label: 'Groceries', icon: 'ti-shopping-cart', href: 'Pages/Headstaff/grocery.html' },
-        { id: 'medicine', label: 'Medicine',  icon: 'ti-pill',          href: 'Pages/Headstaff/medicine.html' },
-        { id: 'pension',  label: 'Pension',   icon: 'ti-cash',          href: 'Pages/Headstaff/pension.html' },
-      ]
-    },
-    {
-      section: 'Documents',
-      items: [
-        { id: 'upload', label: 'Upload docs',    icon: 'ti-upload',   href: 'Pages/Headstaff/upload.html' },
-        { id: 'search', label: 'Search records', icon: 'ti-search',   href: 'Pages/Headstaff/search.html' },
-        { id: 'map',    label: 'Map view',       icon: 'ti-map-pin',  href: 'Pages/Headstaff/map.html' },
-      ]
-    },
-    {
-      section: 'System',
-      items: [
-        { id: 'reports',      label: 'Reports',            icon: 'ti-chart-bar', href: 'Pages/Headstaff/reports.html' },
-        { id: 'genaccounts',  label: 'Generate accounts',  icon: 'ti-key',       href: 'Pages/Headstaff/generate-accounts.html' },
-      ]
-    }
+    { section: 'Main', items: [
+      { id: 'dashboard', label: 'Dashboard', icon: 'ti-layout-dashboard', href: 'dashboard.html' },
+      { id: 'members',   label: 'Members',   icon: 'ti-users',            href: 'members.html' },
+    ]},
+    { section: 'Services', items: [
+      { id: 'grocery',  label: 'Groceries', icon: 'ti-shopping-cart', href: 'grocery.html' },
+      { id: 'medicine', label: 'Medicine',  icon: 'ti-pill',          href: 'medicine.html' },
+      { id: 'pension',  label: 'Pension',   icon: 'ti-cash',          href: 'pension.html' },
+    ]},
+    { section: 'Documents', items: [
+      { id: 'upload', label: 'Upload docs',    icon: 'ti-upload',   href: 'upload.html' },
+      { id: 'search', label: 'Search records', icon: 'ti-search',   href: 'search.html' },
+      { id: 'map',    label: 'Map view',       icon: 'ti-map-pin',  href: 'map.html' },
+    ]},
+    { section: 'System', items: [
+      { id: 'reports',     label: 'Reports',           icon: 'ti-chart-bar', href: 'reports.html' },
+      { id: 'genaccounts', label: 'Generate accounts',  icon: 'ti-key',       href: 'generate-accounts.html' },
+    ]}
   ];
 
   let html = `<nav class="sidebar">
@@ -51,20 +35,17 @@ function renderSidebar(activePage) {
     html += `<span class="sb-section">${group.section}</span>`;
     group.items.forEach(item => {
       const isActive = item.id === activePage;
-      const badge     = item.badge     ? `<span class="nav-badge">${item.badge}</span>` : '';
-      const badgeGold = item.badgeGold ? `<span class="nav-badge-gold">${item.badgeGold}</span>` : '';
       html += `
-        <a class="nav-item ${isActive ? 'active' : ''}" href="${item.href}"
-           style="${item.badgeGold ? 'color:#FAC775' : ''}">
+        <a class="nav-item ${isActive ? 'active' : ''}" href="${item.href}">
           <i class="ti ${item.icon}"></i>
-          ${item.label}${badge}${badgeGold}
+          ${item.label}
         </a>`;
     });
   });
 
   html += `
     <div class="sb-spacer"></div>
-    <a class="nav-item" href="login.html" onclick="logout(event)">
+    <a class="nav-item" href="../login.html" onclick="logout(event)">
       <i class="ti ti-settings"></i>Settings
     </a>
     <div class="sb-user">
@@ -83,7 +64,7 @@ function logout(e) {
   e && e.preventDefault();
   if (confirm('Are you sure you want to logout?')) {
     localStorage.clear();
-    window.location.href = 'login.html';
+    window.location.href = '../login.html';
   }
 }
 
