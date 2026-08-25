@@ -117,7 +117,7 @@
     setTimeout(() => {
       // Demo credentials — Staff covers both Regular and Head Staff, routed by role
       const staffAccounts = {
-        'osca_head':   { role: 'head_staff',    mustChange: true  },
+        'osca_head':   { role: 'head_staff',    mustChange: false },
         'osca_staff1': { role: 'regular_staff', mustChange: true  },
         'osca_staff2': { role: 'regular_staff', mustChange: false },
       };
@@ -132,12 +132,13 @@
         localStorage.setItem('ark_role',     acc.role);
         localStorage.setItem('ark_token',    'demo-token-' + Date.now());
 
+        // Staff pages live inside the Staff/ subfolder, Head Staff pages inside Headstaff/, both relative to this login page.
         if (acc.mustChange) {
-          window.location.href = 'change-password.html';
+          window.location.href = 'Staff/change-password.html';
         } else if (acc.role === 'head_staff') {
-          window.location.href = 'hs-dashboard.html';   // Head Staff → dedicated Head Staff portal
+          window.location.href = 'Headstaff/hs-dashboard.html';   // Head Staff → dedicated Headstaff folder
         } else {
-          window.location.href = 'dashboard.html';      // Regular staff → regular staff portal
+          window.location.href = 'Staff/dashboard.html';      // Regular staff → Staff/dashboard.html
         }
 
       } else if (currentType === 'senior' && seniorAccounts[user]) {

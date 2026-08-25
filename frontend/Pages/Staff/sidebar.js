@@ -1,7 +1,24 @@
+// Turns raw usernames like "osca_staff2" into a friendly "Staff 2" display name.
+// Falls back to a humanized version of the username for anything that doesn't match.
+function formatStaffName(username) {
+  if (!username) return 'Staff';
+  const staffMatch = username.match(/^osca_staff(\d+)$/i);
+  if (staffMatch) return 'Staff ' + staffMatch[1];
+  if (/^osca_head$/i.test(username)) return 'Head Staff';
+  return username
+    .replace(/[_\.]+/g, ' ')
+    .replace(/@.*/, '')
+    .split(' ')
+    .filter(Boolean)
+    .map(w => w[0].toUpperCase() + w.slice(1))
+    .join(' ');
+}
+
 function renderSidebar(activePage) {
   const role     = localStorage.getItem('ark_role') || 'regular_staff';
-  const username = localStorage.getItem('ark_username') || 'Staff';
-  const initials = username.split('_').map(w => w[0]?.toUpperCase() || '').join('').slice(0,2) || 'ST';
+  const rawUsername = localStorage.getItem('ark_username') || 'Staff';
+  const displayName = formatStaffName(rawUsername);
+  const initials = role === 'head_staff' ? 'HS' : 'S';
   const roleLabel = role === 'head_staff' ? 'Head Staff' : 'Regular Staff';
 
   const navGroups = [
@@ -20,8 +37,9 @@ function renderSidebar(activePage) {
       { id: 'map',    label: 'Map view',       icon: 'ti-map-pin',  href: 'map.html' },
     ]},
     { section: 'System', items: [
-      { id: 'reports',     label: 'Reports',           icon: 'ti-chart-bar', href: 'reports.html' },
-      { id: 'genaccounts', label: 'Generate accounts',  icon: 'ti-key',       href: 'generate-accounts.html' },
+      { id: 'reports',     label: 'Reports',            icon: 'ti-chart-bar', href: 'reports.html' },
+      { id: 'genaccounts', label: 'Generate accounts',  icon: 'ti-key',        href: 'generate-accounts.html' },
+      { id: 'settings',    label: 'Settings',           icon: 'ti-settings',   href: 'settings.html' },
     ]}
   ];
 
@@ -45,13 +63,13 @@ function renderSidebar(activePage) {
 
   html += `
     <div class="sb-spacer"></div>
-    <a class="nav-item" href="../login.html" onclick="logout(event)">
-      <i class="ti ti-settings"></i>Settings
+    <a class="nav-item" href="#" onclick="logout(event)">
+      <i class="ti ti-logout"></i>Logout
     </a>
     <div class="sb-user">
       <div class="sb-avatar">${initials}</div>
       <div>
-        <div class="sb-uname">${username}</div>
+        <div class="sb-uname">${displayName}</div>
         <div class="sb-urole">${roleLabel}</div>
       </div>
     </div>

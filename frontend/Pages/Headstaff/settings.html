@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Settings</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { display:flex; }
+
+    .settings-col  { display:flex; flex-direction:column; gap:14px; }
+
+    .form-group { margin-bottom:16px; }
+    .form-group:last-child { margin-bottom:0; }
+    .form-label { display:block; font-size:12px; font-weight:600; color:var(--gray-600); margin-bottom:6px; }
+    .form-input, .form-select {
+      width:100%; padding:9px 12px; border:1px solid var(--gray-200); border-radius:var(--radius-sm);
+      font-size:13px; color:var(--gray-900); font-family:inherit; background:#fff;
+    }
+    .form-input:focus, .form-select:focus { outline:none; border-color:var(--navy); }
+    .form-input:disabled { background:var(--gray-50, #f7f7f8); color:var(--gray-600); cursor:not-allowed; }
+    .form-hint { font-size:11px; color:var(--gray-600); margin-top:4px; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+
+    .profile-head { display:flex; align-items:center; gap:14px; padding:16px; border-bottom:.5px solid var(--gray-200); }
+    .profile-avatar {
+      width:56px; height:56px; border-radius:50%; background:var(--gold); color:var(--navy);
+      display:flex; align-items:center; justify-content:center; font-family:var(--font-display);
+      font-size:18px; font-weight:700; flex-shrink:0;
+    }
+    .profile-name { font-family:var(--font-display); font-size:15px; font-weight:600; color:var(--gray-900); }
+    .profile-role { font-size:12px; color:var(--gray-600); margin-top:2px; }
+    .role-badge {
+      display:inline-block; font-size:10px; font-weight:700; letter-spacing:.5px;
+      background:var(--gold); color:var(--navy); padding:3px 8px; border-radius:20px;
+    }
+
+    .setting-row {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 16px; border-bottom:.5px solid var(--gray-200); gap:16px;
+    }
+    .setting-row:last-child { border-bottom:none; }
+    .setting-row-label { font-size:13px; font-weight:500; color:var(--gray-900); }
+    .setting-row-desc { font-size:12px; color:var(--gray-600); margin-top:2px; }
+    .setting-row .btn { white-space:nowrap; flex-shrink:0; font-size:12px; padding:8px 12px; }
+
+    .toggle { position:relative; display:inline-block; width:40px; height:22px; flex-shrink:0; }
+    .toggle input { opacity:0; width:0; height:0; }
+    .toggle-slider {
+      position:absolute; inset:0; cursor:pointer; background:var(--gray-200);
+      transition:.2s; border-radius:999px;
+    }
+    .toggle-slider:before {
+      content:""; position:absolute; height:16px; width:16px; left:3px; bottom:3px;
+      background:#fff; transition:.2s; border-radius:50%;
+    }
+    .toggle input:checked + .toggle-slider { background:var(--navy); }
+    .toggle input:checked + .toggle-slider:before { transform:translateX(18px); }
+
+    .card-footer {
+      display:flex; justify-content:flex-end; gap:8px; padding:14px 16px; border-top:.5px solid var(--gray-200);
+    }
+
+    .danger-row { border-color:var(--coral-50); }
+
+    /* Quick admin links */
+    .quick-links { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:16px; }
+    .quick-link {
+      display:flex; align-items:center; gap:10px; padding:12px; border:1px solid var(--gray-200);
+      border-radius:var(--radius-sm); cursor:pointer; transition:border-color .15s, background .15s;
+    }
+    .quick-link:hover { border-color:var(--navy-light); background:var(--teal-50); }
+    .quick-link-icon {
+      width:32px; height:32px; border-radius:var(--radius-sm); background:var(--teal-50);
+      display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    }
+    .quick-link-icon i { font-size:16px; color:var(--navy); }
+    .quick-link-label { font-size:12px; font-weight:600; color:var(--gray-900); }
+    .quick-link-sub { font-size:11px; color:var(--gray-600); }
+  </style>
+</head>
+<body>
+<script src="sidebar-headstaff.js"></script>
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">Settings</span>
+    <div class="topbar-search">
+      <i class="ti ti-search"></i>
+      <input type="text" placeholder="Search by name, barangay, OSCA ID..." onkeydown="if(event.key==='Enter')location.href='../Staff/search.html'">
+    </div>
+    <div class="topbar-actions">
+      <div class="topbar-icon-btn"><i class="ti ti-bell"></i></div>
+      <div class="topbar-avatar" id="topbarAvatar">HS</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div>
+      <h1 style="font-family:var(--font-display);font-size:20px;font-weight:600;color:var(--gray-900)">Account & system settings</h1>
+      <p style="font-size:13px;color:var(--gray-600);margin-top:3px">Manage your profile, security, and OSCA Carmen system preferences</p>
+    </div>
+
+    <div class="two-col">
+
+      <div class="settings-col">
+        <!-- Profile -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">Profile</div></div>
+          <div class="profile-head">
+            <div class="profile-avatar" id="profileAvatar">HS</div>
+            <div>
+              <div class="profile-name" id="profileName">Head Staff</div>
+              <div class="profile-role"><span class="role-badge">HEAD STAFF</span></div>
+            </div>
+          </div>
+          <div style="padding:16px;">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Display name</label>
+                <input type="text" class="form-input" id="usernameInput" placeholder="e.g. osca_head">
+                <div class="form-hint">Shown on the sidebar and in the audit log.</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Role</label>
+                <input type="text" class="form-input" value="Head Staff" disabled>
+                <div class="form-hint">Head Staff is the highest access level.</div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Contact number</label>
+              <input type="text" class="form-input" id="contactInput" placeholder="09XX XXX XXXX">
+            </div>
+          </div>
+          <div class="card-footer">
+            <button class="btn btn-navy" onclick="saveProfile()"><i class="ti ti-device-floppy"></i> Save profile</button>
+          </div>
+        </div>
+
+        <!-- Security -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">Security</div></div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-row-label">Password</div>
+              <div class="setting-row-desc">Change your account password</div>
+            </div>
+            <button class="btn btn-ghost" onclick="location.href='change-password.html'"><i class="ti ti-lock"></i> Change password</button>
+          </div>
+        </div>
+
+        <!-- Quick admin links -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">Quick admin links</div></div>
+          <div class="quick-links">
+            <div class="quick-link" onclick="location.href='staff-mgmt.html'">
+              <div class="quick-link-icon"><i class="ti ti-users-group"></i></div>
+              <div>
+                <div class="quick-link-label">Manage staff</div>
+                <div class="quick-link-sub">Accounts & roles</div>
+              </div>
+            </div>
+            <div class="quick-link" onclick="location.href='audit.html'">
+              <div class="quick-link-icon"><i class="ti ti-shield-check"></i></div>
+              <div>
+                <div class="quick-link-label">Audit log</div>
+                <div class="quick-link-sub">System activity</div>
+              </div>
+            </div>
+            <div class="quick-link" onclick="location.href='hs-pending-approval.html'">
+              <div class="quick-link-icon"><i class="ti ti-checklist"></i></div>
+              <div>
+                <div class="quick-link-label">Pending approvals</div>
+                <div class="quick-link-sub">Review requests</div>
+              </div>
+            </div>
+            <div class="quick-link" onclick="location.href='hs-reports.html'">
+              <div class="quick-link-icon"><i class="ti ti-file-text"></i></div>
+              <div>
+                <div class="quick-link-label">Reports</div>
+                <div class="quick-link-sub">Analytics & exports</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-col">
+        <!-- Notifications -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">Notifications</div></div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-row-label">Staff requests</div>
+              <div class="setting-row-desc">Notify when a staff member submits a request</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="notifRequests" checked><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-row-label">Pending approvals</div>
+              <div class="setting-row-desc">Reminders for items awaiting your approval</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="notifApprovals" checked><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-row-label">Audit & security alerts</div>
+              <div class="setting-row-desc">Unusual activity or failed login attempts</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="notifAudit" checked><span class="toggle-slider"></span></label>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-row-label">Weekly summary</div>
+              <div class="setting-row-desc">OSCA Carmen activity digest every Monday</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="notifWeekly"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="card-footer">
+            <button class="btn btn-navy" onclick="saveNotifications()"><i class="ti ti-device-floppy"></i> Save preferences</button>
+          </div>
+        </div>
+
+        <!-- Organization settings -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">Organization settings</div></div>
+          <div style="padding:16px;">
+            <div class="form-group">
+              <label class="form-label">Office name</label>
+              <input type="text" class="form-input" id="orgName" value="OSCA Carmen, Davao del Norte">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Default landing page</label>
+                <select class="form-select" id="prefLanding">
+                  <option value="hs-dashboard.html">Head Staff Dashboard</option>
+                  <option value="hs-pending-approval.html">Pending approvals</option>
+                  <option value="hs-reports.html">Reports</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Records per page</label>
+                <select class="form-select" id="prefPerPage">
+                  <option value="10">10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Auto-flag pending approvals older than</label>
+              <select class="form-select" id="prefApprovalThreshold">
+                <option value="1">1 day</option>
+                <option value="3">3 days</option>
+                <option value="7">7 days</option>
+              </select>
+              <div class="form-hint">Flags requests waiting longer than this as urgent on the dashboard.</div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <button class="btn btn-navy" onclick="saveOrgPrefs()"><i class="ti ti-device-floppy"></i> Save preferences</button>
+          </div>
+        </div>
+
+        <!-- Session -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">Session</div></div>
+          <div class="setting-row danger-row">
+            <div>
+              <div class="setting-row-label">Log out</div>
+              <div class="setting-row-desc">End your current session on this device</div>
+            </div>
+            <button class="btn btn-ghost" onclick="logoutHS(event)"><i class="ti ti-logout"></i> Logout</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+renderHeadStaffSidebar('settings');
+
+function loadSettings() {
+  const role = localStorage.getItem('ark_role');
+  const username = (role === 'head_staff' ? localStorage.getItem('ark_username') : null) || 'Head Staff';
+  const initials = 'HS';
+
+  document.getElementById('usernameInput').value = username;
+  document.getElementById('profileName').textContent = username;
+  document.getElementById('profileAvatar').textContent = initials;
+  document.getElementById('topbarAvatar').textContent = initials;
+
+  document.getElementById('contactInput').value = localStorage.getItem('ark_contact') || '';
+
+  document.getElementById('notifRequests').checked = localStorage.getItem('ark_hs_notif_requests') !== 'off';
+  document.getElementById('notifApprovals').checked = localStorage.getItem('ark_hs_notif_approvals') !== 'off';
+  document.getElementById('notifAudit').checked = localStorage.getItem('ark_hs_notif_audit') !== 'off';
+  document.getElementById('notifWeekly').checked = localStorage.getItem('ark_hs_notif_weekly') === 'on';
+
+  document.getElementById('prefLanding').value = localStorage.getItem('ark_hs_pref_landing') || 'hs-dashboard.html';
+  document.getElementById('prefPerPage').value = localStorage.getItem('ark_hs_pref_perpage') || '10';
+  document.getElementById('prefApprovalThreshold').value = localStorage.getItem('ark_hs_pref_threshold') || '3';
+}
+
+function saveProfile() {
+  const username = document.getElementById('usernameInput').value.trim();
+  if (!username) { showToast('Display name cannot be empty', 'error'); return; }
+  localStorage.setItem('ark_username', username);
+  localStorage.setItem('ark_contact', document.getElementById('contactInput').value.trim());
+  showToast('Profile updated');
+  setTimeout(() => location.reload(), 600);
+}
+
+function saveNotifications() {
+  localStorage.setItem('ark_hs_notif_requests', document.getElementById('notifRequests').checked ? 'on' : 'off');
+  localStorage.setItem('ark_hs_notif_approvals', document.getElementById('notifApprovals').checked ? 'on' : 'off');
+  localStorage.setItem('ark_hs_notif_audit', document.getElementById('notifAudit').checked ? 'on' : 'off');
+  localStorage.setItem('ark_hs_notif_weekly', document.getElementById('notifWeekly').checked ? 'on' : 'off');
+  showToast('Notification preferences saved');
+}
+
+function saveOrgPrefs() {
+  localStorage.setItem('ark_hs_pref_landing', document.getElementById('prefLanding').value);
+  localStorage.setItem('ark_hs_pref_perpage', document.getElementById('prefPerPage').value);
+  localStorage.setItem('ark_hs_pref_threshold', document.getElementById('prefApprovalThreshold').value);
+  showToast('Organization preferences saved');
+}
+
+loadSettings();
+</script>
+</body>
+</html>

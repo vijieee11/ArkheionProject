@@ -26,14 +26,14 @@
     </div>
     <div class="topbar-actions">
       <div class="topbar-icon-btn"><i class="ti ti-bell"></i></div>
-      <div class="topbar-avatar">HS</div>
+      <div class="topbar-avatar" id="topbarAvatar">S</div>
     </div>
   </div>
 
   <div class="content">
     <div style="display:flex;align-items:center;justify-content:space-between;">
       <div>
-        <h1 style="font-family:var(--font-display);font-size:20px;font-weight:600;color:var(--gray-900)">Good morning, Head Staff 👋</h1>
+        <h1 style="font-family:var(--font-display);font-size:20px;font-weight:600;color:var(--gray-900)" id="pageGreeting">Good morning, Staff 👋</h1>
         <p style="font-size:13px;color:var(--gray-600);margin-top:3px">OSCA Carmen — July 27, 2026</p>
       </div>
       <div style="display:flex;gap:8px;">
@@ -186,6 +186,20 @@
   </div>
 </div>
 
-<script>renderSidebar('dashboard');</script>
+<script>
+renderSidebar('dashboard');
+
+// Personalize the greeting and avatar based on the logged-in account.
+const rawUsername = localStorage.getItem('ark_username') || 'Staff';
+const role = localStorage.getItem('ark_role') || 'regular_staff';
+const displayName = formatStaffName(rawUsername);
+const initials = role === 'head_staff' ? 'HS' : 'S';
+
+document.getElementById('topbarAvatar').textContent = initials;
+
+const hour = new Date().getHours();
+const timeGreeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+document.getElementById('pageGreeting').textContent = timeGreeting + ', ' + displayName + ' 👋';
+</script>
 </body>
 </html>

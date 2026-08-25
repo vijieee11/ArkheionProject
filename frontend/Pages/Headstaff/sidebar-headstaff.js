@@ -31,7 +31,7 @@ function renderHeadStaffSidebar(activePage) {
     {
       section: 'System',
       items: [
-        { id: 'settings', label: 'System settings', icon: 'ti-settings',  href: '../settings.html' },
+        { id: 'settings', label: 'System settings', icon: 'ti-settings',  href: 'settings.html' },
         { id: 'reports',  label: 'Reports',          icon: 'ti-file-text', href: 'hs-reports.html' },
       ]
     }
@@ -61,7 +61,7 @@ function renderHeadStaffSidebar(activePage) {
 
   html += `
     <div class="sb-spacer"></div>
-    <a class="nav-item" href="../dashboard.html">
+    <a class="nav-item" href="../Staff/dashboard.html">
       <i class="ti ti-arrow-back-up"></i>Switch to Staff view
     </a>
     <a class="nav-item" href="../login.html" onclick="logoutHS(event)">
