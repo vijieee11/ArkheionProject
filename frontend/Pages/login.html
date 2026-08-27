@@ -31,6 +31,7 @@
     .acc-opt-sub { font-size:11px; color:var(--gray-400); }
     .login-btn { height:42px; background:var(--navy); color:var(--gold); border:none; border-radius:var(--radius-sm); font-size:14px; font-weight:600; font-family:var(--font-display); cursor:pointer; width:100%; transition:opacity .15s; }
     .login-btn:hover { opacity:.88; }
+    .login-btn:disabled { cursor:not-allowed; opacity:.7; }
     .login-hint { font-size:12px; color:var(--gray-400); text-align:center; line-height:1.8; }
     .login-hint a { color:var(--navy-light); text-decoration:underline; cursor:pointer; }
     .login-error { background:var(--coral-50); border:.5px solid #F5C4B3; color:var(--coral-900); border-radius:var(--radius-sm); padding:9px 12px; font-size:12px; display:flex; align-items:center; gap:8px; display:none; }
@@ -67,7 +68,7 @@
     </div>
     <div class="form-group">
       <label id="uname-label">Username</label>
-      <input type="text" id="uname-input" placeholder="Enter your username" value="osca_head" onkeydown="if(event.key==='Enter')handleLogin()">
+      <input type="text" id="uname-input" placeholder="Enter your username" onkeydown="if(event.key==='Enter')handleLogin()">
     </div>
     <div class="form-group">
       <label>Password</label>
@@ -95,6 +96,20 @@
     const input = document.getElementById('uname-input');
     label.textContent = type === 'senior' ? 'OSCA ID number' : 'Username';
     input.placeholder = type === 'senior' ? 'e.g. 2024-001' : 'Enter your username';
+    // Don't carry a value typed/pre-filled for one account type over to the other
+    // (e.g. the "osca_head" demo default shouldn't show up under Senior/Family).
+    input.value = '';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('login-error').style.display = 'none';
+  }
+
+  // Puts the Sign in button back to its normal, clickable state.
+  // Used both on a failed login attempt and when the page is restored
+  // from the browser's back/forward cache (see the pageshow listener below).
+  function resetLoginButton() {
+    const btn = document.getElementById('login-btn');
+    btn.textContent = 'Sign in';
+    btn.disabled = false;
   }
 
   function handleLogin() {
@@ -153,11 +168,26 @@
       } else {
         document.getElementById('error-msg').textContent = 'Invalid username or password. Please try again.';
         err.style.display = 'flex';
-        btn.textContent = 'Sign in';
-        btn.disabled = false;
+        resetLoginButton();
       }
     }, 800);
   }
+
+  // Fixes the "stuck on Signing in..." symptom: when a user successfully
+  // logs in, the browser navigates away while the button is still disabled
+  // and reading "Signing in...". If they then hit the Back button, some
+  // browsers restore that exact frozen DOM from the back/forward cache
+  // (bfcache) instead of re-running this script — so the button looks
+  // permanently stuck. `pageshow` with `event.persisted` fires whenever a
+  // page is restored that way, letting us reset the button (and clear the
+  // password field, since it's no longer a fresh session).
+  window.addEventListener('pageshow', function (event) {
+    if (event.persisted) {
+      resetLoginButton();
+      document.getElementById('pw-input').value = '';
+      document.getElementById('login-error').style.display = 'none';
+    }
+  });
 </script>
 </body>
 </html>

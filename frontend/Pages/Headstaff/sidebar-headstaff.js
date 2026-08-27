@@ -4,8 +4,10 @@
 // Then call: renderHeadStaffSidebar('hs-dashboard') at bottom of body
 
 function renderHeadStaffSidebar(activePage) {
-  const username = localStorage.getItem('ark_username') || 'Head Staff';
-  const initials = username.split('_').map(w => w[0]?.toUpperCase() || '').join('').slice(0,2) || 'HS';
+  // Every account on this sidebar is Head Staff, so the badge/initials are
+  // always "HS" — no need to derive them from the raw username.
+  const initials = 'HS';
+  const displayName = 'Head Staff';
 
   const navGroups = [
     {
@@ -64,27 +66,54 @@ function renderHeadStaffSidebar(activePage) {
     <a class="nav-item" href="../Staff/dashboard.html">
       <i class="ti ti-arrow-back-up"></i>Switch to Staff view
     </a>
-    <a class="nav-item" href="../login.html" onclick="logoutHS(event)">
+    <a class="nav-item" href="#" onclick="logoutHS(event)">
       <i class="ti ti-logout"></i>Logout
     </a>
     <div class="sb-user">
       <div class="sb-avatar" style="background:var(--gold);color:var(--navy);">${initials}</div>
       <div>
-        <div class="sb-uname">${username}</div>
-        <div class="sb-urole" style="color:var(white);font-weight:600;">Head Staff</div>
+        <div class="sb-uname">${displayName}</div>
+        <div class="sb-urole">OSCA Head Staff</div>
       </div>
     </div>
   </nav>`;
 
   document.body.insertAdjacentHTML('afterbegin', html);
+  ensureLogoutModalHS();
+}
+
+// Same modal-overlay/.modal pattern used across the rest of the app —
+// replaces the native confirm() box for logout.
+function ensureLogoutModalHS() {
+  if (document.getElementById('modal-logout-confirm')) return;
+  const html = `
+    <div class="modal-overlay" id="modal-logout-confirm" onclick="if(event.target===this)closeModal('modal-logout-confirm')">
+      <div class="modal" style="width:380px;">
+        <div class="modal-header">
+          <span class="modal-title">Log out</span>
+          <button class="modal-close" onclick="closeModal('modal-logout-confirm')"><i class="ti ti-x"></i></button>
+        </div>
+        <div class="modal-body">
+          <p style="margin:0;font-size:14px;color:var(--gray-600,#555);">Are you sure you want to logout?</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" onclick="closeModal('modal-logout-confirm')">Cancel</button>
+          <button class="btn btn-navy" onclick="confirmLogoutHS()"><i class="ti ti-logout"></i> Logout</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
 }
 
 function logoutHS(e) {
   e && e.preventDefault();
-  if (confirm('Are you sure you want to logout?')) {
-    localStorage.clear();
-    window.location.href = '../login.html';
-  }
+  ensureLogoutModalHS();
+  openModal('modal-logout-confirm');
+}
+
+function confirmLogoutHS() {
+  localStorage.clear();
+  window.location.href = '../login.html';
 }
 
 function showToast(msg, type = 'success') {
