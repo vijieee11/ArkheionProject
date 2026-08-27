@@ -9,11 +9,27 @@
     .approvals-table th { padding: 12px 16px; font-size: 11.5px; }
     .approvals-table td { padding: 15px 16px; font-size: 13px; }
     .approvals-table th:first-child, .approvals-table td:first-child { width: 34%; }
-    .btn-lightgreen { background: var(--teal-50); color: var(--navy); border: 1.5px solid var(--navy-light); }
-    .btn-lightgreen:hover { opacity: .85; }
-    .approvals-table .btn { height: 32px; padding: 0 14px; font-size: 12.5px; }
-    .btn-approve { background: var(--teal-50); color: var(--navy); border: 1.5px solid var(--navy-light); }
-    .btn-approve:hover { opacity: .85; }
+    .approvals-table th:last-child, .approvals-table td:last-child { width: 1%; white-space: nowrap; }
+
+    /* Balanced action buttons: pill-shaped Approve/Reject (badge-style), icon-only View */
+    .action-btns { display: flex; align-items: center; gap: 8px; }
+    .pill-btn {
+      border-radius: 999px; padding: 6px 16px; font-size: 12px; font-weight: 600;
+      border: none; cursor: pointer; transition: opacity .15s, transform .1s; white-space: nowrap;
+    }
+    .pill-btn:hover { opacity: .8; }
+    .pill-btn:active { transform: scale(.96); }
+    .pill-approve { background: var(--teal-50);  color: var(--navy); }
+    .pill-reject  { background: var(--coral-50); color: var(--coral-900); }
+    .action-icon-btn {
+      width: 30px; height: 30px; border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      border: 1.5px solid var(--gray-200); background: var(--white); color: var(--gray-600);
+      cursor: pointer; transition: opacity .15s, transform .1s; flex-shrink: 0;
+    }
+    .action-icon-btn:hover { opacity: .8; }
+    .action-icon-btn:active { transform: scale(.94); }
+    .action-icon-btn i { font-size: 16px; }
   </style>
 </head>
 <body>
@@ -93,10 +109,10 @@
             <td class="td-muted">Jul 24, 2026</td>
             <td><span class="badge badge-pend">Awaiting review</span></td>
             <td>
-              <div style="display:flex;gap:8px;">
-                <button class="btn btn-lightgreen" onclick="showToast('Request REQ-2026-0801 approved')">Approve</button>
-                <button class="btn btn-coral" onclick="showToast('Request REQ-2026-0801 rejected','error')">Reject</button>
-                <button class="btn btn-ghost">View</button>
+              <div class="action-btns">
+                <button class="pill-btn pill-approve" onclick="showToast('Request REQ-2026-0801 approved')">Approve</button>
+                <button class="pill-btn pill-reject" onclick="showToast('Request REQ-2026-0801 rejected','error')">Reject</button>
+                <button class="action-icon-btn" title="View details"><i class="ti ti-eye"></i></button>
               </div>
             </td>
           </tr>
@@ -110,10 +126,10 @@
             <td class="td-muted">Jul 25, 2026</td>
             <td><span class="badge badge-pend">Awaiting review</span></td>
             <td>
-              <div style="display:flex;gap:8px;">
-                <button class="btn btn-lightgreen" onclick="showToast('Request REQ-2026-0802 approved')">Approve</button>
-                <button class="btn btn-coral" onclick="showToast('Request REQ-2026-0802 rejected','error')">Reject</button>
-                <button class="btn btn-ghost">View</button>
+              <div class="action-btns">
+                <button class="pill-btn pill-approve" onclick="showToast('Request REQ-2026-0802 approved')">Approve</button>
+                <button class="pill-btn pill-reject" onclick="showToast('Request REQ-2026-0802 rejected','error')">Reject</button>
+                <button class="action-icon-btn" title="View details"><i class="ti ti-eye"></i></button>
               </div>
             </td>
           </tr>
@@ -127,10 +143,10 @@
             <td class="td-muted">Jul 25, 2026</td>
             <td><span class="badge badge-pend">Awaiting review</span></td>
             <td>
-              <div style="display:flex;gap:8px;">
-                <button class="btn btn-lightgreen" onclick="showToast('Request REQ-2026-0803 approved')">Approve</button>
-                <button class="btn btn-coral" onclick="showToast('Request REQ-2026-0803 rejected','error')">Reject</button>
-                <button class="btn btn-ghost">View</button>
+              <div class="action-btns">
+                <button class="pill-btn pill-approve" onclick="showToast('Request REQ-2026-0803 approved')">Approve</button>
+                <button class="pill-btn pill-reject" onclick="showToast('Request REQ-2026-0803 rejected','error')">Reject</button>
+                <button class="action-icon-btn" title="View details"><i class="ti ti-eye"></i></button>
               </div>
             </td>
           </tr>
@@ -144,10 +160,10 @@
             <td class="td-muted">Jul 26, 2026</td>
             <td><span class="badge badge-pend">Awaiting review</span></td>
             <td>
-              <div style="display:flex;gap:8px;">
-                <button class="btn btn-lightgreen" onclick="showToast('Request REQ-2026-0804 approved')">Approve</button>
-                <button class="btn btn-coral" onclick="showToast('Request REQ-2026-0804 rejected','error')">Reject</button>
-                <button class="btn btn-ghost">View</button>
+              <div class="action-btns">
+                <button class="pill-btn pill-approve" onclick="showToast('Request REQ-2026-0804 approved')">Approve</button>
+                <button class="pill-btn pill-reject" onclick="showToast('Request REQ-2026-0804 rejected','error')">Reject</button>
+                <button class="action-icon-btn" title="View details"><i class="ti ti-eye"></i></button>
               </div>
             </td>
           </tr>
@@ -161,10 +177,10 @@
             <td class="td-muted">Jul 27, 2026</td>
             <td><span class="badge badge-pend">Awaiting review</span></td>
             <td>
-              <div style="display:flex;gap:8px;">
-                <button class="btn btn-lightgreen" onclick="showToast('Request REQ-2026-0805 approved')">Approve</button>
-                <button class="btn btn-coral" onclick="showToast('Request REQ-2026-0805 rejected','error')">Reject</button>
-                <button class="btn btn-ghost">View</button>
+              <div class="action-btns">
+                <button class="pill-btn pill-approve" onclick="showToast('Request REQ-2026-0805 approved')">Approve</button>
+                <button class="pill-btn pill-reject" onclick="showToast('Request REQ-2026-0805 rejected','error')">Reject</button>
+                <button class="action-icon-btn" title="View details"><i class="ti ti-eye"></i></button>
               </div>
             </td>
           </tr>

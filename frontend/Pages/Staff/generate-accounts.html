@@ -5,7 +5,82 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Arkheion — Generate Portal Accounts</title>
   <link rel="stylesheet" href="styles.css">
-  <style>body{display:flex;}</style>
+  <style>
+    body{display:flex;}
+
+    /* Self-contained confirmation dialog — does not depend on styles.css modal classes */
+    #confirmDialogOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+    #confirmDialogOverlay.show { display: flex; }
+    #confirmDialogBox {
+      background: #fff;
+      width: 460px;
+      max-width: 90vw;
+      max-height: 80vh;
+      overflow-y: auto;
+      border-radius: 10px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    }
+    #confirmDialogHeader {
+      padding: 16px 20px;
+      border-bottom: 1px solid #E9ECEF;
+      font-family: var(--font-display, sans-serif);
+      font-size: 15px;
+      font-weight: 700;
+      color: #212529;
+    }
+    #confirmDialogBody { padding: 18px 20px; }
+    #confirmDialogBody p {
+      font-size: 13px;
+      color: #212529;
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+    #confirmDialogList {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      border: 1px solid #E9ECEF;
+      border-radius: 6px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    #confirmDialogList li {
+      padding: 8px 12px;
+      font-size: 12px;
+      color: #212529;
+      border-bottom: 1px solid #E9ECEF;
+    }
+    #confirmDialogList li:last-child { border-bottom: none; }
+    #confirmDialogList li b { font-weight: 600; }
+    #confirmDialogFooter {
+      padding: 14px 20px;
+      border-top: 1px solid #E9ECEF;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    #confirmDialogFooter button {
+      height: 34px;
+      padding: 0 16px;
+      border-radius: 5px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    #confirmCancelBtn { background: #fff; border: 1px solid #E9ECEF; color: #212529; }
+    #confirmYesBtn { background: var(--navy, #04342C); color: var(--gold, #FAC775); }
+    #confirmCancelBtn:hover, #confirmYesBtn:hover { opacity: .88; }
+  </style>
 </head>
 <body>
 <script src="sidebar.js"></script>
@@ -14,7 +89,7 @@
     <span class="topbar-title">Generate portal accounts</span>
     <div class="topbar-actions" style="margin-left:auto;">
       <button class="btn btn-ghost btn-sm" id="export-btn" style="display:none;" onclick="exportCredentials()"><i class="ti ti-download"></i> Export credential list</button>
-      <button class="btn btn-navy btn-sm" onclick="generateSelected()"><i class="ti ti-key"></i> Generate for selected</button>
+      <button class="btn btn-navy btn-sm" onclick="askConfirmGenerate()"><i class="ti ti-key"></i> Generate for selected</button>
     </div>
   </div>
 
@@ -68,6 +143,21 @@
       <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:.5px solid var(--gray-200);">
         <span style="font-size:12px;color:var(--gray-500)" id="selected-count">0 members selected</span>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Self-contained confirmation dialog: shown BEFORE credentials are generated -->
+<div id="confirmDialogOverlay">
+  <div id="confirmDialogBox">
+    <div id="confirmDialogHeader">Confirm account generation</div>
+    <div id="confirmDialogBody">
+      <p>Do you want to generate portal credentials for <b id="confirmDialogCount">0</b> member(s)? This cannot be undone from this screen.</p>
+      <ul id="confirmDialogList"></ul>
+    </div>
+    <div id="confirmDialogFooter">
+      <button id="confirmCancelBtn" onclick="hideConfirmDialog()">Cancel</button>
+      <button id="confirmYesBtn" onclick="onConfirmYes()">Yes</button>
     </div>
   </div>
 </div>
@@ -160,7 +250,35 @@
     return pw;
   }
 
-  function generateSelected() {
+  // ---- Self-contained confirmation dialog logic ----
+  function showConfirmDialog() {
+    document.getElementById('confirmDialogOverlay').classList.add('show');
+  }
+  function hideConfirmDialog() {
+    document.getElementById('confirmDialogOverlay').classList.remove('show');
+  }
+
+  // Step 1: user clicks "Generate for selected" — validate selection, then show the confirm dialog.
+  function askConfirmGenerate() {
+    const checked = document.querySelectorAll('.row-check:checked');
+    if (checked.length === 0) {
+      showToast('Please select at least one member first.', 'error');
+      return;
+    }
+    const rows = Array.from(checked).map(cb => members[parseInt(cb.dataset.i)]);
+
+    document.getElementById('confirmDialogCount').textContent = rows.length;
+    document.getElementById('confirmDialogList').innerHTML = rows.map(m =>
+      `<li><b>${m.name}</b> — ${m.osca} — ${m.brgy}</li>`
+    ).join('');
+
+    showConfirmDialog();
+  }
+
+  // Step 2: user clicked "Yes" inside the confirm dialog — this actually generates the credentials.
+  function onConfirmYes() {
+    hideConfirmDialog();
+
     const checked = document.querySelectorAll('.row-check:checked');
     if (checked.length === 0) {
       showToast('Please select at least one member first.', 'error');

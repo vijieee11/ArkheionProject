@@ -6,7 +6,21 @@
   <title>Arkheion — Medicine Booklet</title>
   <link rel="stylesheet" href="styles.css">
   <script src="sidebar.js"></script>
-  <style>body{display:flex;}</style>
+  <style>
+    body{display:flex;}
+
+    /* Print booklet: hide everything except #print-area, and drop any
+       element (even inside the print area) that's marked .no-print,
+       e.g. the header action buttons. */
+    @media print {
+      body * { visibility: hidden; }
+      #print-area, #print-area * { visibility: visible; }
+      #print-area { position: absolute; top: 0; left: 0; width: 100%; margin: 0; box-shadow: none; border: none; }
+      .no-print, .no-print * { display: none !important; }
+      #print-header { display: block !important; margin-bottom: 12px; }
+    }
+    #print-header { display: none; }
+  </style>
 </head>
 <body>
 
@@ -41,14 +55,18 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="print-area">
+      <div id="print-header">
+        <strong>Arkheion — OSCA Carmen</strong><br>
+        <span style="font-size:12px;color:var(--gray-500,#666);">Medicine Purchase Booklet</span>
+      </div>
       <div class="card-header">
         <div>
           <div class="card-title">Juan dela Cruz — Booklet MB-10613</div>
           <div class="card-subtitle">OSCA ID: 2024-001 · Brgy 2, Carmen · Issued: Jan 5, 2024</div>
         </div>
-        <div class="card-actions">
-          <button class="btn btn-ghost btn-sm"><i class="ti ti-printer"></i> Print booklet</button>
+        <div class="card-actions no-print">
+          <button class="btn btn-ghost btn-sm" onclick="printBooklet()"><i class="ti ti-printer"></i> Print booklet</button>
           <button class="btn btn-navy btn-sm" onclick="openModal('modal-prescription')"><i class="ti ti-plus"></i> Add prescription</button>
         </div>
       </div>
@@ -204,6 +222,14 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<script>renderSidebar('medicine');</script>
+<script>
+  renderSidebar('medicine');
+
+  function printBooklet() {
+    const stamp = document.getElementById('print-header').querySelector('span');
+    stamp.textContent = 'Medicine Purchase Booklet — printed ' + new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    window.print();
+  }
+</script>
 </body>
 </html>

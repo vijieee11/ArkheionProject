@@ -231,8 +231,8 @@ function loadSettings() {
   const rawUsername = localStorage.getItem('ark_username') || 'Staff';
   const role     = localStorage.getItem('ark_role') || 'regular_staff';
   const roleLabel = role === 'head_staff' ? 'Head Staff' : 'Regular Staff';
-  const displayName = formatStaffName(rawUsername);
-  const initials = 'S';
+  const displayName = formatStaffName(rawUsername, role);
+  const initials = role === 'head_staff' ? 'HS' : 'S';
   document.getElementById('usernameInput').value = rawUsername;
   document.getElementById('roleInput').value = roleLabel;
   document.getElementById('profileName').textContent = displayName;

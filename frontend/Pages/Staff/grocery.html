@@ -5,7 +5,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Arkheion — Grocery Distribution</title>
   <link rel="stylesheet" href="styles.css">
-  <style>body{display:flex;}</style>
+  <style>
+    body{display:flex;}
+    /* Instant hover tooltip — no native-title delay (matches search/member-detail/pension) */
+    .tooltip{position:relative;}
+    .tooltip::after{
+      content:attr(data-tooltip);
+      position:absolute;
+      bottom:calc(100% + 6px);
+      left:50%;
+      transform:translateX(-50%);
+      background:var(--navy,#1f2937);
+      color:#fff;
+      font-size:11px;
+      line-height:1;
+      padding:5px 8px;
+      border-radius:4px;
+      white-space:nowrap;
+      opacity:0;
+      visibility:hidden;
+      pointer-events:none;
+      transition:opacity .1s ease;
+      z-index:30;
+    }
+    .tooltip:hover::after{opacity:1;visibility:visible;}
+    .tooltip::before{
+      content:'';
+      position:absolute;
+      bottom:100%;
+      left:50%;
+      transform:translateX(-50%);
+      border:5px solid transparent;
+      border-top-color:var(--navy,#1f2937);
+      opacity:0;
+      visibility:hidden;
+      transition:opacity .1s ease;
+      z-index:31;
+    }
+    .tooltip:hover::before{opacity:1;visibility:visible;}
+  </style>
 </head>
 <body>
 <script src="sidebar.js"></script>
@@ -13,9 +51,8 @@
   <div class="topbar">
     <span class="topbar-title">Grocery distribution</span>
     <div class="topbar-actions" style="margin-left:auto;">
-      <button class="btn btn-ghost btn-sm"><i class="ti ti-download"></i> Export list</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportList()"><i class="ti ti-download"></i> Export list</button>
       <button class="btn btn-ghost btn-sm" onclick="openModal('modal-schedule')"><i class="ti ti-calendar"></i> New schedule</button>
-      <button class="btn btn-navy btn-sm" onclick="openModal('modal-mark')"><i class="ti ti-check"></i> Mark received</button>
     </div>
   </div>
 
@@ -23,18 +60,18 @@
     <div class="stats-grid stats-3">
       <div class="stat-card teal">
         <div class="stat-label"><i class="ti ti-circle-check"></i> Released this month</div>
-        <div class="stat-value">891</div>
-        <div class="stat-sub">69% of 1,284 members</div>
+        <div class="stat-value" id="stat-released-count">891</div>
+        <div class="stat-sub" id="stat-released-sub">69% of 1,284 members</div>
       </div>
       <div class="stat-card amber">
         <div class="stat-label"><i class="ti ti-clock"></i> Pending</div>
-        <div class="stat-value">393</div>
-        <div class="stat-sub">31% not yet released</div>
+        <div class="stat-value" id="stat-pending-count">393</div>
+        <div class="stat-sub" id="stat-pending-sub">31% not yet released</div>
       </div>
       <div class="stat-card">
         <div class="stat-label"><i class="ti ti-calendar"></i> Next schedule</div>
-        <div class="stat-value" style="font-size:18px;">Jul 15</div>
-        <div class="stat-sub">Brgy 2 — 8:00 AM at OSCA Carmen</div>
+        <div class="stat-value" id="stat-next-date" style="font-size:18px;">Jul 15</div>
+        <div class="stat-sub" id="stat-next-sub">Brgy 2 — 8:00 AM at OSCA Carmen</div>
       </div>
     </div>
 
@@ -51,11 +88,11 @@
           <div class="card-subtitle">Click "Mark received" to record a claim</div>
         </div>
         <div class="card-actions">
-          <select class="filter-select">
+          <select id="filter-brgy" class="filter-select" onchange="renderTable()">
             <option>All barangays</option>
-            <option>Brgy 1</option><option>Brgy 2</option><option>Brgy 3</option>
+            <option>Brgy 1</option><option>Brgy 2</option><option>Brgy 3</option><option>Brgy 4</option><option>Brgy 5</option>
           </select>
-          <select class="filter-select">
+          <select id="filter-status" class="filter-select" onchange="renderTable()">
             <option>All status</option>
             <option>Released</option><option>Pending</option><option>Urgent</option>
           </select>
@@ -65,38 +102,7 @@
         <thead>
           <tr><th>OSCA ID</th><th>Name</th><th>Barangay</th><th>Status</th><th>Date received</th><th>Received by</th><th>Action</th></tr>
         </thead>
-        <tbody>
-          <tr>
-            <td class="td-muted">2024-001</td><td class="td-bold">Juan dela Cruz</td><td class="td-muted">Brgy 2</td>
-            <td><span class="badge badge-ok">Released</span></td>
-            <td class="td-muted">Jul 5, 2026</td><td class="td-muted">Self</td>
-            <td><button class="btn btn-ghost btn-sm btn-icon" title="View details"><i class="ti ti-eye"></i></button></td>
-          </tr>
-          <tr>
-            <td class="td-muted">2023-087</td><td class="td-bold">Maria Santos</td><td class="td-muted">Brgy 5</td>
-            <td><span class="badge badge-pend">Pending</span></td>
-            <td class="td-muted">—</td><td class="td-muted">—</td>
-            <td><button class="btn btn-navy btn-sm" onclick="openModal('modal-mark')"><i class="ti ti-check"></i> Mark</button></td>
-          </tr>
-          <tr>
-            <td class="td-muted">2024-033</td><td class="td-bold">Pedro Ramos</td><td class="td-muted">Brgy 1</td>
-            <td><span class="badge badge-urgent">Urgent</span></td>
-            <td class="td-muted">—</td><td class="td-muted">—</td>
-            <td><button class="btn btn-navy btn-sm" onclick="openModal('modal-mark')"><i class="ti ti-check"></i> Mark</button></td>
-          </tr>
-          <tr>
-            <td class="td-muted">2022-114</td><td class="td-bold">Lourdes Garcia</td><td class="td-muted">Brgy 3</td>
-            <td><span class="badge badge-ok">Released</span></td>
-            <td class="td-muted">Jul 6, 2026</td><td class="td-muted">Daughter</td>
-            <td><button class="btn btn-ghost btn-sm btn-icon" title="View details"><i class="ti ti-eye"></i></button></td>
-          </tr>
-          <tr>
-            <td class="td-muted">2025-012</td><td class="td-bold">Rosario Mendoza</td><td class="td-muted">Brgy 4</td>
-            <td><span class="badge badge-pend">Pending</span></td>
-            <td class="td-muted">—</td><td class="td-muted">—</td>
-            <td><button class="btn btn-navy btn-sm" onclick="openModal('modal-mark')"><i class="ti ti-check"></i> Mark</button></td>
-          </tr>
-        </tbody>
+        <tbody id="grocery-rows"></tbody>
       </table>
     </div>
   </div>
@@ -111,15 +117,15 @@
     <div class="modal-body">
       <div class="form-group">
         <label>Senior citizen</label>
-        <input type="text" value="Maria Santos — 2023-087" readonly>
+        <input type="text" id="mark-name" value="" readonly>
       </div>
       <div class="form-group">
         <label>Date received</label>
-        <input type="date" value="2026-07-09">
+        <input type="date" id="mark-date" value="2026-07-09">
       </div>
       <div class="form-group">
         <label>Received by</label>
-        <select>
+        <select id="mark-receivedby" onchange="toggleRepGroup()">
           <option>Self</option>
           <option>Authorized representative</option>
           <option>Barangay official</option>
@@ -127,11 +133,11 @@
       </div>
       <div class="form-group" id="rep-name-group" style="display:none;">
         <label>Representative name</label>
-        <input type="text" placeholder="Full name of representative">
+        <input type="text" id="mark-rep-name" placeholder="Full name of representative">
       </div>
       <div class="form-group">
         <label>Remarks (optional)</label>
-        <textarea placeholder="Any additional notes..."></textarea>
+        <textarea id="mark-remarks" placeholder="Any additional notes..."></textarea>
       </div>
     </div>
     <div class="modal-footer">
@@ -150,26 +156,26 @@
     <div class="modal-body">
       <div class="form-group">
         <label>Barangay</label>
-        <select><option>All barangays</option><option>Brgy 1</option><option>Brgy 2</option><option>Brgy 3</option></select>
+        <select id="schedule-brgy"><option>All barangays</option><option>Brgy 1</option><option>Brgy 2</option><option>Brgy 3</option><option>Brgy 4</option><option>Brgy 5</option></select>
       </div>
       <div class="form-2col">
         <div class="form-group">
           <label>Distribution date</label>
-          <input type="date">
+          <input type="date" id="schedule-date">
         </div>
         <div class="form-group">
           <label>Time</label>
-          <input type="time" value="08:00">
+          <input type="time" id="schedule-time" value="08:00">
         </div>
       </div>
       <div class="form-group">
         <label>Period</label>
-        <input type="text" placeholder="e.g. July 2026">
+        <input type="text" id="schedule-period" placeholder="e.g. July 2026">
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-schedule')">Cancel</button>
-      <button class="btn btn-navy" onclick="closeModal('modal-schedule');showToast('Schedule saved successfully!')"><i class="ti ti-calendar"></i> Save schedule</button>
+      <button class="btn btn-navy" onclick="saveSchedule()"><i class="ti ti-calendar"></i> Save schedule</button>
     </div>
   </div>
 </div>
@@ -177,10 +183,165 @@
 <div class="toast" id="toast"></div>
 <script>
   renderSidebar('grocery');
-  function confirmMark() {
-    closeModal('modal-mark');
-    showToast('Grocery marked as received for Maria Santos.');
+
+  // Distribution records — in production, fetch/patch these via the backend instead.
+  const records = [
+    { osca: '2024-001', name: 'Juan dela Cruz',   brgy: 'Brgy 2', status: 'released', dateReceived: 'Jul 5, 2026', receivedBy: 'Self' },
+    { osca: '2023-087', name: 'Maria Santos',     brgy: 'Brgy 5', status: 'pending',  dateReceived: null,          receivedBy: null },
+    { osca: '2024-033', name: 'Pedro Ramos',      brgy: 'Brgy 1', status: 'urgent',   dateReceived: null,          receivedBy: null },
+    { osca: '2022-114', name: 'Lourdes Garcia',   brgy: 'Brgy 3', status: 'released', dateReceived: 'Jul 6, 2026', receivedBy: 'Daughter' },
+    { osca: '2025-012', name: 'Rosario Mendoza',  brgy: 'Brgy 4', status: 'pending',  dateReceived: null,          receivedBy: null },
+  ];
+
+  let activeOsca = null; // which record the "Mark received" modal is currently open for
+
+  const statusMeta = {
+    released: { badge: 'badge-ok',     label: 'Released' },
+    pending:  { badge: 'badge-pend',   label: 'Pending' },
+    urgent:   { badge: 'badge-urgent', label: 'Urgent' },
+  };
+
+  function renderStats() {
+    const total = records.length;
+    const released = records.filter(r => r.status === 'released');
+    const pending = records.filter(r => r.status !== 'released');
+    document.getElementById('stat-released-count').textContent = released.length;
+    document.getElementById('stat-released-sub').textContent = `${Math.round(released.length / total * 100)}% of ${total} members`;
+    document.getElementById('stat-pending-count').textContent = pending.length;
+    document.getElementById('stat-pending-sub').textContent = `${Math.round(pending.length / total * 100)}% not yet released`;
   }
+
+  function renderTable() {
+    const brgy = document.getElementById('filter-brgy').value;
+    const status = document.getElementById('filter-status').value;
+
+    const rows = records.filter(r => {
+      const matchesBrgy = brgy === 'All barangays' || r.brgy === brgy;
+      const matchesStatus = status === 'All status' || statusMeta[r.status].label === status;
+      return matchesBrgy && matchesStatus;
+    });
+
+    document.getElementById('grocery-rows').innerHTML = rows.map(r => {
+      const meta = statusMeta[r.status];
+      // Released members get a View action that opens their full record in
+      // member-detail.html; everyone else still needs to be marked received.
+      const action = r.status === 'released'
+        ? `<button class="btn btn-ghost btn-sm btn-icon tooltip" data-tooltip="View details" onclick="location.href='member-detail.html?id=${encodeURIComponent(r.osca)}'"><i class="ti ti-eye"></i></button>`
+        : `<button class="btn btn-navy btn-sm" onclick="openMarkModal('${r.osca}')"><i class="ti ti-check"></i> Mark</button>`;
+
+      return `
+        <tr>
+          <td class="td-muted">${r.osca}</td>
+          <td class="td-bold">${r.name}</td>
+          <td class="td-muted">${r.brgy}</td>
+          <td><span class="badge ${meta.badge}">${meta.label}</span></td>
+          <td class="td-muted">${r.dateReceived || '—'}</td>
+          <td class="td-muted">${r.receivedBy || '—'}</td>
+          <td>${action}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  function toggleRepGroup() {
+    const v = document.getElementById('mark-receivedby').value;
+    document.getElementById('rep-name-group').style.display = v === 'Self' ? 'none' : 'block';
+  }
+
+  // Opens the modal pre-filled for a given OSCA ID, or for the first
+  // not-yet-released record when opened from the topbar's generic button.
+  function openMarkModal(osca) {
+    const target = osca || (records.find(r => r.status !== 'released') || {}).osca;
+    if (!target) {
+      showToast('Everyone on this list has already received their grocery.');
+      return;
+    }
+    const r = records.find(x => x.osca === target);
+    activeOsca = target;
+    document.getElementById('mark-name').value = `${r.name} — ${r.osca}`;
+    document.getElementById('mark-receivedby').value = 'Self';
+    document.getElementById('mark-rep-name').value = '';
+    document.getElementById('mark-remarks').value = '';
+    toggleRepGroup();
+    openModal('modal-mark');
+  }
+
+  function confirmMark() {
+    const r = records.find(x => x.osca === activeOsca);
+    if (!r) { closeModal('modal-mark'); return; }
+
+    const dateVal = document.getElementById('mark-date').value;
+    const receivedByChoice = document.getElementById('mark-receivedby').value;
+    const repName = document.getElementById('mark-rep-name').value.trim();
+
+    r.status = 'released';
+    r.dateReceived = dateVal
+      ? new Date(dateVal + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      : 'Today';
+    r.receivedBy = receivedByChoice === 'Self' ? 'Self' : (repName || receivedByChoice);
+
+    closeModal('modal-mark');
+    renderStats();
+    renderTable();
+    showToast(`Grocery marked as received for ${r.name}.`);
+  }
+
+  // Reflects the newly saved schedule on the "Next schedule" stat card.
+  function saveSchedule() {
+    const brgy = document.getElementById('schedule-brgy').value;
+    const dateVal = document.getElementById('schedule-date').value;
+    const timeVal = document.getElementById('schedule-time').value;
+
+    if (!dateVal) {
+      showToast('Pick a distribution date first.');
+      return;
+    }
+
+    const dateLabel = new Date(dateVal + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const [h, m] = timeVal.split(':').map(Number);
+    const period = h >= 12 ? 'PM' : 'AM';
+    const hour12 = ((h % 12) || 12);
+    const timeLabel = `${hour12}:${String(m).padStart(2, '0')} ${period}`;
+
+    document.getElementById('stat-next-date').textContent = dateLabel;
+    document.getElementById('stat-next-sub').textContent = `${brgy} — ${timeLabel} at OSCA Carmen`;
+
+    closeModal('modal-schedule');
+    showToast('Schedule saved successfully!');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  function exportList() {
+    if (!records.length) {
+      showToast('Nothing to export.');
+      return;
+    }
+    const headers = ['OSCA ID', 'Name', 'Barangay', 'Status', 'Date Received', 'Received By'];
+    const csvRows = records.map(r => [
+      r.osca, r.name, r.brgy, statusMeta[r.status].label, r.dateReceived || '', r.receivedBy || ''
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+    const csv = [headers.join(','), ...csvRows].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `grocery-distribution-july-2026.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+
+    showToast(`Exported ${records.length} record${records.length === 1 ? '' : 's'}.`);
+  }
+
+  renderStats();
+  renderTable();
 </script>
 </body>
 </html>

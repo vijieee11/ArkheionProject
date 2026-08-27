@@ -20,6 +20,7 @@
     .form-input:focus, .form-select:focus { outline:none; border-color:var(--navy); }
     .form-input:disabled { background:var(--gray-50, #f7f7f8); color:var(--gray-600); cursor:not-allowed; }
     .form-hint { font-size:11px; color:var(--gray-600); margin-top:4px; }
+    .form-hint a { color:var(--navy); font-weight:600; text-decoration:underline; cursor:pointer; }
     .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 
     .profile-head { display:flex; align-items:center; gap:14px; padding:16px; border-bottom:.5px solid var(--gray-200); }
@@ -123,7 +124,7 @@
               <div class="form-group">
                 <label class="form-label">Role</label>
                 <input type="text" class="form-input" value="Head Staff" disabled>
-                <div class="form-hint">Head Staff is the highest access level.</div>
+                <div class="form-hint">Head Staff already has full system access. To change another staff member's role, go to <a onclick="location.href='staff-mgmt.html'">Manage staff</a>.</div>
               </div>
             </div>
             <div class="form-group">
@@ -144,7 +145,7 @@
               <div class="setting-row-label">Password</div>
               <div class="setting-row-desc">Change your account password</div>
             </div>
-            <button class="btn btn-ghost" onclick="location.href='change-password.html'"><i class="ti ti-lock"></i> Change password</button>
+            <button class="btn btn-ghost" onclick="location.href='../Staff/change-password.html'"><i class="ti ti-lock"></i> Change password</button>
           </div>
         </div>
 
@@ -156,7 +157,7 @@
               <div class="quick-link-icon"><i class="ti ti-users-group"></i></div>
               <div>
                 <div class="quick-link-label">Manage staff</div>
-                <div class="quick-link-sub">Accounts & roles</div>
+                <div class="quick-link-sub">Accounts &amp; roles</div>
               </div>
             </div>
             <div class="quick-link" onclick="location.href='audit.html'">
@@ -177,7 +178,7 @@
               <div class="quick-link-icon"><i class="ti ti-file-text"></i></div>
               <div>
                 <div class="quick-link-label">Reports</div>
-                <div class="quick-link-sub">Analytics & exports</div>
+                <div class="quick-link-sub">Analytics &amp; exports</div>
               </div>
             </div>
           </div>

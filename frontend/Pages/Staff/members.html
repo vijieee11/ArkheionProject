@@ -14,19 +14,19 @@
     <span class="topbar-title">Members</span>
     <div class="topbar-search">
       <i class="ti ti-search"></i>
-      <input type="text" placeholder="Search by name, OSCA ID, barangay...">
+      <input type="text" id="member-search" placeholder="Search by name, OSCA ID, barangay..." oninput="renderTable()">
     </div>
     <div class="topbar-actions">
-      <select class="filter-select">
+      <select id="filter-brgy" class="filter-select" onchange="renderTable()">
         <option>All barangays</option>
         <option>Brgy 1</option><option>Brgy 2</option><option>Brgy 3</option>
         <option>Brgy 4</option><option>Brgy 5</option>
       </select>
-      <select class="filter-select">
+      <select id="filter-status" class="filter-select" onchange="renderTable()">
         <option>All status</option>
         <option>Complete</option><option>Incomplete</option><option>Urgent</option>
       </select>
-      <button class="btn btn-ghost btn-sm"><i class="ti ti-download"></i> Export</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportMembers()"><i class="ti ti-download"></i> Export</button>
       <button class="btn btn-navy btn-sm" onclick="location.href='register.html'"><i class="ti ti-plus"></i> Register</button>
     </div>
   </div>
@@ -57,10 +57,10 @@
           <div class="card-subtitle">Click a member to view full profile</div>
         </div>
         <div class="card-actions">
-          <select class="filter-select">
-            <option>Sort: Name A-Z</option>
-            <option>Sort: Recently added</option>
-            <option>Sort: Age (oldest)</option>
+          <select id="sort-select" class="filter-select" onchange="renderTable()">
+            <option value="name-asc">Sort: Name A-Z</option>
+            <option value="recent">Sort: Recently added</option>
+            <option value="age-desc">Sort: Age (oldest)</option>
           </select>
         </div>
       </div>
@@ -72,65 +72,10 @@
             <th>Reg. Status</th><th>Actions</th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td class="td-muted">2024-001</td>
-            <td class="td-bold">Juan dela Cruz</td>
-            <td class="td-muted">81</td><td class="td-muted">M</td>
-            <td class="td-muted">Brgy 2</td><td class="td-muted">Widowed</td>
-            <td><span class="badge badge-urgent">80+</span></td>
-            <td><span class="badge badge-ok">Complete</span></td>
-            <td><button class="btn btn-ghost btn-sm btn-icon" onclick="location.href='member-detail.html'" title="View"><i class="ti ti-eye"></i></button></td>
-          </tr>
-          <tr>
-            <td class="td-muted">2023-087</td>
-            <td class="td-bold">Maria Santos</td>
-            <td class="td-muted">72</td><td class="td-muted">F</td>
-            <td class="td-muted">Brgy 5</td><td class="td-muted">Married</td>
-            <td>—</td>
-            <td><span class="badge badge-ok">Complete</span></td>
-            <td><button class="btn btn-ghost btn-sm btn-icon" onclick="location.href='member-detail.html'" title="View"><i class="ti ti-eye"></i></button></td>
-          </tr>
-          <tr>
-            <td class="td-muted">2025-012</td>
-            <td class="td-bold">Rosario Mendoza</td>
-            <td class="td-muted">68</td><td class="td-muted">F</td>
-            <td class="td-muted">Brgy 4</td><td class="td-muted">Widowed</td>
-            <td>—</td>
-            <td><span class="badge badge-miss">Missing ID</span></td>
-            <td><button class="btn btn-ghost btn-sm btn-icon" onclick="location.href='member-detail.html'" title="View"><i class="ti ti-eye"></i></button></td>
-          </tr>
-          <tr>
-            <td class="td-muted">2024-033</td>
-            <td class="td-bold">Pedro Ramos</td>
-            <td class="td-muted">85</td><td class="td-muted">M</td>
-            <td class="td-muted">Brgy 1</td><td class="td-muted">Widowed</td>
-            <td><span class="badge badge-urgent">80+</span></td>
-            <td><span class="badge badge-urgent">Urgent</span></td>
-            <td><button class="btn btn-ghost btn-sm btn-icon" onclick="location.href='member-detail.html'" title="View"><i class="ti ti-eye"></i></button></td>
-          </tr>
-          <tr>
-            <td class="td-muted">2022-114</td>
-            <td class="td-bold">Lourdes Garcia</td>
-            <td class="td-muted">76</td><td class="td-muted">F</td>
-            <td class="td-muted">Brgy 3</td><td class="td-muted">Married</td>
-            <td>—</td>
-            <td><span class="badge badge-ok">Complete</span></td>
-            <td><button class="btn btn-ghost btn-sm btn-icon" onclick="location.href='member-detail.html'" title="View"><i class="ti ti-eye"></i></button></td>
-          </tr>
-          <tr>
-            <td class="td-muted">2023-055</td>
-            <td class="td-bold">Felipe Torres</td>
-            <td class="td-muted">70</td><td class="td-muted">M</td>
-            <td class="td-muted">Brgy 2</td><td class="td-muted">Married</td>
-            <td>—</td>
-            <td><span class="badge badge-pend">Pending</span></td>
-            <td><button class="btn btn-ghost btn-sm btn-icon" onclick="location.href='member-detail.html'" title="View"><i class="ti ti-eye"></i></button></td>
-          </tr>
-        </tbody>
+        <tbody id="members-rows"></tbody>
       </table>
       <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:.5px solid var(--gray-200);">
-        <span style="font-size:12px;color:var(--gray-500)">Showing 6 of 1,284 members</span>
+        <span style="font-size:12px;color:var(--gray-500)" id="members-count">Showing 6 of 1,284 members</span>
         <div style="display:flex;gap:4px;">
           <button class="btn btn-ghost btn-sm"><i class="ti ti-chevron-left"></i></button>
           <button class="btn btn-navy btn-sm">1</button>
@@ -142,6 +87,95 @@
     </div>
   </div>
 </div>
-<script>renderSidebar('members');</script>
+<script>
+  renderSidebar('members');
+
+  // Sample members — in production, fetch/sort/filter these via the backend instead.
+  const members = [
+    { osca: '2024-001', name: 'Juan dela Cruz',  age: 81, sex: 'M', brgy: 'Brgy 2', civil: 'Widowed', milestone: '80+', reg: 'complete', dateAdded: '2024-01-05' },
+    { osca: '2023-087', name: 'Maria Santos',    age: 72, sex: 'F', brgy: 'Brgy 5', civil: 'Married', milestone: null,  reg: 'complete', dateAdded: '2023-03-10' },
+    { osca: '2025-012', name: 'Rosario Mendoza', age: 68, sex: 'F', brgy: 'Brgy 4', civil: 'Widowed', milestone: null,  reg: 'missing',  dateAdded: '2025-02-01' },
+    { osca: '2024-033', name: 'Pedro Ramos',     age: 85, sex: 'M', brgy: 'Brgy 1', civil: 'Widowed', milestone: '80+', reg: 'urgent',   dateAdded: '2024-04-20' },
+    { osca: '2022-114', name: 'Lourdes Garcia',  age: 76, sex: 'F', brgy: 'Brgy 3', civil: 'Married', milestone: null,  reg: 'complete', dateAdded: '2022-11-14' },
+    { osca: '2023-055', name: 'Felipe Torres',   age: 70, sex: 'M', brgy: 'Brgy 2', civil: 'Married', milestone: null,  reg: 'pending',  dateAdded: '2023-05-15' },
+  ];
+
+  const regMeta = {
+    complete: { badge: 'badge-ok',     label: 'Complete' },
+    missing:  { badge: 'badge-miss',   label: 'Missing ID' },
+    urgent:   { badge: 'badge-urgent', label: 'Urgent' },
+    pending:  { badge: 'badge-pend',   label: 'Pending' },
+  };
+
+  // "Complete"/"Incomplete"/"Urgent" in the filter maps onto our finer-grained
+  // reg statuses: anything that isn't "complete" counts as Incomplete.
+  function matchesStatusFilter(m, filterValue) {
+    if (filterValue === 'All status') return true;
+    if (filterValue === 'Complete') return m.reg === 'complete';
+    if (filterValue === 'Urgent') return m.reg === 'urgent';
+    if (filterValue === 'Incomplete') return m.reg !== 'complete';
+    return true;
+  }
+
+  function renderTable() {
+    const q = document.getElementById('member-search').value.trim().toLowerCase();
+    const brgy = document.getElementById('filter-brgy').value;
+    const status = document.getElementById('filter-status').value;
+    const sortBy = document.getElementById('sort-select').value;
+
+    let rows = members.filter(m => {
+      const matchesQuery = !q ||
+        m.name.toLowerCase().includes(q) ||
+        m.osca.toLowerCase().includes(q) ||
+        m.brgy.toLowerCase().includes(q);
+      const matchesBrgy = brgy === 'All barangays' || m.brgy === brgy;
+      return matchesQuery && matchesBrgy && matchesStatusFilter(m, status);
+    });
+
+    rows = rows.slice().sort((a, b) => {
+      if (sortBy === 'name-asc') return a.name.localeCompare(b.name);
+      if (sortBy === 'age-desc') return b.age - a.age;
+      if (sortBy === 'recent') return new Date(b.dateAdded) - new Date(a.dateAdded);
+      return 0;
+    });
+
+    document.getElementById('members-count').textContent = `Showing ${rows.length} of 1,284 members`;
+
+    document.getElementById('members-rows').innerHTML = rows.map(m => {
+      const meta = regMeta[m.reg];
+      const milestoneCell = m.milestone ? `<span class="badge badge-urgent">${m.milestone}</span>` : '—';
+      return `
+        <tr>
+          <td class="td-muted">${m.osca}</td>
+          <td class="td-bold">${m.name}</td>
+          <td class="td-muted">${m.age}</td><td class="td-muted">${m.sex}</td>
+          <td class="td-muted">${m.brgy}</td><td class="td-muted">${m.civil}</td>
+          <td>${milestoneCell}</td>
+          <td><span class="badge ${meta.badge}">${meta.label}</span></td>
+          <td><button class="btn btn-ghost btn-sm btn-icon" onclick="location.href='member-detail.html?id=${encodeURIComponent(m.osca)}'" title="View"><i class="ti ti-eye"></i></button></td>
+        </tr>`;
+    }).join('');
+  }
+
+  function exportMembers() {
+    const headers = ['OSCA ID', 'Name', 'Age', 'Sex', 'Barangay', 'Civil Status', 'Milestone', 'Reg. Status'];
+    const csvRows = members.map(m => [
+      m.osca, m.name, m.age, m.sex, m.brgy, m.civil, m.milestone || '', regMeta[m.reg].label
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+    const csv = [headers.join(','), ...csvRows].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'members-export.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  renderTable();
+</script>
 </body>
 </html>

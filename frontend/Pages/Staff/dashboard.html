@@ -192,7 +192,7 @@ renderSidebar('dashboard');
 // Personalize the greeting and avatar based on the logged-in account.
 const rawUsername = localStorage.getItem('ark_username') || 'Staff';
 const role = localStorage.getItem('ark_role') || 'regular_staff';
-const displayName = formatStaffName(rawUsername);
+const displayName = formatStaffName(rawUsername, role);
 const initials = role === 'head_staff' ? 'HS' : 'S';
 
 document.getElementById('topbarAvatar').textContent = initials;

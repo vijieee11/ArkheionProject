@@ -1,44 +1,48 @@
-// sidebar.js — Shared sidebar for all staff pages
-// Usage: <script src="sidebar.js"></script>
-// Then call: renderSidebar('dashboard') at bottom of body
+// Turns raw usernames like "osca_staff2" into a friendly "Staff 2" display name.
+// If role is 'head_staff', always shows "Head Staff" regardless of the username used to log in
+// (so switching between the Head Staff and Staff views stays consistent).
+function formatStaffName(username, role) {
+  if (role === 'head_staff') return 'Head Staff';
+  if (!username) return 'Staff';
+  const staffMatch = username.match(/^osca_staff(\d+)$/i);
+  if (staffMatch) return 'Staff ' + staffMatch[1];
+  if (/^osca_head$/i.test(username)) return 'Head Staff';
+  return username
+    .replace(/[_\.]+/g, ' ')
+    .replace(/@.*/, '')
+    .split(' ')
+    .filter(Boolean)
+    .map(w => w[0].toUpperCase() + w.slice(1))
+    .join(' ');
+}
 
 function renderSidebar(activePage) {
   const role     = localStorage.getItem('ark_role') || 'regular_staff';
-  const username = localStorage.getItem('ark_username') || 'Staff';
-  const initials = username.split('_').map(w => w[0]?.toUpperCase() || '').join('').slice(0,2) || 'ST';
+  const rawUsername = localStorage.getItem('ark_username') || 'Staff';
+  const displayName = formatStaffName(rawUsername, role);
+  const initials = role === 'head_staff' ? 'HS' : 'S';
   const roleLabel = role === 'head_staff' ? 'Head Staff' : 'Regular Staff';
 
   const navGroups = [
-    {
-      section: 'Main',
-      items: [
-        { id: 'dashboard', label: 'Dashboard',     icon: 'ti-layout-dashboard', href: 'Pages/Headstaff/dashboard.html' },
-        { id: 'members',   label: 'Members',       icon: 'ti-users',            href: 'members.html' },
-      ]
-    },
-    {
-      section: 'Services',
-      items: [
-        { id: 'grocery',  label: 'Groceries', icon: 'ti-shopping-cart', href: 'Pages/Headstaff/grocery.html' },
-        { id: 'medicine', label: 'Medicine',  icon: 'ti-pill',          href: 'Pages/Headstaff/medicine.html' },
-        { id: 'pension',  label: 'Pension',   icon: 'ti-cash',          href: 'Pages/Headstaff/pension.html' },
-      ]
-    },
-    {
-      section: 'Documents',
-      items: [
-        { id: 'upload', label: 'Upload docs',    icon: 'ti-upload',   href: 'Pages/Headstaff/upload.html' },
-        { id: 'search', label: 'Search records', icon: 'ti-search',   href: 'Pages/Headstaff/search.html' },
-        { id: 'map',    label: 'Map view',       icon: 'ti-map-pin',  href: 'Pages/Headstaff/map.html' },
-      ]
-    },
-    {
-      section: 'System',
-      items: [
-        { id: 'reports',      label: 'Reports',            icon: 'ti-chart-bar', href: 'Pages/Headstaff/reports.html' },
-        { id: 'genaccounts',  label: 'Generate accounts',  icon: 'ti-key',       href: 'Pages/Headstaff/generate-accounts.html' },
-      ]
-    }
+    { section: 'Main', items: [
+      { id: 'dashboard', label: 'Dashboard', icon: 'ti-layout-dashboard', href: 'dashboard.html' },
+      { id: 'members',   label: 'Members',   icon: 'ti-users',            href: 'members.html' },
+    ]},
+    { section: 'Services', items: [
+      { id: 'grocery',  label: 'Groceries', icon: 'ti-shopping-cart', href: 'grocery.html' },
+      { id: 'medicine', label: 'Medicine',  icon: 'ti-pill',          href: 'medicine.html' },
+      { id: 'pension',  label: 'Pension',   icon: 'ti-cash',          href: 'pension.html' },
+    ]},
+    { section: 'Documents', items: [
+      { id: 'upload', label: 'Upload docs',    icon: 'ti-upload',   href: 'upload.html' },
+      { id: 'search', label: 'Search records', icon: 'ti-search',   href: 'search.html' },
+      { id: 'map',    label: 'Map view',       icon: 'ti-map-pin',  href: 'map.html' },
+    ]},
+    { section: 'System', items: [
+      { id: 'reports',     label: 'Reports',            icon: 'ti-chart-bar', href: 'reports.html' },
+      { id: 'genaccounts', label: 'Generate accounts',  icon: 'ti-key',        href: 'generate-accounts.html' },
+      { id: 'settings',    label: 'Settings',           icon: 'ti-settings',   href: 'settings.html' },
+    ]}
   ];
 
   let html = `<nav class="sidebar">
@@ -51,26 +55,23 @@ function renderSidebar(activePage) {
     html += `<span class="sb-section">${group.section}</span>`;
     group.items.forEach(item => {
       const isActive = item.id === activePage;
-      const badge     = item.badge     ? `<span class="nav-badge">${item.badge}</span>` : '';
-      const badgeGold = item.badgeGold ? `<span class="nav-badge-gold">${item.badgeGold}</span>` : '';
       html += `
-        <a class="nav-item ${isActive ? 'active' : ''}" href="${item.href}"
-           style="${item.badgeGold ? 'color:#FAC775' : ''}">
+        <a class="nav-item ${isActive ? 'active' : ''}" href="${item.href}">
           <i class="ti ${item.icon}"></i>
-          ${item.label}${badge}${badgeGold}
+          ${item.label}
         </a>`;
     });
   });
 
   html += `
     <div class="sb-spacer"></div>
-    <a class="nav-item" href="login.html" onclick="logout(event)">
-      <i class="ti ti-settings"></i>Settings
+    <a class="nav-item" href="#" onclick="logout(event)">
+      <i class="ti ti-logout"></i>Logout
     </a>
     <div class="sb-user">
       <div class="sb-avatar">${initials}</div>
       <div>
-        <div class="sb-uname">${username}</div>
+        <div class="sb-uname">${displayName}</div>
         <div class="sb-urole">${roleLabel}</div>
       </div>
     </div>
@@ -83,7 +84,7 @@ function logout(e) {
   e && e.preventDefault();
   if (confirm('Are you sure you want to logout?')) {
     localStorage.clear();
-    window.location.href = 'login.html';
+    window.location.href = '../login.html';
   }
 }
 

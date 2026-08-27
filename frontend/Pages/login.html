@@ -67,7 +67,7 @@
     </div>
     <div class="form-group">
       <label id="uname-label">Username</label>
-      <input type="text" id="uname-input" placeholder="Enter your username" onkeydown="if(event.key==='Enter')handleLogin()">
+      <input type="text" id="uname-input" placeholder="Enter your username" value="osca_head" onkeydown="if(event.key==='Enter')handleLogin()">
     </div>
     <div class="form-group">
       <label>Password</label>
@@ -117,9 +117,10 @@
     setTimeout(() => {
       // Demo credentials — Staff covers both Regular and Head Staff, routed by role
       const staffAccounts = {
-        'osca_head':   { role: 'head_staff',    mustChange: false },
-        'osca_staff1': { role: 'regular_staff', mustChange: true  },
-        'osca_staff2': { role: 'regular_staff', mustChange: false },
+        'osca_head':            { role: 'head_staff',    mustChange: false },
+        's@umindanao.edu.ph':   { role: 'head_staff',    mustChange: false },
+        'osca_staff1':          { role: 'regular_staff', mustChange: true  },
+        'osca_staff2':          { role: 'regular_staff', mustChange: false },
       };
       const seniorAccounts = {
         '2024-001': { role: 'senior', name: 'Juan dela Cruz',  mustChange: true  },
@@ -146,7 +147,8 @@
         localStorage.setItem('ark_username', acc.name);
         localStorage.setItem('ark_role',     acc.role);
         localStorage.setItem('ark_token',    'demo-token-' + Date.now());
-        window.location.href = acc.mustChange ? 'senior-change-password.html' : 'portal-home.html';
+        // Senior portal pages live inside the SeniorPortal/ subfolder relative to this login page.
+        window.location.href = acc.mustChange ? 'SeniorPortal/senior-change-password.html' : 'SeniorPortal/portal-home.html';
 
       } else {
         document.getElementById('error-msg').textContent = 'Invalid username or password. Please try again.';

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Member Details</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body{display:flex;}
+    @media (max-width: 900px){ #info-grid{grid-template-columns:repeat(2,minmax(160px,1fr)) !important;} }
+    @media (max-width: 520px){ #info-grid{grid-template-columns:1fr !important;} }
+    .badge-warn{background:#fff3e0;color:#b06a00;}
+    .badge-info{background:#e3f2fd;color:#1565c0;}
+    .badge-danger{background:#fde8e8;color:#c0392b;}
+  </style>
+</head>
+<body>
+<script src="sidebar.js"></script>
+<div class="main">
+  <div class="topbar">
+    <button class="btn btn-ghost btn-sm btn-icon" onclick="history.back()"><i class="ti ti-arrow-left"></i></button>
+    <span class="topbar-title">Member details</span>
+  </div>
+
+  <div class="content">
+
+    <!-- Profile summary -->
+    <div class="card" style="padding:20px;">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div id="avatar" style="width:64px;height:64px;border-radius:50%;background:var(--teal-50);border:1.5px solid var(--teal-100);display:flex;align-items:center;justify-content:center;font-family:var(--font-body);font-weight:700;font-size:22px;color:var(--navy);flex-shrink:0;">JD</div>
+        <div style="flex:1;min-width:200px;">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <h3 id="m-name" style="margin:0;color:var(--navy);">Juan dela Cruz</h3>
+            <span class="badge badge-ok" id="m-status">Verified</span>
+          </div>
+          <div class="card-subtitle" style="margin-top:4px;">
+            OSCA ID <span id="m-osca" class="td-bold">2024-001</span>
+            &nbsp;·&nbsp; <span id="m-brgy">Brgy 2</span>
+            &nbsp;·&nbsp; Registered <span id="m-year">2024</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm"><i class="ti ti-printer"></i> Print</button>
+          <button class="btn btn-ghost btn-sm"><i class="ti ti-download"></i> Export</button>
+          <button class="btn btn-navy btn-sm"><i class="ti ti-pencil"></i> Edit</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Personal information -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Personal information</div>
+          <div class="card-subtitle">Details on file with OSCA</div>
+        </div>
+      </div>
+      <div id="info-grid" style="display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:24px 20px;padding:16px 24px;">
+        <div><div class="td-muted" style="font-size:12px;">Full name</div><div class="td-bold" id="i-name">Juan dela Cruz</div></div>
+        <div><div class="td-muted" style="font-size:12px;">Birthdate</div><div class="td-bold" id="i-birthdate">May 14, 1958</div></div>
+        <div><div class="td-muted" style="font-size:12px;">Age</div><div class="td-bold" id="i-age">68</div></div>
+        <div><div class="td-muted" style="font-size:12px;">Sex</div><div class="td-bold" id="i-sex">Male</div></div>
+        <div><div class="td-muted" style="font-size:12px;">Civil status</div><div class="td-bold" id="i-civil">Married</div></div>
+        <div><div class="td-muted" style="font-size:12px;">Barangay</div><div class="td-bold" id="i-brgy">Brgy 2</div></div>
+        <div><div class="td-muted" style="font-size:12px;">Contact number</div><div class="td-bold" id="i-contact">09171234567</div></div>
+        <div><div class="td-muted" style="font-size:12px;">Address</div><div class="td-bold" id="i-address">Purok 3, Brgy 2</div></div>
+      </div>
+    </div>
+
+    <!-- Services status -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Services status</div>
+          <div class="card-subtitle">Current standing across OSCA services</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;padding:16px 0;">
+        <div style="flex:1;min-width:160px;border:1.5px solid var(--teal-100);border-radius:var(--radius);padding:12px 14px;">
+          <div class="td-muted" style="font-size:12px;">Pension</div>
+          <div style="margin-top:6px;"><span class="badge badge-ok">Active</span></div>
+        </div>
+        <div style="flex:1;min-width:160px;border:1.5px solid var(--teal-100);border-radius:var(--radius);padding:12px 14px;">
+          <div class="td-muted" style="font-size:12px;">Medicine assistance</div>
+          <div style="margin-top:6px;"><span class="badge badge-proc">Pending refill</span></div>
+        </div>
+        <div style="flex:1;min-width:160px;border:1.5px solid var(--teal-100);border-radius:var(--radius);padding:12px 14px;">
+          <div class="td-muted" style="font-size:12px;">Grocery assistance</div>
+          <div style="margin-top:6px;"><span class="badge badge-ok">Claimed - Aug 2026</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Documents on file -->
+    <div class="card" id="docs-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Documents on file</div>
+          <div class="card-subtitle" id="docs-sub">All submitted documents for this member</div>
+        </div>
+        <button class="btn btn-ghost btn-sm"><i class="ti ti-upload"></i> Add document</button>
+      </div>
+      <div id="docs-body">
+        <table>
+          <thead><tr><th>Document</th><th>NLP Classification</th><th>Year</th><th>Status</th><th></th></tr></thead>
+          <tbody id="docs-rows"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+  renderSidebar('members');
+
+  // Sample records — mirrors the dataset used in search.html.
+  // In production, fetch by OSCA ID from the query string instead.
+  const allMembers = {
+    '2024-001': {
+      name: 'Juan dela Cruz', brgy: 'Brgy 2', year: '2024', status: 'ok', statusLabel: 'Verified',
+      birthdate: 'May 14, 1958', age: 68, sex: 'Male', civil: 'Married',
+      contact: '09171234567', address: 'Purok 3, Brgy 2',
+      docs: [
+        { type: 'OSCA Form No. 1',       cls: 'Registration form', year: '2024', status: 'ok',   statusLabel: 'Verified' },
+        { type: 'PSA Birth Certificate', cls: 'Birth certificate', year: '2024', status: 'ok',   statusLabel: 'Verified' },
+        { type: 'NCSC Annex A',          cls: 'NCSC application',  year: '2025', status: 'proc', statusLabel: 'For validation' },
+      ]
+    },
+    '2023-087': {
+      name: 'Maria Santos', brgy: 'Brgy 5', year: '2023', status: 'ok', statusLabel: 'Verified',
+      birthdate: 'Jan 22, 1961', age: 65, sex: 'Female', civil: 'Widowed',
+      contact: '09209876543', address: 'Purok 1, Brgy 5',
+      docs: [
+        { type: 'PhilSys ID', cls: 'Government ID', year: '2023', status: 'ok', statusLabel: 'Verified' },
+      ]
+    },
+    '2024-056': {
+      name: 'Wyndell Joshua Camacho', brgy: 'Brgy 2', year: '2024', status: 'pending', statusLabel: 'Pending',
+      birthdate: 'Sep 3, 1959', age: 67, sex: 'Male', civil: 'Single',
+      contact: '09173456789', address: 'Purok 2, Brgy 2',
+      docs: [
+        { type: 'PhilSys ID', cls: 'Government ID', year: '2024', status: 'pending', statusLabel: 'Pending' },
+      ]
+    }
+  };
+
+  function initials(name) {
+    return name.split(' ').filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase();
+  }
+
+  // Same mapping used in search.html — keeps status colors consistent site-wide.
+  function statusClass(label) {
+    switch (label) {
+      case 'Verified': return 'badge-ok';
+      case 'For validation': return 'badge-warn';
+      case 'Pending': return 'badge-info';
+      case 'Missing': return 'badge-danger';
+      default: return 'badge-proc';
+    }
+  }
+
+  function loadMember() {
+    const params = new URLSearchParams(location.search);
+    const osca = params.get('id') || '2024-001';
+    const m = allMembers[osca] || allMembers['2024-001'];
+
+    document.getElementById('avatar').textContent = initials(m.name);
+    document.getElementById('m-name').textContent = m.name;
+    document.getElementById('m-status').textContent = m.statusLabel;
+    document.getElementById('m-status').className = 'badge ' + statusClass(m.statusLabel);
+    document.getElementById('m-osca').textContent = osca;
+    document.getElementById('m-brgy').textContent = m.brgy;
+    document.getElementById('m-year').textContent = m.year;
+
+    document.getElementById('i-name').textContent = m.name;
+    document.getElementById('i-birthdate').textContent = m.birthdate;
+    document.getElementById('i-age').textContent = m.age;
+    document.getElementById('i-sex').textContent = m.sex;
+    document.getElementById('i-civil').textContent = m.civil;
+    document.getElementById('i-brgy').textContent = m.brgy;
+    document.getElementById('i-contact').textContent = m.contact;
+    document.getElementById('i-address').textContent = m.address;
+
+    document.getElementById('docs-sub').textContent = `${m.docs.length} document(s) on file for OSCA ID ${osca}`;
+    document.getElementById('docs-rows').innerHTML = m.docs.map(d => `
+      <tr>
+        <td class="td-bold">${d.type}</td>
+        <td><span class="badge ${statusClass(d.statusLabel)}">${d.cls}</span></td>
+        <td class="td-muted">${d.year}</td>
+        <td><span class="badge ${statusClass(d.statusLabel)}">${d.statusLabel}</span></td>
+        <td><button class="btn btn-ghost btn-sm btn-icon" title="View"><i class="ti ti-eye"></i></button></td>
+      </tr>`).join('');
+  }
+
+  loadMember();
+</script>
+</body>
+</html>

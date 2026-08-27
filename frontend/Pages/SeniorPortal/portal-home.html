@@ -26,7 +26,7 @@
   <div class="portal-user">
     <div class="portal-avatar">JC</div>
     <span class="portal-uname">Juan dela Cruz</span>
-    <button class="btn btn-ghost btn-sm" style="margin-left:8px;" onclick="location.href='login.html'"><i class="ti ti-logout"></i></button>
+    <button class="btn btn-ghost btn-sm" style="margin-left:8px;" onclick="location.href='../login.html'"><i class="ti ti-logout"></i></button>
   </div>
 </nav>
 
@@ -163,11 +163,11 @@
         <span class="chat-status">Online</span>
       </div>
       <div class="chat-messages" id="chatMessages">
-        <div class="msg bot">Hello Lolo Juan! I am your Arkheion assistant. How can I help you today? 😊</div>
+        <div class="msg bot" style="background:#E1F5EE;border-color:#9FE1CB;">Hello Lolo Juan! I am your Arkheion assistant. How can I help you today? 😊</div>
         <div class="msg usr">Kanus-a ang akong grocery?</div>
-        <div class="msg bot">Ang sunod nga grocery distribution sa <strong>Brgy 2</strong> is on <strong>July 15, 2026</strong> — 8:00 AM sa OSCA Carmen office. Siguruha nga naa ka nianang adlawa!</div>
+        <div class="msg bot" style="background:#E1F5EE;border-color:#9FE1CB;">Ang sunod nga grocery distribution sa <strong>Brgy 2</strong> is on <strong>July 15, 2026</strong> — 8:00 AM sa OSCA Carmen office. Siguruha nga naa ka nianang adlawa!</div>
         <div class="msg usr">Unsa pa akong kulang?</div>
-        <div class="msg bot">Base sa imong rekord, kulang pa ang imong <strong>valid government ID</strong>. Pwede ka magdala og PhilSys card, passport, o driver's license para makompleto ang imong registration.</div>
+        <div class="msg bot" style="background:#E1F5EE;border-color:#9FE1CB;">Base sa imong rekord, kulang pa ang imong <strong>valid government ID</strong>. Pwede ka magdala og PhilSys card, passport, o driver's license para makompleto ang imong registration.</div>
       </div>
       <div class="quick-replies">
         <div class="qr" onclick="sendMsg('Pension status ko?')">Pension status</div>
@@ -223,6 +223,8 @@
       typing.remove();
       const botDiv = document.createElement('div');
       botDiv.className = 'msg bot';
+      botDiv.style.background = '#E1F5EE';
+      botDiv.style.borderColor = '#9FE1CB';
       const lower = msg.toLowerCase();
       let reply = responses.default;
       for (const key in responses) {
