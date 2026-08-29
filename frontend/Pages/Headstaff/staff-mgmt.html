@@ -19,9 +19,31 @@
     .rbac-role { font-size:13.5px; font-weight:600; color:var(--gray-900); margin-bottom:6px; display:flex; align-items:center; gap:6px; }
     .rbac-desc { font-size:12.5px; color:var(--gray-500); line-height:1.6; }
     .filter-row { display:flex; align-items:center; gap:8px; }
-    tbody tr.row-inactive { background: var(--gray-100); }
+
+    /* FIX: inactive row no longer blends with the page background.
+       A light coral tint + left accent bar makes "this row is disabled"
+       readable at a glance, instead of relying on a gray that's too
+       close to the surrounding gray-50 surface. */
+    tbody tr.row-inactive {
+      background: #fef2f2;
+      border-left: 3px solid #f87171;
+    }
     tbody tr.row-inactive .td-bold { color: var(--gray-500); }
     tbody tr.row-inactive .td-muted { color: var(--gray-400); }
+
+    /* FIX: "Inactive" status badge — was too pale (coral-50/coral-900
+       washed out against the row tint). Bumped saturation so it reads
+       clearly as a warning state, distinct from the gray "Viewer" role
+       badge (.badge-inact). Border removed per request. */
+    .badge-status-inactive {
+      background: #fecaca;
+      color: #991b1b;
+      font-weight: 600;
+    }
+
+    .field-error { border-color:#f87171 !important; }
+    .field-error-msg { color:#dc2626; font-size:11.5px; margin-top:4px; display:none; }
+    .field-error-msg.show { display:block; }
   </style>
 </head>
 <body>
@@ -30,7 +52,7 @@
   <div class="topbar">
     <span class="topbar-title">Manage Staff</span>
     <div class="topbar-actions" style="margin-left:auto;">
-      <button class="btn btn-navy btn-sm" onclick="openModal('modal-add-staff')"><i class="ti ti-plus"></i> Add new staff</button>
+      <button class="btn btn-navy btn-sm" onclick="openAddModal()"><i class="ti ti-plus"></i> Add new staff</button>
     </div>
   </div>
 
@@ -44,22 +66,22 @@
     <div class="stats-grid stats-4">
       <div class="stat-card">
         <div class="stat-label"><i class="ti ti-users"></i> Total staff</div>
-        <div class="stat-value">5</div>
+        <div class="stat-value" id="stat-total">5</div>
         <div class="stat-sub">All accounts</div>
       </div>
       <div class="stat-card teal">
         <div class="stat-label"><i class="ti ti-circle-check"></i> Active</div>
-        <div class="stat-value">4</div>
+        <div class="stat-value" id="stat-active">4</div>
         <div class="stat-sub">Currently enabled</div>
       </div>
       <div class="stat-card coral">
         <div class="stat-label"><i class="ti ti-user-off"></i> Inactive</div>
-        <div class="stat-value">1</div>
+        <div class="stat-value" id="stat-inactive">1</div>
         <div class="stat-sub">Deactivated accounts</div>
       </div>
       <div class="stat-card amber">
         <div class="stat-label"><i class="ti ti-shield-lock"></i> Admins</div>
-        <div class="stat-value">1</div>
+        <div class="stat-value" id="stat-admin">1</div>
         <div class="stat-sub">Full system access</div>
       </div>
     </div>
@@ -141,12 +163,24 @@
       <button class="modal-close" onclick="closeModal('modal-add-staff')"><i class="ti ti-x"></i></button>
     </div>
     <div class="modal-body">
-      <div class="form-group"><label>Full name <span class="required">*</span></label><input type="text" placeholder="e.g. Maria Fernandez"></div>
-      <div class="form-group"><label>Username / email <span class="required">*</span></label><input type="text" placeholder="e.g. osca_staff4"></div>
-      <div class="form-group"><label>Temporary password <span class="required">*</span></label><input type="password" placeholder="Set initial password"></div>
+      <div class="form-group">
+        <label>Full name <span class="required">*</span></label>
+        <input type="text" id="add-name" placeholder="e.g. Maria Fernandez">
+        <div class="field-error-msg" id="err-add-name">Full name is required.</div>
+      </div>
+      <div class="form-group">
+        <label>Username / email <span class="required">*</span></label>
+        <input type="text" id="add-username" placeholder="e.g. osca_staff4">
+        <div class="field-error-msg" id="err-add-username">Username / email is required and must be unique.</div>
+      </div>
+      <div class="form-group">
+        <label>Temporary password <span class="required">*</span></label>
+        <input type="password" id="add-password" placeholder="Set initial password">
+        <div class="field-error-msg" id="err-add-password">Temporary password is required.</div>
+      </div>
       <div class="form-2col">
         <div class="form-group"><label>Role <span class="required">*</span></label>
-          <select>
+          <select id="add-role">
             <option>Regular Staff</option>
             <option>Head Staff</option>
             <option>Viewer</option>
@@ -154,7 +188,7 @@
           </select>
         </div>
         <div class="form-group"><label>Account status</label>
-          <select>
+          <select id="add-status">
             <option>Active</option>
             <option>Inactive</option>
           </select>
@@ -164,7 +198,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-add-staff')">Cancel</button>
-      <button class="btn btn-navy" onclick="closeModal('modal-add-staff');showToast('Staff account created successfully!')"><i class="ti ti-plus"></i> Create account</button>
+      <button class="btn btn-navy" onclick="submitAddStaff()"><i class="ti ti-plus"></i> Create account</button>
     </div>
   </div>
 </div>
@@ -177,8 +211,16 @@
       <button class="modal-close" onclick="closeModal('modal-edit-staff')"><i class="ti ti-x"></i></button>
     </div>
     <div class="modal-body">
-      <div class="form-group"><label>Full name</label><input type="text" id="edit-name"></div>
-      <div class="form-group"><label>Username / email</label><input type="text" id="edit-username"></div>
+      <div class="form-group">
+        <label>Full name</label>
+        <input type="text" id="edit-name">
+        <div class="field-error-msg" id="err-edit-name">Full name is required.</div>
+      </div>
+      <div class="form-group">
+        <label>Username / email</label>
+        <input type="text" id="edit-username">
+        <div class="field-error-msg" id="err-edit-username">Username / email is required and must be unique.</div>
+      </div>
       <div class="form-2col">
         <div class="form-group"><label>Role</label>
           <select id="edit-role">
@@ -198,7 +240,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-edit-staff')">Cancel</button>
-      <button class="btn btn-navy" onclick="closeModal('modal-edit-staff');showToast('Staff account updated successfully!')"><i class="ti ti-device-floppy"></i> Save changes</button>
+      <button class="btn btn-navy" onclick="submitEditStaff()"><i class="ti ti-device-floppy"></i> Save changes</button>
     </div>
   </div>
 </div>
@@ -211,12 +253,33 @@
       <button class="modal-close" onclick="closeModal('modal-reset-pw')"><i class="ti ti-x"></i></button>
     </div>
     <div class="modal-body">
-      <div class="alert alert-amber"><i class="ti ti-alert-triangle"></i>This will reset the staff member's password. They will be required to change it on next login.</div>
-      <div class="form-group"><label>New temporary password <span class="required">*</span></label><input type="password" placeholder="Set new temporary password"></div>
+      <div class="alert alert-amber" id="reset-pw-alert"><i class="ti ti-alert-triangle"></i>This will reset the staff member's password. They will be required to change it on next login.</div>
+      <div class="form-group">
+        <label>New temporary password <span class="required">*</span></label>
+        <input type="password" id="reset-password" placeholder="Set new temporary password">
+        <div class="field-error-msg" id="err-reset-password">Temporary password is required.</div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-reset-pw')">Cancel</button>
-      <button class="btn btn-navy" onclick="closeModal('modal-reset-pw');showToast('Password reset successfully!')"><i class="ti ti-key"></i> Reset password</button>
+      <button class="btn btn-navy" onclick="submitResetPassword()"><i class="ti ti-key"></i> Reset password</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Confirm deactivate/activate -->
+<div class="modal-overlay" id="modal-confirm-status" onclick="if(event.target===this)closeModal('modal-confirm-status')">
+  <div class="modal" style="width:420px;">
+    <div class="modal-header">
+      <span class="modal-title" id="confirm-status-title">Deactivate account</span>
+      <button class="modal-close" onclick="closeModal('modal-confirm-status')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <p id="confirm-status-message" style="margin:0;font-size:14px;color:var(--gray-600);line-height:1.6;"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-confirm-status')">Cancel</button>
+      <button class="btn" id="confirm-status-btn" onclick="executeStatusChange()"></button>
     </div>
   </div>
 </div>
@@ -234,7 +297,7 @@
   ];
 
   const roleBadge = { 'Admin':'badge-admin', 'Head Staff':'badge-hs', 'Regular Staff':'badge-rs', 'Viewer':'badge-inact' };
-  const statusBadge = { 'Active':'badge-ok', 'Inactive':'badge-inact' };
+  const statusBadge = { 'Active':'badge-ok', 'Inactive':'badge-status-inactive' };
 
   function renderStaffTable(list) {
     const tbody = document.getElementById('staff-tbody');
@@ -248,16 +311,25 @@
         <td class="td-muted">${s.lastLogin}</td>
         <td>
           <div style="display:flex;gap:6px;">
-            <button class="btn btn-ghost btn-sm btn-icon" title="Edit" onclick="openEditModal(${i})"><i class="ti ti-edit"></i></button>
-            <button class="btn btn-ghost btn-sm btn-icon" title="Reset password" onclick="openModal('modal-reset-pw')"><i class="ti ti-key"></i></button>
+            <button class="btn btn-ghost btn-sm btn-icon" title="Edit" onclick="openEditModal('${s.username}')"><i class="ti ti-edit"></i></button>
+            <button class="btn btn-ghost btn-sm btn-icon" title="Reset password" onclick="openResetModal('${s.username}')"><i class="ti ti-key"></i></button>
             ${s.status === 'Active'
-              ? `<button class="btn btn-coral btn-sm btn-icon" title="Deactivate" onclick="confirmDeactivate('${s.name}')"><i class="ti ti-user-off"></i></button>`
-              : `<button class="btn btn-approve btn-sm btn-icon" title="Activate" onclick="confirmActivate('${s.name}')"><i class="ti ti-user-check"></i></button>`}
+              ? `<button class="btn btn-coral btn-sm btn-icon" title="Deactivate" onclick="confirmDeactivate('${s.username}')"><i class="ti ti-user-off"></i></button>`
+              : `<button class="btn btn-approve btn-sm btn-icon" title="Activate" onclick="confirmActivate('${s.username}')"><i class="ti ti-user-check"></i></button>`}
           </div>
         </td>
       </tr>
     `).join('');
     document.getElementById('staff-count-label').textContent = `Showing ${list.length} of ${staff.length} staff accounts`;
+  }
+
+  // FIX: keeps the stat cards (Active / Inactive) in sync after a status change,
+  // instead of leaving them hardcoded to the original counts.
+  function updateStatCounts() {
+    document.getElementById('stat-total').textContent = staff.length;
+    document.getElementById('stat-active').textContent = staff.filter(s => s.status === 'Active').length;
+    document.getElementById('stat-inactive').textContent = staff.filter(s => s.status === 'Inactive').length;
+    document.getElementById('stat-admin').textContent = staff.filter(s => s.role === 'Admin').length;
   }
 
   function applyFilters() {
@@ -273,25 +345,182 @@
     renderStaffTable(filtered);
   }
 
-  function openEditModal(i) {
-    const s = staff[i];
+  function clearFieldError(inputId, errId) {
+    document.getElementById(inputId).classList.remove('field-error');
+    document.getElementById(errId).classList.remove('show');
+  }
+  function setFieldError(inputId, errId) {
+    document.getElementById(inputId).classList.add('field-error');
+    document.getElementById(errId).classList.add('show');
+  }
+  function todayLabel() {
+    return new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+  }
+
+  // ---------- Add staff ----------
+  function openAddModal() {
+    document.getElementById('add-name').value = '';
+    document.getElementById('add-username').value = '';
+    document.getElementById('add-password').value = '';
+    document.getElementById('add-role').value = 'Regular Staff';
+    document.getElementById('add-status').value = 'Active';
+    ['add-name','add-username','add-password'].forEach(id => clearFieldError(id, 'err-'+id));
+    openModal('modal-add-staff');
+  }
+
+  function submitAddStaff() {
+    const name = document.getElementById('add-name').value.trim();
+    const username = document.getElementById('add-username').value.trim();
+    const password = document.getElementById('add-password').value;
+    const role = document.getElementById('add-role').value;
+    const status = document.getElementById('add-status').value;
+
+    let valid = true;
+    clearFieldError('add-name','err-add-name');
+    clearFieldError('add-username','err-add-username');
+    clearFieldError('add-password','err-add-password');
+
+    if (!name) { setFieldError('add-name','err-add-name'); valid = false; }
+    if (!username) { setFieldError('add-username','err-add-username'); valid = false; }
+    else if (staff.some(s => s.username.toLowerCase() === username.toLowerCase())) {
+      setFieldError('add-username','err-add-username'); valid = false;
+    }
+    if (!password) { setFieldError('add-password','err-add-password'); valid = false; }
+    if (!valid) return;
+
+    staff.push({
+      name, username, role, status,
+      created: todayLabel(),
+      lastLogin: 'Never'
+    });
+
+    closeModal('modal-add-staff');
+    showToast('Staff account created successfully!');
+    applyFilters();
+    updateStatCounts();
+  }
+
+  // ---------- Edit staff ----------
+  let pendingEditUsername = null;
+
+  function openEditModal(username) {
+    const s = staff.find(x => x.username === username);
+    if (!s) return;
+    pendingEditUsername = username;
     document.getElementById('edit-name').value = s.name;
     document.getElementById('edit-username').value = s.username;
     document.getElementById('edit-role').value = s.role;
     document.getElementById('edit-status').value = s.status;
+    clearFieldError('edit-name','err-edit-name');
+    clearFieldError('edit-username','err-edit-username');
     openModal('modal-edit-staff');
   }
 
-  function confirmDeactivate(name) {
-    if (confirm(`Are you sure you want to deactivate ${name}'s account? They will no longer be able to log in, but their history stays in the audit log.`)) {
-      showToast(`${name}'s account has been deactivated.`);
+  function submitEditStaff() {
+    const s = staff.find(x => x.username === pendingEditUsername);
+    if (!s) { closeModal('modal-edit-staff'); return; }
+
+    const name = document.getElementById('edit-name').value.trim();
+    const username = document.getElementById('edit-username').value.trim();
+    const role = document.getElementById('edit-role').value;
+    const status = document.getElementById('edit-status').value;
+
+    let valid = true;
+    clearFieldError('edit-name','err-edit-name');
+    clearFieldError('edit-username','err-edit-username');
+
+    if (!name) { setFieldError('edit-name','err-edit-name'); valid = false; }
+    if (!username) { setFieldError('edit-username','err-edit-username'); valid = false; }
+    else if (staff.some(x => x.username.toLowerCase() === username.toLowerCase() && x !== s)) {
+      setFieldError('edit-username','err-edit-username'); valid = false;
     }
+    if (!valid) return;
+
+    s.name = name;
+    s.username = username;
+    s.role = role;
+    s.status = status;
+
+    pendingEditUsername = null;
+    closeModal('modal-edit-staff');
+    showToast('Staff account updated successfully!');
+    applyFilters();
+    updateStatCounts();
   }
 
-  function confirmActivate(name) {
-    if (confirm(`Reactivate ${name}'s account? They will be able to log in again.`)) {
-      showToast(`${name}'s account has been activated.`);
+  // ---------- Reset password ----------
+  let pendingResetUsername = null;
+
+  function openResetModal(username) {
+    const s = staff.find(x => x.username === username);
+    if (!s) return;
+    pendingResetUsername = username;
+    document.getElementById('reset-password').value = '';
+    clearFieldError('reset-password','err-reset-password');
+    document.getElementById('reset-pw-alert').innerHTML =
+      `<i class="ti ti-alert-triangle"></i>This will reset the password for <strong>${s.name}</strong> (${s.username}). They will be required to change it on next login.`;
+    openModal('modal-reset-pw');
+  }
+
+  function submitResetPassword() {
+    const password = document.getElementById('reset-password').value;
+    clearFieldError('reset-password','err-reset-password');
+    if (!password) { setFieldError('reset-password','err-reset-password'); return; }
+
+    const s = staff.find(x => x.username === pendingResetUsername);
+    pendingResetUsername = null;
+    closeModal('modal-reset-pw');
+    showToast(s ? `Password reset for ${s.name}.` : 'Password reset successfully!');
+  }
+
+  // ---------- Activate / deactivate ----------
+  // FIX: track the pending target by username (unique) instead of display
+  // name, so two staff who happen to share a name can't get mixed up.
+  let pendingAction = null;
+  let pendingUsername = null;
+
+  function confirmDeactivate(username) {
+    pendingAction = 'deactivate';
+    pendingUsername = username;
+    const s = staff.find(x => x.username === username);
+    document.getElementById('confirm-status-title').textContent = 'Deactivate account';
+    document.getElementById('confirm-status-message').textContent =
+      `Are you sure you want to deactivate ${s.name}'s account? They will no longer be able to log in, but their history stays in the audit log.`;
+    const btn = document.getElementById('confirm-status-btn');
+    btn.className = 'btn btn-coral';
+    btn.innerHTML = '<i class="ti ti-user-off"></i> Deactivate';
+    openModal('modal-confirm-status');
+  }
+
+  function confirmActivate(username) {
+    pendingAction = 'activate';
+    pendingUsername = username;
+    const s = staff.find(x => x.username === username);
+    document.getElementById('confirm-status-title').textContent = 'Activate account';
+    document.getElementById('confirm-status-message').textContent =
+      `Reactivate ${s.name}'s account? They will be able to log in again.`;
+    const btn = document.getElementById('confirm-status-btn');
+    btn.className = 'btn btn-navy';
+    btn.innerHTML = '<i class="ti ti-user-check"></i> Activate';
+    openModal('modal-confirm-status');
+  }
+
+  // FIX: this used to just close the modal and pop a toast — the underlying
+  // `staff` array was never touched, so the row and stat cards never
+  // actually changed. Now it mutates the record and re-renders.
+  function executeStatusChange() {
+    closeModal('modal-confirm-status');
+    const s = staff.find(x => x.username === pendingUsername);
+    if (s) {
+      s.status = pendingAction === 'deactivate' ? 'Inactive' : 'Active';
+      showToast(pendingAction === 'deactivate'
+        ? `${s.name}'s account has been deactivated.`
+        : `${s.name}'s account has been activated.`);
     }
+    pendingAction = null;
+    pendingUsername = null;
+    applyFilters();
+    updateStatCounts();
   }
 
   renderStaffTable(staff);
