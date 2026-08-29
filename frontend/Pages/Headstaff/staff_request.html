@@ -9,12 +9,106 @@
     .approvals-table th { padding: 12px 16px; font-size: 11.5px; }
     .approvals-table td { padding: 15px 16px; font-size: 13px; }
     .approvals-table th:first-child, .approvals-table td:first-child { width: 34%; }
-    .btn-lightgreen { background: var(--teal-50); color: var(--navy); border: 1.5px solid var(--navy-light); }
-    .btn-lightgreen:hover { opacity: .85; }
-    .approvals-table .btn { height: 32px; padding: 0 14px; font-size: 12.5px; width: 100%; justify-content: center; }
-    .btn-approve { background: var(--teal-50); color: var(--navy); border: 1.5px solid var(--navy-light); }
-    .btn-approve:hover { opacity: .85; }
-    .action-grid { display: grid; grid-template-columns: 150px 90px 70px; gap: 8px; }
+
+    /* Pill-shaped action buttons (scoped to this table only) */
+    .approvals-table .btn-lightgreen,
+    .approvals-table .btn-approve {
+      background: var(--teal-50);
+      color: var(--navy);
+      border: none;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+    .approvals-table .btn-lightgreen:hover,
+    .approvals-table .btn-approve:hover { opacity: .85; }
+
+    .approvals-table .btn-coral {
+      background: #fdecea;
+      color: #c0392b;
+      border: none;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+    .approvals-table .btn-coral:hover { opacity: .85; }
+
+    .rm-footer .btn-lightgreen,
+    .rm-footer .btn-approve {
+      background: var(--teal-50);
+      color: var(--navy);
+      border: 1.5px solid var(--navy-light);
+      border-radius: 999px;
+      font-weight: 600;
+    }
+    .rm-footer .btn-lightgreen:hover,
+    .rm-footer .btn-approve:hover { opacity: .85; }
+
+    .rm-footer .btn-coral {
+      background: #fdecea;
+      color: #c0392b;
+      border: 1.5px solid #f3c6c1;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+    .rm-footer .btn-coral:hover { opacity: .85; }
+
+    .approvals-table .btn { height: 32px; padding: 0 16px; font-size: 12.5px; justify-content: center; }
+
+    /* View: icon in a light bordered square */
+    .approvals-table .btn-view-icon {
+      background: #fff;
+      border: 1px solid var(--gray-200, #e5e7eb);
+      color: var(--gray-600);
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .approvals-table .btn-view-icon:hover { background: var(--gray-100); color: var(--navy); }
+    .approvals-table .btn-view-icon i { font-size: 16px; }
+
+    .action-grid { display: grid; grid-template-columns: 150px 88px 32px; gap: 8px; align-items: center; }
+    .action-grid .btn { width: 100%; }
+
+    /* Request detail modal */
+    .rm-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(15,23,42,.45);
+      align-items: center; justify-content: center;
+      z-index: 100;
+    }
+    .rm-overlay.open { display: flex; }
+    .rm-modal {
+      background: #fff;
+      width: 420px;
+      max-width: 92vw;
+      border-radius: 12px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.25);
+      overflow: hidden;
+    }
+    .rm-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      padding: 18px 20px 12px;
+      border-bottom: .5px solid var(--gray-200);
+    }
+    .rm-header-id { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
+    .rm-close {
+      border: none; background: transparent; color: var(--gray-500);
+      width: 28px; height: 28px; border-radius: 6px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .rm-close:hover { background: var(--gray-100); color: var(--navy); }
+    .rm-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+    .rm-row { display: flex; justify-content: space-between; font-size: 12.5px; }
+    .rm-row span:first-child { color: var(--gray-500); }
+    .rm-row span:last-child { color: var(--gray-900); font-weight: 500; text-align: right; }
+    .rm-desc { font-size: 12.5px; color: var(--gray-700); line-height: 1.5; background: var(--gray-50, #f8fafc); padding: 10px 12px; border-radius: 8px; }
+    .rm-footer { display: flex; gap: 8px; padding: 14px 20px 20px; }
+    .rm-footer .btn { flex: 1; height: 34px; font-size: 12.5px; justify-content: center; }
   </style>
 </head>
 <body>
@@ -73,10 +167,10 @@
       </div>
 
       <div class="tabs">
-        <div class="tab active">All (4)</div>
-        <div class="tab">Password reset</div>
-        <div class="tab">Access</div>
-        <div class="tab">Schedule/Leave</div>
+        <div class="tab active" onclick="filterRequests('All', this)">All (4)</div>
+        <div class="tab" onclick="filterRequests('Password reset', this)">Password reset</div>
+        <div class="tab" onclick="filterRequests('Access request', this)">Access</div>
+        <div class="tab" onclick="filterRequests('Schedule/Leave', this)">Schedule/Leave</div>
       </div>
 
       <table class="approvals-table">
@@ -84,7 +178,9 @@
           <tr><th>Request</th><th>Type</th><th>Staff member</th><th>Submitted</th><th>Status</th><th>Actions</th></tr>
         </thead>
         <tbody>
-          <tr>
+          <tr data-id="SR-2026-0301" data-title="Forgot login password" data-type="Password reset"
+              data-staff="Regular Staff 1" data-submitted="Jul 25, 2026" data-status="Awaiting action"
+              data-desc="Staff member reported being locked out of their account and is unable to reset it themselves. Verify identity before resetting.">
             <td>
               <div class="td-bold">Forgot login password</div>
               <div class="td-muted" style="font-size:11.5px;margin-top:2px;">SR-2026-0301 · Password reset</div>
@@ -97,11 +193,13 @@
               <div class="action-grid">
                 <button class="btn btn-lightgreen" onclick="showToast('Password reset for SR-2026-0301 sent')">Reset password</button>
                 <button class="btn btn-coral" onclick="showToast('Request SR-2026-0301 declined','error')">Decline</button>
-                <button class="btn btn-ghost">View</button>
+                <button class="btn-view-icon" title="View request" onclick="openRequestModal(this)"><i class="ti ti-eye"></i></button>
               </div>
             </td>
           </tr>
-          <tr>
+          <tr data-id="SR-2026-0302" data-title="Forgot login password" data-type="Password reset"
+              data-staff="Regular Staff 3" data-submitted="Jul 25, 2026" data-status="Awaiting action"
+              data-desc="Staff member reported being locked out of their account and is unable to reset it themselves. Verify identity before resetting.">
             <td>
               <div class="td-bold">Forgot login password</div>
               <div class="td-muted" style="font-size:11.5px;margin-top:2px;">SR-2026-0302 · Password reset</div>
@@ -114,11 +212,13 @@
               <div class="action-grid">
                 <button class="btn btn-lightgreen" onclick="showToast('Password reset for SR-2026-0302 sent')">Reset password</button>
                 <button class="btn btn-coral" onclick="showToast('Request SR-2026-0302 declined','error')">Decline</button>
-                <button class="btn btn-ghost">View</button>
+                <button class="btn-view-icon" title="View request" onclick="openRequestModal(this)"><i class="ti ti-eye"></i></button>
               </div>
             </td>
           </tr>
-          <tr>
+          <tr data-id="SR-2026-0303" data-title="Access to Records module" data-type="Access request"
+              data-staff="Regular Staff 2" data-submitted="Jul 26, 2026" data-status="Awaiting action"
+              data-desc="Staff member is requesting access to the Records module to support day-to-day document processing tasks.">
             <td>
               <div class="td-bold">Access to Records module</div>
               <div class="td-muted" style="font-size:11.5px;margin-top:2px;">SR-2026-0303 · Access request</div>
@@ -131,11 +231,13 @@
               <div class="action-grid">
                 <button class="btn btn-lightgreen" onclick="showToast('Access granted for SR-2026-0303')">Grant access</button>
                 <button class="btn btn-coral" onclick="showToast('Request SR-2026-0303 declined','error')">Decline</button>
-                <button class="btn btn-ghost">View</button>
+                <button class="btn-view-icon" title="View request" onclick="openRequestModal(this)"><i class="ti ti-eye"></i></button>
               </div>
             </td>
           </tr>
-          <tr>
+          <tr data-id="SR-2026-0304" data-title="Leave — family emergency" data-type="Schedule/Leave"
+              data-staff="Regular Staff 1" data-submitted="Jul 27, 2026" data-status="Awaiting action"
+              data-desc="Staff member is requesting emergency leave due to a family matter. No end date specified yet.">
             <td>
               <div class="td-bold">Leave — family emergency</div>
               <div class="td-muted" style="font-size:11.5px;margin-top:2px;">SR-2026-0304 · Schedule/Leave</div>
@@ -148,23 +250,91 @@
               <div class="action-grid">
                 <button class="btn btn-lightgreen" onclick="showToast('Leave approved for SR-2026-0304')">Approve</button>
                 <button class="btn btn-coral" onclick="showToast('Request SR-2026-0304 declined','error')">Decline</button>
-                <button class="btn btn-ghost">View</button>
+                <button class="btn-view-icon" title="View request" onclick="openRequestModal(this)"><i class="ti ti-eye"></i></button>
               </div>
             </td>
           </tr>
         </tbody>
       </table>
       <div style="display:flex;justify-content:space-between;padding:10px 16px;font-size:11px;color:var(--gray-500);border-top:.5px solid var(--gray-200);">
-        <span>Showing 4 of 4 staff requests</span>
+        <span id="requestsCount">Showing 4 of 4 staff requests</span>
         <span>Oldest submitted 2 days ago</span>
       </div>
     </div>
   </div>
 </div>
 
+<!-- Request detail modal -->
+<div class="rm-overlay" id="rmOverlay" onclick="if(event.target===this)closeRequestModal()">
+  <div class="rm-modal">
+    <div class="rm-header">
+      <div>
+        <div class="td-bold" id="rmTitle" style="font-size:14.5px;"></div>
+        <div class="rm-header-id" id="rmId"></div>
+      </div>
+      <button class="rm-close" onclick="closeRequestModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="rm-body">
+      <div class="rm-row"><span>Type</span><span id="rmType"></span></div>
+      <div class="rm-row"><span>Staff member</span><span id="rmStaff"></span></div>
+      <div class="rm-row"><span>Submitted</span><span id="rmSubmitted"></span></div>
+      <div class="rm-row"><span>Status</span><span id="rmStatus"></span></div>
+      <div class="rm-desc" id="rmDesc"></div>
+    </div>
+    <div class="rm-footer" id="rmFooter"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <script>
   renderHeadStaffSidebar('requests');
+
+  function openRequestModal(btn) {
+    const row = btn.closest('tr');
+    const id = row.dataset.id;
+    document.getElementById('rmTitle').textContent = row.dataset.title;
+    document.getElementById('rmId').textContent = id + ' · ' + row.dataset.type;
+    document.getElementById('rmType').textContent = row.dataset.type;
+    document.getElementById('rmStaff').textContent = row.dataset.staff;
+    document.getElementById('rmSubmitted').textContent = row.dataset.submitted;
+    document.getElementById('rmStatus').textContent = row.dataset.status;
+    document.getElementById('rmDesc').textContent = row.dataset.desc;
+
+    // Rebuild footer actions from the same row so they stay in sync
+    const rowActions = row.querySelectorAll('.action-grid button');
+    const footer = document.getElementById('rmFooter');
+    footer.innerHTML = '';
+    rowActions.forEach(btnEl => {
+      if (btnEl.classList.contains('btn-view-icon')) return;
+      const clone = document.createElement('button');
+      clone.className = 'btn ' + (btnEl.classList.contains('btn-coral') ? 'btn-coral' : 'btn-lightgreen');
+      clone.textContent = btnEl.textContent;
+      clone.onclick = () => { btnEl.click(); closeRequestModal(); };
+      footer.appendChild(clone);
+    });
+
+    document.getElementById('rmOverlay').classList.add('open');
+  }
+
+  function closeRequestModal() {
+    document.getElementById('rmOverlay').classList.remove('open');
+  }
+
+  function filterRequests(type, tabEl) {
+    document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+    tabEl.classList.add('active');
+
+    const rows = document.querySelectorAll('.approvals-table tbody tr');
+    let visibleCount = 0;
+    rows.forEach(row => {
+      const match = type === 'All' || row.dataset.type === type;
+      row.style.display = match ? '' : 'none';
+      if (match) visibleCount++;
+    });
+
+    document.getElementById('requestsCount').textContent =
+      'Showing ' + visibleCount + ' of ' + rows.length + ' staff requests';
+  }
 </script>
 </body>
 </html>

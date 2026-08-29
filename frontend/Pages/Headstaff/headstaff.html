@@ -5,7 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Arkheion — Staff Management</title>
   <link rel="stylesheet" href="output.css">
-  <style>body{display:flex;}</style>
+  <style>
+    body{display:flex;}
+
+    /* Self-contained modal styling so Edit / Reset / Deactivate always pop up centered.
+       !important here guards against any conflicting .modal-overlay rule in output.css. */
+    .modal-overlay { display:none !important; position:fixed !important; inset:0; background:rgba(15,23,42,.45); align-items:center; justify-content:center; z-index:2147483000; }
+    .modal-overlay.open { display:flex !important; }
+    .modal { background:#fff; width:440px; max-width:92vw; max-height:88vh; overflow-y:auto; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,.25); }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; padding:18px 20px; border-bottom:.5px solid var(--gray-200,#e5e7eb); }
+    .modal-title { font-size:14.5px; font-weight:600; color:var(--gray-900,#0f172a); }
+    .modal-close { border:none; background:transparent; color:var(--gray-500,#64748b); width:28px; height:28px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+    .modal-close:hover { background:var(--gray-100,#f1f5f9); }
+    .modal-body { padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
+    .modal-footer { display:flex; gap:8px; justify-content:flex-end; padding:14px 20px 20px; border-top:.5px solid var(--gray-200,#e5e7eb); }
+    .form-group { display:flex; flex-direction:column; gap:6px; font-size:12.5px; }
+    .form-group label { color:var(--gray-600,#475569); font-weight:500; }
+    .form-group input, .form-group select { border:1px solid var(--gray-200,#e5e7eb); border-radius:8px; padding:8px 10px; font-size:13px; }
+    .form-2col { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .required { color:#c0392b; }
+    .btn-icon-green { background:#e7f5ec !important; color:#1e8a4c !important; border:none !important; }
+    .btn-icon-green:hover { opacity:.85; }
+    .btn-icon-green i { color:#1e8a4c !important; }
+    .row-inactive td { background:#fdecea !important; }
+    .row-inactive td:first-child { box-shadow: inset 3px 0 0 #e74c3c; }
+  </style>
 </head>
 <body>
 <script src="sidebar-headstaff.js"></script>
@@ -62,8 +86,9 @@
             <td class="td-muted">System default</td>
             <td>
               <div style="display:flex;gap:4px;">
-                <button class="btn btn-ghost btn-sm btn-icon" title="Edit" onclick="openModal('modal-edit-staff')"><i class="ti ti-edit"></i></button>
-                <button class="btn btn-ghost btn-sm btn-icon" title="Reset password" onclick="openModal('modal-reset-pw')"><i class="ti ti-lock-reset"></i></button>
+                <button class="btn btn-ghost btn-sm btn-icon" title="Edit" onclick="openEditModal(this)"><i class="ti ti-edit"></i></button>
+                <button class="btn btn-ghost btn-sm btn-icon" title="Reset password" onclick="openResetModal(this)"><i class="ti ti-key"></i></button>
+                <button class="btn btn-coral btn-sm btn-icon" title="Deactivate" data-role="toggle-status" onclick="confirmToggleStatus(this, 'Head Staff')"><i class="ti ti-user-off"></i></button>
               </div>
             </td>
           </tr>
@@ -76,9 +101,9 @@
             <td class="td-muted">Jul 1, 2026</td>
             <td>
               <div style="display:flex;gap:4px;">
-                <button class="btn btn-ghost btn-sm btn-icon" title="Edit" onclick="openModal('modal-edit-staff')"><i class="ti ti-edit"></i></button>
-                <button class="btn btn-ghost btn-sm btn-icon" title="Reset password" onclick="openModal('modal-reset-pw')"><i class="ti ti-lock-reset"></i></button>
-                <button class="btn btn-coral btn-sm btn-icon" title="Deactivate" onclick="confirmDeactivate('Regular Staff 1')"><i class="ti ti-user-off"></i></button>
+                <button class="btn btn-ghost btn-sm btn-icon" title="Edit" onclick="openEditModal(this)"><i class="ti ti-edit"></i></button>
+                <button class="btn btn-ghost btn-sm btn-icon" title="Reset password" onclick="openResetModal(this)"><i class="ti ti-key"></i></button>
+                <button class="btn btn-coral btn-sm btn-icon" title="Deactivate" data-role="toggle-status" onclick="confirmToggleStatus(this, 'Regular Staff 1')"><i class="ti ti-user-off"></i></button>
               </div>
             </td>
           </tr>
@@ -91,9 +116,9 @@
             <td class="td-muted">Jul 20, 2026</td>
             <td>
               <div style="display:flex;gap:4px;">
-                <button class="btn btn-ghost btn-sm btn-icon" title="Edit" onclick="openModal('modal-edit-staff')"><i class="ti ti-edit"></i></button>
-                <button class="btn btn-ghost btn-sm btn-icon" title="Reset password" onclick="openModal('modal-reset-pw')"><i class="ti ti-lock-reset"></i></button>
-                <button class="btn btn-coral btn-sm btn-icon" title="Deactivate" onclick="confirmDeactivate('Regular Staff 2')"><i class="ti ti-user-off"></i></button>
+                <button class="btn btn-ghost btn-sm btn-icon" title="Edit" onclick="openEditModal(this)"><i class="ti ti-edit"></i></button>
+                <button class="btn btn-ghost btn-sm btn-icon" title="Reset password" onclick="openResetModal(this)"><i class="ti ti-key"></i></button>
+                <button class="btn btn-coral btn-sm btn-icon" title="Deactivate" data-role="toggle-status" onclick="confirmToggleStatus(this, 'Regular Staff 2')"><i class="ti ti-user-off"></i></button>
               </div>
             </td>
           </tr>
@@ -112,18 +137,44 @@
     </div>
     <div class="modal-body">
       <div class="form-2col">
-        <div class="form-group"><label>First name <span class="required">*</span></label><input type="text" placeholder="First name"></div>
-        <div class="form-group"><label>Last name <span class="required">*</span></label><input type="text" placeholder="Last name"></div>
+        <div class="form-group"><label>First name <span class="required">*</span></label><input type="text" id="add-first-name" placeholder="First name"></div>
+        <div class="form-group"><label>Last name <span class="required">*</span></label><input type="text" id="add-last-name" placeholder="Last name"></div>
       </div>
-      <div class="form-group"><label>Username <span class="required">*</span></label><input type="text" placeholder="e.g. osca_staff3"></div>
-      <div class="form-group"><label>Role <span class="required">*</span></label><select><option>Regular Staff</option><option>Head Staff</option></select></div>
-      <div class="form-group"><label>Temporary password <span class="required">*</span></label><input type="password" placeholder="Set initial password"></div>
-      <div class="form-group"><label>Contact number</label><input type="text" placeholder="e.g. 09XX-XXX-XXXX"></div>
+      <div class="form-group"><label>Username <span class="required">*</span></label><input type="text" id="add-username" placeholder="e.g. osca_staff3"></div>
+      <div class="form-group"><label>Role <span class="required">*</span></label>
+        <select id="add-role"><option value="Regular Staff">Regular Staff</option><option value="Head Staff">Head Staff</option></select>
+      </div>
+      <div class="form-group"><label>Temporary password <span class="required">*</span></label><input type="password" id="add-password" placeholder="Set initial password"></div>
+      <div class="form-group"><label>Contact number</label><input type="text" id="add-contact" placeholder="e.g. 09XX-XXX-XXXX"></div>
       <div class="alert alert-teal"><i class="ti ti-info-circle"></i>The staff member will be required to change this password on their first login.</div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-add-staff')">Cancel</button>
-      <button class="btn btn-navy" onclick="closeModal('modal-add-staff');showToast('Staff account created successfully!')"><i class="ti ti-plus"></i> Create account</button>
+      <button class="btn btn-navy" onclick="createStaffAccount()"><i class="ti ti-plus"></i> Create account</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Edit staff -->
+<div class="modal-overlay" id="modal-edit-staff" onclick="if(event.target===this)closeModal('modal-edit-staff')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Edit staff account</span>
+      <button class="modal-close" onclick="closeModal('modal-edit-staff')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-2col">
+        <div class="form-group"><label>First name <span class="required">*</span></label><input type="text" id="edit-first-name" placeholder="First name"></div>
+        <div class="form-group"><label>Last name <span class="required">*</span></label><input type="text" id="edit-last-name" placeholder="Last name"></div>
+      </div>
+      <div class="form-group"><label>Username <span class="required">*</span></label><input type="text" id="edit-username" placeholder="Username"></div>
+      <div class="form-group"><label>Role <span class="required">*</span></label>
+        <select id="edit-role"><option value="Regular Staff">Regular Staff</option><option value="Head Staff">Head Staff</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit-staff')">Cancel</button>
+      <button class="btn btn-navy" onclick="saveEditStaff()"><i class="ti ti-device-floppy"></i> Save changes</button>
     </div>
   </div>
 </div>
@@ -137,23 +188,216 @@
     </div>
     <div class="modal-body">
       <div class="alert alert-amber"><i class="ti ti-alert-triangle"></i>This will reset the staff member's password. They will be required to change it on next login.</div>
-      <div class="form-group"><label>New temporary password <span class="required">*</span></label><input type="password" placeholder="Set new temporary password"></div>
+      <div class="form-group"><label>New temporary password <span class="required">*</span></label><input type="password" id="reset-pw-input" placeholder="Set new temporary password"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-reset-pw')">Cancel</button>
-      <button class="btn btn-navy" onclick="closeModal('modal-reset-pw');showToast('Password reset successfully!')"><i class="ti ti-lock-reset"></i> Reset password</button>
+      <button class="btn btn-navy" onclick="confirmResetPassword()"><i class="ti ti-key"></i> Reset password</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Deactivate / Activate confirmation -->
+<div class="modal-overlay" id="modal-toggle-status" onclick="if(event.target===this)closeModal('modal-toggle-status')">
+  <div class="modal" style="width:380px;">
+    <div class="modal-header">
+      <span class="modal-title" id="toggle-status-title">Deactivate staff account</span>
+      <button class="modal-close" onclick="closeModal('modal-toggle-status')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-amber"><i class="ti ti-alert-triangle"></i><span id="toggle-status-message"></span></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-toggle-status')">Cancel</button>
+      <button class="btn btn-coral" id="toggle-status-confirm-btn" onclick="performToggleStatus()"><i class="ti ti-user-off"></i> Deactivate</button>
     </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 <script>
-  renderHeadStaffSidebar('staffmgmt');
+  // Declare shared state first so it's never left uninitialized,
+  // even if something below (like the sidebar call) throws.
+  let activeStaffRow = null;
+  let pendingToggleRow = null;
+  let pendingToggleName = null;
+  let pendingToggleActivate = false;
 
-  function confirmDeactivate(name) {
-    if (confirm(`Are you sure you want to deactivate ${name}'s account? They will no longer be able to log in.`)) {
-      showToast(`${name}'s account has been deactivated.`);
+  if (typeof renderHeadStaffSidebar === 'function') {
+    renderHeadStaffSidebar('staffmgmt');
+  }
+
+  function openModal(id) {
+    document.getElementById(id).classList.add('open');
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+
+  function updateStaffStats(activeDelta, pendingDelta, totalDelta) {
+    const cards = document.querySelectorAll('.stats-grid .stat-card');
+    const totalEl = cards[0].querySelector('.stat-value');
+    const activeEl = cards[1].querySelector('.stat-value');
+    const pendingEl = cards[2].querySelector('.stat-value');
+    totalEl.textContent = parseInt(totalEl.textContent) + (totalDelta || 0);
+    activeEl.textContent = parseInt(activeEl.textContent) + (activeDelta || 0);
+    pendingEl.textContent = parseInt(pendingEl.textContent) + (pendingDelta || 0);
+  }
+
+  function createStaffAccount() {
+    const firstName = document.getElementById('add-first-name').value.trim();
+    const lastName = document.getElementById('add-last-name').value.trim();
+    const username = document.getElementById('add-username').value.trim();
+    const role = document.getElementById('add-role').value;
+    const password = document.getElementById('add-password').value.trim();
+
+    if (!firstName || !lastName || !username || !password) {
+      showToast('Please fill in all required fields', 'error');
+      return;
     }
+
+    const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const roleBadge = role === 'Head Staff'
+      ? '<span class="badge badge-hs">Head Staff</span>'
+      : '<span class="badge badge-rs">Regular Staff</span>';
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td class="td-bold">${firstName} ${lastName}</td>
+      <td class="td-muted">${username}</td>
+      <td>${roleBadge}</td>
+      <td><span class="badge badge-pend">First login</span></td>
+      <td class="td-muted">Never</td>
+      <td class="td-muted">${today}</td>
+      <td>
+        <div style="display:flex;gap:4px;">
+          <button class="btn btn-ghost btn-sm btn-icon" title="Edit" onclick="openEditModal(this)"><i class="ti ti-edit"></i></button>
+          <button class="btn btn-ghost btn-sm btn-icon" title="Reset password" onclick="openResetModal(this)"><i class="ti ti-key"></i></button>
+          <button class="btn btn-coral btn-sm btn-icon" title="Deactivate" data-role="toggle-status" onclick="confirmToggleStatus(this, '${firstName} ${lastName}')"><i class="ti ti-user-off"></i></button>
+        </div>
+      </td>
+    `;
+    document.querySelector('table tbody').appendChild(row);
+
+    ['add-first-name','add-last-name','add-username','add-password','add-contact'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('add-role').value = 'Regular Staff';
+
+    closeModal('modal-add-staff');
+    showToast('Staff account created successfully!');
+    updateStaffStats(0, 1, 1);
+  }
+
+  function openEditModal(btn) {
+    activeStaffRow = btn.closest('tr');
+    const fullName = activeStaffRow.children[0].textContent.trim();
+    const [first, ...rest] = fullName.split(' ');
+    document.getElementById('edit-first-name').value = first || '';
+    document.getElementById('edit-last-name').value = rest.join(' ');
+    document.getElementById('edit-username').value = activeStaffRow.children[1].textContent.trim();
+    document.getElementById('edit-role').value = activeStaffRow.children[2].textContent.trim().includes('Head') ? 'Head Staff' : 'Regular Staff';
+    openModal('modal-edit-staff');
+  }
+
+  function saveEditStaff() {
+    if (!activeStaffRow) return;
+    const first = document.getElementById('edit-first-name').value.trim();
+    const last = document.getElementById('edit-last-name').value.trim();
+    const username = document.getElementById('edit-username').value.trim();
+    const role = document.getElementById('edit-role').value;
+
+    if (!first || !last || !username) {
+      showToast('Please fill in all required fields', 'error');
+      return;
+    }
+
+    activeStaffRow.children[0].textContent = `${first} ${last}`;
+    activeStaffRow.children[1].textContent = username;
+    activeStaffRow.children[2].innerHTML = role === 'Head Staff'
+      ? '<span class="badge badge-hs">Head Staff</span>'
+      : '<span class="badge badge-rs">Regular Staff</span>';
+
+    closeModal('modal-edit-staff');
+    showToast('Staff account updated successfully!');
+  }
+
+  function openResetModal(btn) {
+    activeStaffRow = btn.closest('tr');
+    openModal('modal-reset-pw');
+  }
+
+  function confirmResetPassword() {
+    const pwInput = document.getElementById('reset-pw-input');
+    if (!pwInput.value.trim()) {
+      showToast('Please set a new temporary password', 'error');
+      return;
+    }
+    const name = activeStaffRow ? activeStaffRow.children[0].textContent.trim() : 'Staff';
+    pwInput.value = '';
+    closeModal('modal-reset-pw');
+    showToast(`Password reset successfully for ${name}!`);
+  }
+
+  function confirmToggleStatus(btn, name) {
+    const row = btn.closest('tr');
+    const statusText = row.children[3].textContent.trim();
+    const isCurrentlyActive = statusText === 'Active' || statusText === 'First login';
+
+    pendingToggleRow = row;
+    pendingToggleName = name;
+    pendingToggleActivate = !isCurrentlyActive;
+
+    document.getElementById('toggle-status-title').textContent =
+      pendingToggleActivate ? 'Activate staff account' : 'Deactivate staff account';
+    document.getElementById('toggle-status-message').textContent = pendingToggleActivate
+      ? `Reactivate ${name}'s account? They will be able to log in again.`
+      : `Are you sure you want to deactivate ${name}'s account? They will no longer be able to log in.`;
+
+    const confirmBtn = document.getElementById('toggle-status-confirm-btn');
+    confirmBtn.className = pendingToggleActivate ? 'btn btn-icon-green' : 'btn btn-coral';
+    confirmBtn.innerHTML = pendingToggleActivate
+      ? '<i class="ti ti-user-check"></i> Activate'
+      : '<i class="ti ti-user-off"></i> Deactivate';
+
+    openModal('modal-toggle-status');
+  }
+
+  function performToggleStatus() {
+    if (!pendingToggleRow) return;
+    const statusCell = pendingToggleRow.children[3];
+    const wasActive = statusCell.textContent.trim() === 'Active';
+
+    statusCell.innerHTML = pendingToggleActivate
+      ? '<span class="badge badge-ok">Active</span>'
+      : '<span class="badge badge-inactive" style="background:#fdecea;color:#c0392b;">Inactive</span>';
+
+    pendingToggleRow.classList.toggle('row-inactive', !pendingToggleActivate);
+
+    const toggleBtn = pendingToggleRow.querySelector('[data-role="toggle-status"]');
+    if (toggleBtn) {
+      if (pendingToggleActivate) {
+        toggleBtn.title = 'Deactivate';
+        toggleBtn.className = 'btn btn-coral btn-sm btn-icon';
+        toggleBtn.innerHTML = '<i class="ti ti-user-off"></i>';
+      } else {
+        toggleBtn.title = 'Activate';
+        toggleBtn.className = 'btn btn-icon-green btn-sm btn-icon';
+        toggleBtn.innerHTML = '<i class="ti ti-user-check"></i>';
+      }
+    }
+
+    const resetBtn = pendingToggleRow.querySelector('[title="Reset password"]');
+    if (resetBtn) {
+      resetBtn.disabled = !pendingToggleActivate;
+      resetBtn.style.opacity = pendingToggleActivate ? '' : '.4';
+      resetBtn.style.pointerEvents = pendingToggleActivate ? '' : 'none';
+    }
+
+    showToast(pendingToggleActivate
+      ? `${pendingToggleName}'s account has been activated.`
+      : `${pendingToggleName}'s account has been deactivated.`);
+
+    updateStaffStats(pendingToggleActivate ? 1 : (wasActive ? -1 : 0), 0, 0);
+    closeModal('modal-toggle-status');
   }
 </script>
 </body>

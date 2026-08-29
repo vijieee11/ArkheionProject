@@ -5,18 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Arkheion — Map View</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     body{display:flex;}
-    .map-wrap{position:relative;height:520px;background:var(--gray-50);border-radius:var(--radius);overflow:hidden;}
-    .map-grid-full{position:absolute;inset:0;background-image:linear-gradient(var(--gray-200) 1px, transparent 1px), linear-gradient(90deg, var(--gray-200) 1px, transparent 1px);background-size:40px 40px;opacity:.5;}
-    .map-pin-full{position:absolute;font-size:26px;cursor:pointer;transform:translate(-50%,-100%);transition:transform .15s;}
-    .map-pin-full:hover{transform:translate(-50%,-100%) scale(1.15);}
+    .map-wrap{position:relative;height:520px;border-radius:var(--radius);overflow:hidden;}
+    #leaflet-map{height:100%;width:100%;background:var(--gray-50);}
+    .map-legend-full{position:absolute;bottom:14px;left:14px;background:var(--white);border-radius:var(--radius-sm);padding:10px 14px;box-shadow:var(--shadow);display:flex;gap:14px;font-size:12px;z-index:500;}
     .pin-ok{color:var(--navy);}
     .pin-inc{color:var(--gold-dark);}
     .pin-urg{color:var(--coral-600);}
-    .map-legend-full{position:absolute;bottom:14px;left:14px;background:var(--white);border-radius:var(--radius-sm);padding:10px 14px;box-shadow:var(--shadow);display:flex;gap:14px;font-size:12px;}
-    .pin-popup{position:absolute;background:var(--white);border-radius:var(--radius-sm);box-shadow:var(--shadow);padding:12px 14px;width:220px;font-size:12px;z-index:10;display:none;}
-    .pin-popup.open{display:block;}
+    /* Custom divIcon markers for senior-citizen pins (colored by status) */
+    .member-pin{font-size:26px;transform:translate(-50%,-100%);cursor:pointer;}
+    .member-pin i{filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));}
+    /* Small dot markers for the 20 real barangay centers, shown for context */
+    .brgy-dot{width:9px;height:9px;border-radius:50%;background:var(--navy-light,#0F6E56);border:2px solid var(--white);box-shadow:0 1px 3px rgba(0,0,0,.3);}
+    .leaflet-popup-content{font-family:var(--font-body);font-size:12px;}
+    /* Shrink the required OSM attribution so it's unobtrusive without
+       removing it — OpenStreetMap's terms of use require it to stay visible. */
+    .leaflet-control-attribution{font-size:9px !important;opacity:.75;padding:1px 6px !important;}
+    .leaflet-control-attribution a{color:var(--navy-light,#0F6E56) !important;}
   </style>
 </head>
 <body>
@@ -25,7 +32,7 @@
   <div class="topbar">
     <span class="topbar-title">Senior citizen map</span>
     <div class="topbar-actions" style="margin-left:auto;">
-      <button class="btn btn-ghost btn-sm"><i class="ti ti-download"></i> Export map data</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportMapData()"><i class="ti ti-download"></i> Export map data</button>
     </div>
   </div>
 
@@ -52,16 +59,11 @@
       <div class="card-header">
         <div>
           <div class="card-title">Barangay map — Carmen, Davao del Norte</div>
-          <div class="card-subtitle">Click a pin to view member details</div>
+          <div class="card-subtitle">All 20 barangays shown · click a pin to view member details</div>
         </div>
         <div class="card-actions">
           <select class="filter-select" id="brgy-filter" onchange="filterPins()">
             <option value="all">All barangays</option>
-            <option value="Brgy 1">Brgy 1</option>
-            <option value="Brgy 2">Brgy 2</option>
-            <option value="Brgy 3">Brgy 3</option>
-            <option value="Brgy 4">Brgy 4</option>
-            <option value="Brgy 5">Brgy 5</option>
           </select>
           <select class="filter-select" id="status-filter" onchange="filterPins()">
             <option value="all">All status</option>
@@ -73,12 +75,12 @@
       </div>
       <div style="padding:16px;">
         <div class="map-wrap" id="map-wrap">
-          <div class="map-grid-full"></div>
-          <!-- pins injected by JS -->
+          <div id="leaflet-map"></div>
           <div class="map-legend-full">
             <span style="color:var(--navy)">● Complete</span>
             <span style="color:var(--gold-dark)">● Incomplete</span>
             <span style="color:var(--coral-600)">● Urgent</span>
+            <span style="color:var(--navy-light,#0F6E56)">● Barangay center</span>
           </div>
         </div>
       </div>
@@ -87,58 +89,164 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
   renderSidebar('map');
 
-  const members = [
-    { name:'Juan dela Cruz',   osca:'2024-001', brgy:'Brgy 2', status:'ok',  top:'18%', left:'26%' },
-    { name:'Maria Santos',     osca:'2023-087', brgy:'Brgy 5', status:'ok',  top:'36%', left:'50%' },
-    { name:'Rosario Mendoza',  osca:'2025-012', brgy:'Brgy 4', status:'inc', top:'55%', left:'20%' },
-    { name:'Lourdes Garcia',   osca:'2022-114', brgy:'Brgy 3', status:'ok',  top:'22%', left:'65%' },
-    { name:'Pedro Ramos',      osca:'2024-033', brgy:'Brgy 1', status:'urg', top:'62%', left:'56%' },
-    { name:'Felipe Torres',    osca:'2023-055', brgy:'Brgy 2', status:'ok',  top:'42%', left:'74%' },
+  // The 20 actual barangays of Carmen, Davao del Norte, with real
+  // coordinates (from barangay hall locations) and 2020 census population.
+  const barangays = [
+    { name:'Alejal',                lat:7.385608, lng:125.658913, pop:8174 },
+    { name:'Anibongan',             lat:7.385836, lng:125.716116, pop:3234 },
+    { name:'Asuncion (Cuatro-Cuatro)', lat:7.345590, lng:125.688887, pop:1860 },
+    { name:'Cebulano',              lat:7.351393, lng:125.671377, pop:2662 },
+    { name:'Guadalupe',             lat:7.377131, lng:125.742069, pop:3150 },
+    { name:'Ising (Poblacion)',     lat:7.357528, lng:125.702119, pop:14204 },
+    { name:'La Paz',                lat:7.321765, lng:125.718571, pop:2757 },
+    { name:'Mabaus',                lat:7.417509, lng:125.750059, pop:1714 },
+    { name:'Mabuhay',               lat:7.337211, lng:125.555594, pop:1656 },
+    { name:'Magsaysay',             lat:7.397401, lng:125.635500, pop:4208 },
+    { name:'Mangalcal',             lat:7.366278, lng:125.660711, pop:4243 },
+    { name:'Minda',                 lat:7.357951, lng:125.582526, pop:1226 },
+    { name:'New Camiling',          lat:7.382295, lng:125.680609, pop:3829 },
+    { name:'Salvacion',             lat:7.404260, lng:125.707401, pop:1724 },
+    { name:'San Isidro',            lat:7.404899, lng:125.708830, pop:2377 },
+    { name:'Santo Niño',            lat:7.334990, lng:125.694722, pop:6210 },
+    { name:'Taba',                  lat:7.348628, lng:125.727038, pop:1619 },
+    { name:'Tibulao',               lat:7.374005, lng:125.560429, pop:1574 },
+    { name:'Tubod',                 lat:7.367831, lng:125.630161, pop:10631 },
+    { name:'Tuganay',               lat:7.370734, lng:125.721613, pop:4966 },
   ];
 
-  function renderPins(filterBrgy='all', filterStatus='all'){
-    const wrap = document.getElementById('map-wrap');
-    wrap.querySelectorAll('.map-pin-full, .pin-popup').forEach(el => el.remove());
+  // Sample senior-citizen members — each pinned at their real barangay's
+  // coordinates (with a small offset so multiple pins in one barangay don't
+  // sit exactly on top of each other).
+  const members = [
+    { name:'Juan dela Cruz',  osca:'2024-001', brgy:'Ising (Poblacion)', status:'ok',  dlat: 0.0025, dlng:-0.0025 },
+    { name:'Maria Santos',    osca:'2023-087', brgy:'Tuganay',           status:'ok',  dlat:-0.0020, dlng: 0.0018 },
+    { name:'Rosario Mendoza', osca:'2025-012', brgy:'Tubod',             status:'inc', dlat: 0.0015, dlng: 0.0022 },
+    { name:'Lourdes Garcia',  osca:'2022-114', brgy:'Alejal',            status:'ok',  dlat:-0.0018, dlng:-0.0015 },
+    { name:'Pedro Ramos',     osca:'2024-033', brgy:'Mangalcal',         status:'urg', dlat: 0.0020, dlng:-0.0020 },
+    { name:'Felipe Torres',   osca:'2023-055', brgy:'New Camiling',      status:'ok',  dlat:-0.0022, dlng: 0.0020 },
+    { name:'Wyndell Joshua Camacho',   osca:'2024-057', brgy:'Tuganay',      status:'urg',  dlat:-0.0022, dlng: 0.0020 },
 
-    members.forEach((m, i) => {
+  ];
+
+  // Populate the barangay filter dropdown from the real list.
+  const brgySelect = document.getElementById('brgy-filter');
+  barangays.forEach(b => {
+    const opt = document.createElement('option');
+    opt.value = b.name;
+    opt.textContent = b.name;
+    brgySelect.appendChild(opt);
+  });
+
+  // Restrict the map to Carmen, Davao del Norte only — computed from the
+  // min/max lat/lng of all 20 barangays above, with a little padding.
+  const carmenBounds = L.latLngBounds(
+    [7.29, 125.52],   // southwest corner
+    [7.45, 125.78]    // northeast corner
+  );
+
+  const map = L.map('leaflet-map', {
+    scrollWheelZoom: true,
+    minZoom: 11,
+    maxZoom: 17,
+    maxBounds: carmenBounds,
+    maxBoundsViscosity: 1.0, // fully "solid" edges — can't drag/pan past Carmen
+  }).setView([7.3556, 125.7045], 12);
+  map.setMaxBounds(carmenBounds);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 18,
+  }).addTo(map);
+
+  // The map div's real size isn't always known yet at the moment L.map()
+  // runs (sidebar insertion / layout reflow can still be pending), which
+  // makes Leaflet miscalculate and fall back to a zoomed-out view. Forcing
+  // a resize check — and re-fitting to Carmen's bounds — after layout
+  // settles fixes it, and doubles as a safety net if anything ever nudges
+  // the view outside the allowed area.
+  function fixMapSize() {
+    map.invalidateSize();
+    map.fitBounds(carmenBounds);
+  }
+  setTimeout(fixMapSize, 100);
+  setTimeout(fixMapSize, 500);
+  window.addEventListener('load', fixMapSize);
+  window.addEventListener('resize', () => map.invalidateSize());
+
+  // Barangay center reference dots — always shown for geographic context.
+  barangays.forEach(b => {
+    const icon = L.divIcon({ className: '', html: '<div class="brgy-dot"></div>', iconSize: [9,9] });
+    L.marker([b.lat, b.lng], { icon, zIndexOffset: -100 })
+      .addTo(map)
+      .bindPopup(`<strong>Barangay ${b.name}</strong><br>Population (2020 census): ${b.pop.toLocaleString()}`);
+  });
+
+  let memberMarkers = [];
+
+  function statusClass(s){ return s === 'ok' ? 'pin-ok' : s === 'inc' ? 'pin-inc' : 'pin-urg'; }
+
+  function renderMemberPins(filterBrgy='all', filterStatus='all'){
+    memberMarkers.forEach(m => map.removeLayer(m));
+    memberMarkers = [];
+
+    members.forEach(m => {
       if (filterBrgy !== 'all' && m.brgy !== filterBrgy) return;
       if (filterStatus !== 'all' && m.status !== filterStatus) return;
 
-      const pin = document.createElement('i');
-      pin.className = `ti ti-map-pin-filled map-pin-full pin-${m.status}`;
-      pin.style.top = m.top;
-      pin.style.left = m.left;
-      pin.onclick = () => togglePopup(i);
-      wrap.appendChild(pin);
+      const b = barangays.find(x => x.name === m.brgy);
+      if (!b) return;
+      const lat = b.lat + m.dlat, lng = b.lng + m.dlng;
 
-      const popup = document.createElement('div');
-      popup.className = 'pin-popup';
-      popup.id = `popup-${i}`;
-      popup.style.top = m.top;
-      popup.style.left = m.left;
-      popup.innerHTML = `
+      const icon = L.divIcon({
+        className: '',
+        html: `<div class="member-pin"><i class="ti ti-map-pin-filled ${statusClass(m.status)}"></i></div>`,
+        iconSize: [26,26], iconAnchor: [13,26],
+      });
+
+      const marker = L.marker([lat, lng], { icon }).addTo(map);
+      marker.bindPopup(`
         <p style="font-weight:600;color:var(--gray-900);margin-bottom:4px;">${m.name}</p>
         <p style="color:var(--gray-500);margin-bottom:2px;">OSCA ID: ${m.osca}</p>
-        <p style="color:var(--gray-500);margin-bottom:8px;">${m.brgy}</p>
-        <button class="btn btn-navy btn-sm btn-full" onclick="location.href='member-detail.html'">View profile</button>
-      `;
-      wrap.appendChild(popup);
+        <p style="color:var(--gray-500);margin-bottom:8px;">Barangay ${m.brgy}</p>
+        <button class="btn btn-navy btn-sm btn-full" onclick="location.href='member-detail.html?id=${encodeURIComponent(m.osca)}'">View profile</button>
+      `);
+      memberMarkers.push(marker);
     });
   }
 
-  function togglePopup(i){
-    document.querySelectorAll('.pin-popup').forEach(p => p.classList.remove('open'));
-    document.getElementById(`popup-${i}`).classList.add('open');
-  }
-
   function filterPins(){
-    renderPins(document.getElementById('brgy-filter').value, document.getElementById('status-filter').value);
+    renderMemberPins(document.getElementById('brgy-filter').value, document.getElementById('status-filter').value);
   }
 
-  renderPins();
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  function exportMapData(){
+    const headers = ['Name','OSCA ID','Barangay','Status','Latitude','Longitude'];
+    const rows = members.map(m => {
+      const b = barangays.find(x => x.name === m.brgy);
+      const lat = (b.lat + m.dlat).toFixed(6), lng = (b.lng + m.dlng).toFixed(6);
+      return [m.name, m.osca, m.brgy, m.status, lat, lng].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
+    });
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'map-data.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    showToast(`Exported ${members.length} pinned member${members.length === 1 ? '' : 's'}.`);
+  }
+
+  renderMemberPins();
 </script>
 </body>
 </html>
