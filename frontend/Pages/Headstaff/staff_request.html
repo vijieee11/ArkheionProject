@@ -52,6 +52,7 @@
     .rm-footer .btn-coral:hover { opacity: .85; }
 
     .approvals-table .btn { height: 32px; padding: 0 16px; font-size: 12.5px; justify-content: center; }
+    .approvals-table .btn[disabled] { opacity: .4; cursor: not-allowed; pointer-events: none; }
 
     /* View: icon in a light bordered square */
     .approvals-table .btn-view-icon {
@@ -73,15 +74,18 @@
     .action-grid { display: grid; grid-template-columns: 150px 88px 32px; gap: 8px; align-items: center; }
     .action-grid .btn { width: 100%; }
 
-    /* Request detail modal */
+    .badge-approved { background: var(--teal-50); color: var(--navy); }
+    .badge-declined { background: #fdecea; color: #c0392b; }
+
+    /* Request detail modal (self-contained, guarded with !important so it always shows) */
     .rm-overlay {
-      display: none;
-      position: fixed; inset: 0;
+      display: none !important;
+      position: fixed !important; inset: 0;
       background: rgba(15,23,42,.45);
       align-items: center; justify-content: center;
-      z-index: 100;
+      z-index: 2147483000;
     }
-    .rm-overlay.open { display: flex; }
+    .rm-overlay.open { display: flex !important; }
     .rm-modal {
       background: #fff;
       width: 420px;
@@ -109,6 +113,7 @@
     .rm-desc { font-size: 12.5px; color: var(--gray-700); line-height: 1.5; background: var(--gray-50, #f8fafc); padding: 10px 12px; border-radius: 8px; }
     .rm-footer { display: flex; gap: 8px; padding: 14px 20px 20px; }
     .rm-footer .btn { flex: 1; height: 34px; font-size: 12.5px; justify-content: center; }
+    .rm-resolved-note { font-size: 12.5px; color: var(--gray-500); text-align: center; width: 100%; padding: 6px 0; }
   </style>
 </head>
 <body>
@@ -162,7 +167,7 @@
         </div>
         <div class="topbar-search" style="max-width:280px;">
           <i class="ti ti-search"></i>
-          <input type="text" placeholder="Search staff name">
+          <input type="text" id="requestsSearch" placeholder="Search staff name" oninput="applyRequestFilters()">
         </div>
       </div>
 
@@ -191,8 +196,8 @@
             <td><span class="badge badge-pend">Awaiting action</span></td>
             <td>
               <div class="action-grid">
-                <button class="btn btn-lightgreen" onclick="showToast('Password reset for SR-2026-0301 sent')">Reset password</button>
-                <button class="btn btn-coral" onclick="showToast('Request SR-2026-0301 declined','error')">Decline</button>
+                <button class="btn btn-lightgreen" onclick="resolveRequest(this, 'approve')">Reset password</button>
+                <button class="btn btn-coral" onclick="resolveRequest(this, 'decline')">Decline</button>
                 <button class="btn-view-icon" title="View request" onclick="openRequestModal(this)"><i class="ti ti-eye"></i></button>
               </div>
             </td>
@@ -210,8 +215,8 @@
             <td><span class="badge badge-pend">Awaiting action</span></td>
             <td>
               <div class="action-grid">
-                <button class="btn btn-lightgreen" onclick="showToast('Password reset for SR-2026-0302 sent')">Reset password</button>
-                <button class="btn btn-coral" onclick="showToast('Request SR-2026-0302 declined','error')">Decline</button>
+                <button class="btn btn-lightgreen" onclick="resolveRequest(this, 'approve')">Reset password</button>
+                <button class="btn btn-coral" onclick="resolveRequest(this, 'decline')">Decline</button>
                 <button class="btn-view-icon" title="View request" onclick="openRequestModal(this)"><i class="ti ti-eye"></i></button>
               </div>
             </td>
@@ -229,8 +234,8 @@
             <td><span class="badge badge-pend">Awaiting action</span></td>
             <td>
               <div class="action-grid">
-                <button class="btn btn-lightgreen" onclick="showToast('Access granted for SR-2026-0303')">Grant access</button>
-                <button class="btn btn-coral" onclick="showToast('Request SR-2026-0303 declined','error')">Decline</button>
+                <button class="btn btn-lightgreen" onclick="resolveRequest(this, 'approve')">Grant access</button>
+                <button class="btn btn-coral" onclick="resolveRequest(this, 'decline')">Decline</button>
                 <button class="btn-view-icon" title="View request" onclick="openRequestModal(this)"><i class="ti ti-eye"></i></button>
               </div>
             </td>
@@ -248,8 +253,8 @@
             <td><span class="badge badge-pend">Awaiting action</span></td>
             <td>
               <div class="action-grid">
-                <button class="btn btn-lightgreen" onclick="showToast('Leave approved for SR-2026-0304')">Approve</button>
-                <button class="btn btn-coral" onclick="showToast('Request SR-2026-0304 declined','error')">Decline</button>
+                <button class="btn btn-lightgreen" onclick="resolveRequest(this, 'approve')">Approve</button>
+                <button class="btn btn-coral" onclick="resolveRequest(this, 'decline')">Decline</button>
                 <button class="btn-view-icon" title="View request" onclick="openRequestModal(this)"><i class="ti ti-eye"></i></button>
               </div>
             </td>
@@ -287,7 +292,12 @@
 
 <div class="toast" id="toast"></div>
 <script>
-  renderHeadStaffSidebar('requests');
+  const BASE_RESOLVED_TODAY = 3;
+  let currentTypeFilter = 'All';
+
+  if (typeof renderHeadStaffSidebar === 'function') {
+    renderHeadStaffSidebar('requests');
+  }
 
   function openRequestModal(btn) {
     const row = btn.closest('tr');
@@ -300,18 +310,25 @@
     document.getElementById('rmStatus').textContent = row.dataset.status;
     document.getElementById('rmDesc').textContent = row.dataset.desc;
 
-    // Rebuild footer actions from the same row so they stay in sync
-    const rowActions = row.querySelectorAll('.action-grid button');
     const footer = document.getElementById('rmFooter');
     footer.innerHTML = '';
-    rowActions.forEach(btnEl => {
-      if (btnEl.classList.contains('btn-view-icon')) return;
-      const clone = document.createElement('button');
-      clone.className = 'btn ' + (btnEl.classList.contains('btn-coral') ? 'btn-coral' : 'btn-lightgreen');
-      clone.textContent = btnEl.textContent;
-      clone.onclick = () => { btnEl.click(); closeRequestModal(); };
-      footer.appendChild(clone);
-    });
+
+    if (row.dataset.resolved === 'true') {
+      const note = document.createElement('div');
+      note.className = 'rm-resolved-note';
+      note.textContent = 'This request has already been resolved.';
+      footer.appendChild(note);
+    } else {
+      const rowActions = row.querySelectorAll('.action-grid button');
+      rowActions.forEach(btnEl => {
+        if (btnEl.classList.contains('btn-view-icon')) return;
+        const clone = document.createElement('button');
+        clone.className = 'btn ' + (btnEl.classList.contains('btn-coral') ? 'btn-coral' : 'btn-lightgreen');
+        clone.textContent = btnEl.textContent;
+        clone.onclick = () => { btnEl.click(); closeRequestModal(); };
+        footer.appendChild(clone);
+      });
+    }
 
     document.getElementById('rmOverlay').classList.add('open');
   }
@@ -320,14 +337,73 @@
     document.getElementById('rmOverlay').classList.remove('open');
   }
 
+  function resolveRequest(triggerBtn, action) {
+    const row = triggerBtn.closest('tr');
+    if (!row || row.dataset.resolved === 'true') return;
+
+    const type = row.dataset.type;
+    const id = row.dataset.id;
+    let statusText, badgeClass, toastMsg;
+
+    if (action === 'decline') {
+      statusText = 'Declined';
+      badgeClass = 'badge-declined';
+      toastMsg = 'Request ' + id + ' declined';
+    } else if (type === 'Password reset') {
+      statusText = 'Password reset sent';
+      badgeClass = 'badge-approved';
+      toastMsg = 'Password reset for ' + id + ' sent';
+    } else if (type === 'Access request') {
+      statusText = 'Access granted';
+      badgeClass = 'badge-approved';
+      toastMsg = 'Access granted for ' + id;
+    } else {
+      statusText = 'Approved';
+      badgeClass = 'badge-approved';
+      toastMsg = 'Leave approved for ' + id;
+    }
+
+    const statusCell = row.children[4];
+    statusCell.innerHTML = '<span class="badge ' + badgeClass + '">' + statusText + '</span>';
+
+    row.dataset.status = statusText;
+    row.dataset.resolved = 'true';
+
+    row.querySelectorAll('.action-grid .btn').forEach(b => { b.disabled = true; });
+
+    showToast(toastMsg, action === 'decline' ? 'error' : undefined);
+    updateStats();
+  }
+
+  function updateStats() {
+    const rows = document.querySelectorAll('.approvals-table tbody tr');
+    let pending = 0, resolvedNow = 0;
+    rows.forEach(r => {
+      if (r.dataset.resolved === 'true') resolvedNow++;
+      else pending++;
+    });
+
+    const statCards = document.querySelectorAll('.stats-grid .stat-card');
+    statCards[0].querySelector('.stat-value').textContent = pending;
+    statCards[3].querySelector('.stat-value').textContent = BASE_RESOLVED_TODAY + resolvedNow;
+  }
+
   function filterRequests(type, tabEl) {
     document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
     tabEl.classList.add('active');
+    currentTypeFilter = type;
+    applyRequestFilters();
+  }
 
+  function applyRequestFilters() {
+    const query = document.getElementById('requestsSearch').value.trim().toLowerCase();
     const rows = document.querySelectorAll('.approvals-table tbody tr');
     let visibleCount = 0;
+
     rows.forEach(row => {
-      const match = type === 'All' || row.dataset.type === type;
+      const typeMatch = currentTypeFilter === 'All' || row.dataset.type === currentTypeFilter;
+      const searchMatch = !query || row.dataset.staff.toLowerCase().includes(query);
+      const match = typeMatch && searchMatch;
       row.style.display = match ? '' : 'none';
       if (match) visibleCount++;
     });

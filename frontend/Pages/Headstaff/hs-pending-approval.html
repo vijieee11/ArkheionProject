@@ -21,6 +21,7 @@
     .pill-btn:active { transform: scale(.96); }
     .pill-approve { background: var(--teal-50);  color: var(--navy); }
     .pill-reject  { background: var(--coral-50); color: var(--coral-900); }
+    .pill-btn[disabled] { opacity: .4; cursor: not-allowed; pointer-events: none; }
     .action-icon-btn {
       width: 30px; height: 30px; border-radius: var(--radius-sm);
       display: flex; align-items: center; justify-content: center;
@@ -30,6 +31,23 @@
     .action-icon-btn:hover { opacity: .8; }
     .action-icon-btn:active { transform: scale(.94); }
     .action-icon-btn i { font-size: 16px; }
+
+    /* Request detail modal (self-contained, guarded with !important so it always shows) */
+    .rm-overlay { display:none !important; position:fixed !important; inset:0; background:rgba(15,23,42,.45); align-items:center; justify-content:center; z-index:2147483000; }
+    .rm-overlay.open { display:flex !important; }
+    .rm-modal { background:#fff; width:440px; max-width:92vw; max-height:88vh; overflow-y:auto; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,.25); }
+    .rm-header { display:flex; align-items:flex-start; justify-content:space-between; padding:18px 20px 12px; border-bottom:.5px solid var(--gray-200); }
+    .rm-header-id { font-size:11px; color:var(--gray-500); margin-top:2px; }
+    .rm-close { border:none; background:transparent; color:var(--gray-500); width:28px; height:28px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+    .rm-close:hover { background:var(--gray-100); color:var(--navy); }
+    .rm-body { padding:16px 20px; display:flex; flex-direction:column; gap:12px; }
+    .rm-row { display:flex; justify-content:space-between; font-size:12.5px; gap:12px; }
+    .rm-row span:first-child { color:var(--gray-500); flex-shrink:0; }
+    .rm-row span:last-child { color:var(--gray-900); font-weight:500; text-align:right; }
+    .rm-desc { font-size:12.5px; color:var(--gray-700); line-height:1.5; background:var(--gray-50,#f8fafc); padding:10px 12px; border-radius:8px; }
+    .rm-footer { display:flex; gap:8px; padding:14px 20px 20px; }
+    .rm-footer .pill-btn { flex:1; text-align:center; padding:9px 16px; }
+    .rm-resolved-note { font-size:12.5px; color:var(--gray-500); text-align:center; width:100%; padding:6px 0; }
   </style>
 </head>
 <body>
@@ -83,15 +101,18 @@
         </div>
         <div class="topbar-search" style="max-width:280px;">
           <i class="ti ti-search"></i>
-          <input type="text" placeholder="Search staff or record">
+          <input type="text" id="approvalsSearch" placeholder="Search staff or record" oninput="applyApprovalFilters()">
         </div>
       </div>
 
       <div class="tabs">
-        <div class="tab active">All (5)</div>
-        <div class="tab">Delete record</div>
-        <div class="tab">Benefit correction</div>
-        <div class="tab">Staff deactivation</div>
+        <div class="tab active" onclick="filterApprovals('All', this)">All (5)</div>
+        <div class="tab" onclick="filterApprovals('Delete record', this)">Delete record</div>
+        <div class="tab" onclick="filterApprovals('Benefit correction', this)">Benefit correction</div>
+        <div class="tab" onclick="filterApprovals('Staff deactivation', this)">Staff deactivation</div>
+      </div>
+      <div class="alert" id="approvalsNoResults" style="display:none;margin:0 16px 12px;padding:10px 14px;font-size:12.5px;color:var(--gray-500);background:var(--gray-50,#f8fafc);border-radius:8px;">
+        No requests match your search.
       </div>
 
       <table class="approvals-table">
@@ -99,7 +120,9 @@
           <tr><th>Request</th><th>Type</th><th>Requested by</th><th>Submitted</th><th>Status</th><th>Actions</th></tr>
         </thead>
         <tbody>
-          <tr>
+          <tr data-id="REQ-2026-0801" data-title="Delete duplicate entry — Perlita Domingo" data-type="Delete record"
+              data-by="Regular Staff 1" data-submitted="Jul 24, 2026" data-status="Awaiting review"
+              data-desc="Duplicate member record. Flagged because two OSCA IDs exist for the same senior citizen — this is the older, unused entry.">
             <td>
               <div class="td-bold">Delete duplicate entry — Perlita Domingo</div>
               <div class="td-muted" style="font-size:11.5px;margin-top:2px;">REQ-2026-0801 · Duplicate member record</div>
@@ -110,13 +133,15 @@
             <td><span class="badge badge-pend">Awaiting review</span></td>
             <td>
               <div class="action-btns">
-                <button class="pill-btn pill-approve" onclick="showToast('Request REQ-2026-0801 approved')">Approve</button>
-                <button class="pill-btn pill-reject" onclick="showToast('Request REQ-2026-0801 rejected','error')">Reject</button>
-                <button class="action-icon-btn" title="View details"><i class="ti ti-eye"></i></button>
+                <button class="pill-btn pill-approve" onclick="resolveApproval(this, 'approve')">Approve</button>
+                <button class="pill-btn pill-reject" onclick="resolveApproval(this, 'reject')">Reject</button>
+                <button class="action-icon-btn" title="View details" onclick="openRequestModal(this)"><i class="ti ti-eye"></i></button>
               </div>
             </td>
           </tr>
-          <tr>
+          <tr data-id="REQ-2026-0802" data-title="Fix pension status — Herminio Salcedo" data-type="Benefit correction"
+              data-by="Regular Staff 3" data-submitted="Jul 25, 2026" data-status="Awaiting review"
+              data-desc="Pension status was mismarked 'inactive' in the system. Staff verified with the member that the pension is still active and receiving disbursements.">
             <td>
               <div class="td-bold">Fix pension status — Herminio Salcedo</div>
               <div class="td-muted" style="font-size:11.5px;margin-top:2px;">REQ-2026-0802 · Pension status was mismarked "inactive"</div>
@@ -127,13 +152,15 @@
             <td><span class="badge badge-pend">Awaiting review</span></td>
             <td>
               <div class="action-btns">
-                <button class="pill-btn pill-approve" onclick="showToast('Request REQ-2026-0802 approved')">Approve</button>
-                <button class="pill-btn pill-reject" onclick="showToast('Request REQ-2026-0802 rejected','error')">Reject</button>
-                <button class="action-icon-btn" title="View details"><i class="ti ti-eye"></i></button>
+                <button class="pill-btn pill-approve" onclick="resolveApproval(this, 'approve')">Approve</button>
+                <button class="pill-btn pill-reject" onclick="resolveApproval(this, 'reject')">Reject</button>
+                <button class="action-icon-btn" title="View details" onclick="openRequestModal(this)"><i class="ti ti-eye"></i></button>
               </div>
             </td>
           </tr>
-          <tr>
+          <tr data-id="REQ-2026-0803" data-title="Deactivate account — Regular Staff 4" data-type="Staff deactivation"
+              data-by="System (auto-flagged)" data-submitted="Jul 25, 2026" data-status="Awaiting review"
+              data-desc="No login activity for 90+ days. System auto-flagged this account for deactivation review under the inactivity policy.">
             <td>
               <div class="td-bold">Deactivate account — Regular Staff 4</div>
               <div class="td-muted" style="font-size:11.5px;margin-top:2px;">REQ-2026-0803 · No login activity for 90+ days</div>
@@ -144,13 +171,15 @@
             <td><span class="badge badge-pend">Awaiting review</span></td>
             <td>
               <div class="action-btns">
-                <button class="pill-btn pill-approve" onclick="showToast('Request REQ-2026-0803 approved')">Approve</button>
-                <button class="pill-btn pill-reject" onclick="showToast('Request REQ-2026-0803 rejected','error')">Reject</button>
-                <button class="action-icon-btn" title="View details"><i class="ti ti-eye"></i></button>
+                <button class="pill-btn pill-approve" onclick="resolveApproval(this, 'approve')">Approve</button>
+                <button class="pill-btn pill-reject" onclick="resolveApproval(this, 'reject')">Reject</button>
+                <button class="action-icon-btn" title="View details" onclick="openRequestModal(this)"><i class="ti ti-eye"></i></button>
               </div>
             </td>
           </tr>
-          <tr>
+          <tr data-id="REQ-2026-0804" data-title="Delete duplicate entry — Rosario Fabian" data-type="Delete record"
+              data-by="Regular Staff 2" data-submitted="Jul 26, 2026" data-status="Awaiting review"
+              data-desc="Duplicate OSCA ID record. Two entries were created for the same member during batch import — this one has incomplete data.">
             <td>
               <div class="td-bold">Delete duplicate entry — Rosario Fabian</div>
               <div class="td-muted" style="font-size:11.5px;margin-top:2px;">REQ-2026-0804 · Duplicate OSCA ID record</div>
@@ -161,13 +190,15 @@
             <td><span class="badge badge-pend">Awaiting review</span></td>
             <td>
               <div class="action-btns">
-                <button class="pill-btn pill-approve" onclick="showToast('Request REQ-2026-0804 approved')">Approve</button>
-                <button class="pill-btn pill-reject" onclick="showToast('Request REQ-2026-0804 rejected','error')">Reject</button>
-                <button class="action-icon-btn" title="View details"><i class="ti ti-eye"></i></button>
+                <button class="pill-btn pill-approve" onclick="resolveApproval(this, 'approve')">Approve</button>
+                <button class="pill-btn pill-reject" onclick="resolveApproval(this, 'reject')">Reject</button>
+                <button class="action-icon-btn" title="View details" onclick="openRequestModal(this)"><i class="ti ti-eye"></i></button>
               </div>
             </td>
           </tr>
-          <tr>
+          <tr data-id="REQ-2026-0805" data-title="Fix grocery benefit status — Teodora Ibarra" data-type="Benefit correction"
+              data-by="Regular Staff 1" data-submitted="Jul 27, 2026" data-status="Awaiting review"
+              data-desc="Benefit marked 'released' but not yet claimed. Member has not visited to claim the grocery benefit; staff requests the status be reverted to available.">
             <td>
               <div class="td-bold">Fix grocery benefit status — Teodora Ibarra</div>
               <div class="td-muted" style="font-size:11.5px;margin-top:2px;">REQ-2026-0805 · Benefit marked "released" but not yet claimed</div>
@@ -178,25 +209,153 @@
             <td><span class="badge badge-pend">Awaiting review</span></td>
             <td>
               <div class="action-btns">
-                <button class="pill-btn pill-approve" onclick="showToast('Request REQ-2026-0805 approved')">Approve</button>
-                <button class="pill-btn pill-reject" onclick="showToast('Request REQ-2026-0805 rejected','error')">Reject</button>
-                <button class="action-icon-btn" title="View details"><i class="ti ti-eye"></i></button>
+                <button class="pill-btn pill-approve" onclick="resolveApproval(this, 'approve')">Approve</button>
+                <button class="pill-btn pill-reject" onclick="resolveApproval(this, 'reject')">Reject</button>
+                <button class="action-icon-btn" title="View details" onclick="openRequestModal(this)"><i class="ti ti-eye"></i></button>
               </div>
             </td>
           </tr>
         </tbody>
       </table>
       <div style="display:flex;justify-content:space-between;padding:10px 16px;font-size:11px;color:var(--gray-500);border-top:.5px solid var(--gray-200);">
-        <span>Showing 5 of 5 pending record actions</span>
+        <span id="approvalsCount">Showing 5 of 5 pending record actions</span>
         <span>Oldest submitted 3 days ago</span>
       </div>
     </div>
   </div>
 </div>
 
+<!-- Request detail modal -->
+<div class="rm-overlay" id="rmOverlay" onclick="if(event.target===this)closeRequestModal()">
+  <div class="rm-modal">
+    <div class="rm-header">
+      <div>
+        <div class="td-bold" id="rmTitle" style="font-size:14.5px;"></div>
+        <div class="rm-header-id" id="rmId"></div>
+      </div>
+      <button class="rm-close" onclick="closeRequestModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="rm-body">
+      <div class="rm-row"><span>Type</span><span id="rmType"></span></div>
+      <div class="rm-row"><span>Requested by</span><span id="rmBy"></span></div>
+      <div class="rm-row"><span>Submitted</span><span id="rmSubmitted"></span></div>
+      <div class="rm-row"><span>Status</span><span id="rmStatus"></span></div>
+      <div class="rm-desc" id="rmDesc"></div>
+    </div>
+    <div class="rm-footer" id="rmFooter"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <script>
-  renderHeadStaffSidebar('approvals');
+  const BASE_APPROVED_TODAY = 4;
+
+  if (typeof renderHeadStaffSidebar === 'function') {
+    renderHeadStaffSidebar('approvals');
+  }
+
+  function openRequestModal(btn) {
+    const row = btn.closest('tr');
+    document.getElementById('rmTitle').textContent = row.dataset.title;
+    document.getElementById('rmId').textContent = row.dataset.id + ' · ' + row.dataset.type;
+    document.getElementById('rmType').textContent = row.dataset.type;
+    document.getElementById('rmBy').textContent = row.dataset.by;
+    document.getElementById('rmSubmitted').textContent = row.dataset.submitted;
+    document.getElementById('rmStatus').textContent = row.dataset.status;
+    document.getElementById('rmDesc').textContent = row.dataset.desc;
+
+    const footer = document.getElementById('rmFooter');
+    footer.innerHTML = '';
+
+    if (row.dataset.resolved === 'true') {
+      const note = document.createElement('div');
+      note.className = 'rm-resolved-note';
+      note.textContent = 'This request has already been resolved.';
+      footer.appendChild(note);
+    } else {
+      const approveBtn = document.createElement('button');
+      approveBtn.className = 'pill-btn pill-approve';
+      approveBtn.textContent = 'Approve';
+      approveBtn.onclick = () => { resolveApproval(row.querySelector('.pill-approve'), 'approve'); closeRequestModal(); };
+      footer.appendChild(approveBtn);
+
+      const rejectBtn = document.createElement('button');
+      rejectBtn.className = 'pill-btn pill-reject';
+      rejectBtn.textContent = 'Reject';
+      rejectBtn.onclick = () => { resolveApproval(row.querySelector('.pill-reject'), 'reject'); closeRequestModal(); };
+      footer.appendChild(rejectBtn);
+    }
+
+    document.getElementById('rmOverlay').classList.add('open');
+  }
+
+  function closeRequestModal() {
+    document.getElementById('rmOverlay').classList.remove('open');
+  }
+
+  function resolveApproval(triggerBtn, action) {
+    const row = triggerBtn.closest('tr');
+    if (!row || row.dataset.resolved === 'true') return;
+
+    const id = row.dataset.id;
+    const statusText = action === 'approve' ? 'Approved' : 'Rejected';
+    const badgeClass = action === 'approve' ? 'badge-ok' : 'badge-miss';
+    const toastMsg = `Request ${id} ${action === 'approve' ? 'approved' : 'rejected'}`;
+
+    const statusCell = row.children[4];
+    statusCell.innerHTML = '<span class="badge ' + badgeClass + '">' + statusText + '</span>';
+
+    row.dataset.status = statusText;
+    row.dataset.resolved = 'true';
+
+    row.querySelectorAll('.pill-btn').forEach(b => { b.disabled = true; });
+
+    showToast(toastMsg, action === 'reject' ? 'error' : undefined);
+    updateApprovalStats();
+  }
+
+  function updateApprovalStats() {
+    const rows = document.querySelectorAll('.approvals-table tbody tr');
+    let pending = 0, approvedNow = 0;
+    rows.forEach(r => {
+      if (r.dataset.resolved !== 'true') pending++;
+      else if (r.dataset.status === 'Approved') approvedNow++;
+    });
+
+    const cards = document.querySelectorAll('.stats-grid .stat-card');
+    cards[0].querySelector('.stat-value').textContent = pending;
+    cards[3].querySelector('.stat-value').textContent = BASE_APPROVED_TODAY + approvedNow;
+  }
+
+  let currentTypeFilter = 'All';
+
+  function filterApprovals(type, tabEl) {
+    document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+    tabEl.classList.add('active');
+    currentTypeFilter = type;
+    applyApprovalFilters();
+  }
+
+  function applyApprovalFilters() {
+    const query = document.getElementById('approvalsSearch').value.trim().toLowerCase();
+    const rows = document.querySelectorAll('.approvals-table tbody tr');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+      const typeMatch = currentTypeFilter === 'All' || row.dataset.type === currentTypeFilter;
+      const searchMatch = !query
+        || row.dataset.title.toLowerCase().includes(query)
+        || row.dataset.by.toLowerCase().includes(query)
+        || row.dataset.id.toLowerCase().includes(query);
+      const match = typeMatch && searchMatch;
+      row.style.display = match ? '' : 'none';
+      if (match) visibleCount++;
+    });
+
+    document.getElementById('approvalsCount').textContent =
+      'Showing ' + visibleCount + ' of ' + rows.length + ' pending record actions';
+    document.getElementById('approvalsNoResults').style.display = visibleCount === 0 ? 'block' : 'none';
+  }
 </script>
 </body>
 </html>
