@@ -5,7 +5,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Arkheion — Official Reports (Head Staff)</title>
   <link rel="stylesheet" href="output.css">
-  <style>body{display:flex;}</style>
+  <style>
+    body{display:flex;}
+    /* Grid rows stretch to equal height by default; make the card and its
+       body fill that height, and let the top content block grow so the
+       badge + button pair always lands at the same spot at the bottom —
+       regardless of how long each card's description text is. */
+    .grid-auto .card { height:100%; display:flex; flex-direction:column; }
+    .grid-auto .card-body { flex:1; display:flex; flex-direction:column; gap:12px; }
+
+    /* Custom scrollable month dropdown (replaces the native <select>) */
+    .custom-dropdown { position:relative; display:inline-block; }
+    .custom-dropdown-btn { display:flex; align-items:center; justify-content:space-between; gap:10px; min-width:130px; }
+    .custom-dropdown-btn i { font-size:14px; color:var(--gray-400); transition:transform .15s; }
+    .custom-dropdown-btn.open i { transform:rotate(180deg); }
+    .custom-dropdown-list {
+      position:absolute; top:calc(100% + 6px); right:0; min-width:150px;
+      background:var(--white); border:.5px solid var(--gray-200); border-radius:var(--radius-sm);
+      box-shadow:var(--shadow); max-height:160px; overflow-y:auto; z-index:60;
+      display:none;
+    }
+    .custom-dropdown-list.open { display:block; }
+    .custom-dropdown-item { padding:8px 12px; font-size:12px; color:var(--gray-900); cursor:pointer; white-space:nowrap; }
+    .custom-dropdown-item:hover { background:var(--gray-50); }
+    .custom-dropdown-item.selected { background:var(--teal-50); color:var(--navy); font-weight:600; }
+    /* Give this dropdown's scrollbar a visible track + thumb, since the
+       page-wide scrollbar style is too light against the white dropdown. */
+    .custom-dropdown-list { scrollbar-width:thin; scrollbar-color:var(--gray-400) var(--gray-100); }
+    .custom-dropdown-list::-webkit-scrollbar { width:7px; }
+    .custom-dropdown-list::-webkit-scrollbar-track { background:var(--gray-100); border-radius:10px; }
+    .custom-dropdown-list::-webkit-scrollbar-thumb { background:var(--gray-400); border-radius:10px; }
+    .custom-dropdown-list::-webkit-scrollbar-thumb:hover { background:var(--gray-600); }
+    .grid-auto .card-top { flex:1; display:flex; flex-direction:column; gap:12px; }
+  </style>
 </head>
 <body>
 <script src="sidebar-headstaff.js"></script>
@@ -13,9 +45,21 @@
   <div class="topbar">
     <span class="topbar-title">Official reports — for submission</span>
     <div class="topbar-actions" style="margin-left:auto;">
-      <select class="filter-select">
-        <option>July 2026</option><option>June 2026</option><option>May 2026</option>
-      </select>
+      <div class="custom-dropdown" id="month-dropdown">
+        <button type="button" class="filter-select custom-dropdown-btn" id="month-dropdown-btn" onclick="toggleMonthDropdown()">
+          <span id="month-dropdown-label">July 2026</span> <i class="ti ti-chevron-down"></i>
+        </button>
+        <div class="custom-dropdown-list" id="month-dropdown-list">
+          <div class="custom-dropdown-item" data-value="August 2026" onclick="selectMonth(this)">August 2026</div>
+          <div class="custom-dropdown-item selected" data-value="July 2026" onclick="selectMonth(this)">July 2026</div>
+          <div class="custom-dropdown-item" data-value="June 2026" onclick="selectMonth(this)">June 2026</div>
+          <div class="custom-dropdown-item" data-value="May 2026" onclick="selectMonth(this)">May 2026</div>
+          <div class="custom-dropdown-item" data-value="April 2026" onclick="selectMonth(this)">April 2026</div>
+          <div class="custom-dropdown-item" data-value="March 2026" onclick="selectMonth(this)">March 2026</div>
+          <div class="custom-dropdown-item" data-value="February 2026" onclick="selectMonth(this)">February 2026</div>
+          <div class="custom-dropdown-item" data-value="January 2026" onclick="selectMonth(this)">January 2026</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -27,13 +71,15 @@
 
     <div class="grid-auto">
       <div class="card">
-        <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
-          <div style="width:40px;height:40px;border-radius:var(--radius-sm);background:var(--blue-50);display:flex;align-items:center;justify-content:center;">
-            <i class="ti ti-file-text" style="font-size:20px;color:var(--blue-900)"></i>
-          </div>
-          <div>
-            <p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900);">NCSC Annex A list</p>
-            <p style="font-size:12px;color:var(--gray-500);margin-top:3px;">80+ members benefit report — for NCSC submission</p>
+        <div class="card-body">
+          <div class="card-top">
+            <div style="width:40px;height:40px;border-radius:var(--radius-sm);background:var(--blue-50);display:flex;align-items:center;justify-content:center;">
+              <i class="ti ti-file-text" style="font-size:20px;color:var(--blue-900)"></i>
+            </div>
+            <div>
+              <p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900);">NCSC Annex A list</p>
+              <p style="font-size:12px;color:var(--gray-500);margin-top:3px;">80+ members benefit report — for NCSC submission</p>
+            </div>
           </div>
           <span class="badge badge-ok">Ready to sign</span>
           <button class="btn btn-navy btn-sm btn-full" onclick="openSignModal('NCSC Annex A list')"><i class="ti ti-stamp"></i> Sign & export</button>
@@ -41,13 +87,15 @@
       </div>
 
       <div class="card">
-        <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
-          <div style="width:40px;height:40px;border-radius:var(--radius-sm);background:var(--amber-100);display:flex;align-items:center;justify-content:center;">
-            <i class="ti ti-cash" style="font-size:20px;color:var(--gold-dark)"></i>
-          </div>
-          <div>
-            <p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900);">Official pension payroll</p>
-            <p style="font-size:12px;color:var(--gray-500);margin-top:3px;">Compiled monthly pension report — for DSWD</p>
+        <div class="card-body">
+          <div class="card-top">
+            <div style="width:40px;height:40px;border-radius:var(--radius-sm);background:var(--amber-100);display:flex;align-items:center;justify-content:center;">
+              <i class="ti ti-cash" style="font-size:20px;color:var(--gold-dark)"></i>
+            </div>
+            <div>
+              <p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900);">Official pension payroll</p>
+              <p style="font-size:12px;color:var(--gray-500);margin-top:3px;">Compiled monthly pension report — for DSWD</p>
+            </div>
           </div>
           <span class="badge badge-ok">Ready to sign</span>
           <button class="btn btn-navy btn-sm btn-full" onclick="openSignModal('Official pension payroll')"><i class="ti ti-stamp"></i> Sign & export</button>
@@ -55,13 +103,15 @@
       </div>
 
       <div class="card">
-        <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
-          <div style="width:40px;height:40px;border-radius:var(--radius-sm);background:var(--teal-50);display:flex;align-items:center;justify-content:center;">
-            <i class="ti ti-users" style="font-size:20px;color:var(--navy)"></i>
-          </div>
-          <div>
-            <p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900);">Official masterlist</p>
-            <p style="font-size:12px;color:var(--gray-500);margin-top:3px;">All registered members — for LGU submission</p>
+        <div class="card-body">
+          <div class="card-top">
+            <div style="width:40px;height:40px;border-radius:var(--radius-sm);background:var(--teal-50);display:flex;align-items:center;justify-content:center;">
+              <i class="ti ti-users" style="font-size:20px;color:var(--navy)"></i>
+            </div>
+            <div>
+              <p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900);">Official masterlist</p>
+              <p style="font-size:12px;color:var(--gray-500);margin-top:3px;">All registered members — for LGU submission</p>
+            </div>
           </div>
           <span class="badge badge-ok">Ready to sign</span>
           <button class="btn btn-navy btn-sm btn-full" onclick="openSignModal('Official masterlist')"><i class="ti ti-stamp"></i> Sign & export</button>
@@ -69,13 +119,15 @@
       </div>
 
       <div class="card">
-        <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
-          <div style="width:40px;height:40px;border-radius:var(--radius-sm);background:var(--coral-50);display:flex;align-items:center;justify-content:center;">
-            <i class="ti ti-chart-bar" style="font-size:20px;color:var(--coral-900)"></i>
-          </div>
-          <div>
-            <p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900);">Quarterly analytics summary</p>
-            <p style="font-size:12px;color:var(--gray-500);margin-top:3px;">Overall statistics and trends — for LGU review</p>
+        <div class="card-body">
+          <div class="card-top">
+            <div style="width:40px;height:40px;border-radius:var(--radius-sm);background:var(--coral-50);display:flex;align-items:center;justify-content:center;">
+              <i class="ti ti-chart-bar" style="font-size:20px;color:var(--coral-900)"></i>
+            </div>
+            <div>
+              <p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900);">Quarterly analytics summary</p>
+              <p style="font-size:12px;color:var(--gray-500);margin-top:3px;">Overall statistics and trends — for LGU review</p>
+            </div>
           </div>
           <span class="badge badge-pend">Compiling data</span>
           <button class="btn btn-ghost btn-sm btn-full" disabled><i class="ti ti-clock"></i> Not yet ready</button>
@@ -88,36 +140,14 @@
       <div class="card-header">
         <div>
           <div class="card-title">Submission history</div>
-          <div class="card-subtitle">Reports signed and exported by Head Staff</div>
+          <div class="card-subtitle" id="history-sub">Reports signed and exported by Head Staff</div>
         </div>
       </div>
       <table>
         <thead>
           <tr><th>Report</th><th>Signed by</th><th>Date signed</th><th>Recipient</th><th>Status</th></tr>
         </thead>
-        <tbody>
-          <tr>
-            <td class="td-bold">NCSC Annex A list — June 2026</td>
-            <td class="td-muted">Head Staff</td>
-            <td class="td-muted">Jul 2, 2026</td>
-            <td class="td-muted">NCSC</td>
-            <td><span class="badge badge-ok">Submitted</span></td>
-          </tr>
-          <tr>
-            <td class="td-bold">Official pension payroll — June 2026</td>
-            <td class="td-muted">Head Staff</td>
-            <td class="td-muted">Jul 1, 2026</td>
-            <td class="td-muted">DSWD</td>
-            <td><span class="badge badge-ok">Submitted</span></td>
-          </tr>
-          <tr>
-            <td class="td-bold">Official masterlist — Q2 2026</td>
-            <td class="td-muted">Head Staff</td>
-            <td class="td-muted">Jun 30, 2026</td>
-            <td class="td-muted">LGU Carmen</td>
-            <td><span class="badge badge-ok">Submitted</span></td>
-          </tr>
-        </tbody>
+        <tbody id="history-rows"></tbody>
       </table>
     </div>
   </div>
@@ -175,6 +205,76 @@
     'LGU Carmen': 'osca@carmen.gov.ph',
   };
 
+  // Sample submission history spanning a few months — in production this
+  // comes from the backend, already filtered/paginated server-side.
+  const history = [
+    { report: 'NCSC Annex A list — June 2026',        signedBy: 'Head Staff', date: '2026-07-02', recipient: 'NCSC',       status: 'Submitted' },
+    { report: 'Official pension payroll — June 2026', signedBy: 'Head Staff', date: '2026-07-01', recipient: 'DSWD',       status: 'Submitted' },
+    { report: 'Official masterlist — H1 2026',        signedBy: 'Head Staff', date: '2026-07-15', recipient: 'LGU Carmen', status: 'Submitted' },
+    { report: 'Quarterly analytics summary — Q2 2026',signedBy: 'Head Staff', date: '2026-07-20', recipient: 'LGU Carmen', status: 'Submitted' },
+    { report: 'NCSC Annex A list — supplemental',     signedBy: 'Head Staff', date: '2026-07-22', recipient: 'NCSC',       status: 'Submitted' },
+    { report: 'Official pension payroll — adjustment',signedBy: 'Head Staff', date: '2026-07-10', recipient: 'DSWD',       status: 'Submitted' },
+    { report: 'Official masterlist — Q2 2026',        signedBy: 'Head Staff', date: '2026-06-30', recipient: 'LGU Carmen', status: 'Submitted' },
+    { report: 'NCSC Annex A list — May 2026',         signedBy: 'Head Staff', date: '2026-06-03', recipient: 'NCSC',       status: 'Submitted' },
+    { report: 'Official pension payroll — May 2026',  signedBy: 'Head Staff', date: '2026-06-01', recipient: 'DSWD',       status: 'Submitted' },
+    { report: 'NCSC Annex A list — April 2026',       signedBy: 'Head Staff', date: '2026-05-04', recipient: 'NCSC',       status: 'Submitted' },
+    { report: 'Official pension payroll — April 2026',signedBy: 'Head Staff', date: '2026-05-01', recipient: 'DSWD',       status: 'Submitted' },
+    { report: 'Official masterlist — Q1 2026',        signedBy: 'Head Staff', date: '2026-05-15', recipient: 'LGU Carmen', status: 'Submitted' },
+  ];
+
+  let currentMonth = 'July 2026';
+
+  function toggleMonthDropdown() {
+    document.getElementById('month-dropdown-list').classList.toggle('open');
+    document.getElementById('month-dropdown-btn').classList.toggle('open');
+  }
+
+  function selectMonth(el) {
+    currentMonth = el.dataset.value;
+    document.getElementById('month-dropdown-label').textContent = currentMonth;
+    document.querySelectorAll('.custom-dropdown-item').forEach(i => i.classList.toggle('selected', i === el));
+    document.getElementById('month-dropdown-list').classList.remove('open');
+    document.getElementById('month-dropdown-btn').classList.remove('open');
+    renderHistory();
+  }
+
+  // Close the dropdown when clicking anywhere outside it.
+  document.addEventListener('click', function (e) {
+    const dd = document.getElementById('month-dropdown');
+    if (dd && !dd.contains(e.target)) {
+      document.getElementById('month-dropdown-list').classList.remove('open');
+      document.getElementById('month-dropdown-btn').classList.remove('open');
+    }
+  });
+
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  function renderHistory() {
+    const selected = currentMonth; // e.g. "July 2026"
+    const [monthName, year] = selected.split(' ');
+    const monthIdx = monthNames.indexOf(monthName);
+
+    const rows = history.filter(h => {
+      const d = new Date(h.date + 'T00:00:00');
+      return d.getMonth() === monthIdx && String(d.getFullYear()) === year;
+    });
+
+    document.getElementById('history-sub').textContent =
+      rows.length
+        ? `Reports signed and exported by Head Staff — ${selected}`
+        : `No reports signed in ${selected}`;
+
+    document.getElementById('history-rows').innerHTML = rows.length ? rows.map(h => `
+      <tr>
+        <td class="td-bold">${h.report}</td>
+        <td class="td-muted">${h.signedBy}</td>
+        <td class="td-muted">${new Date(h.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+        <td class="td-muted">${h.recipient}</td>
+        <td><span class="badge badge-ok">${h.status}</span></td>
+      </tr>`).join('') : `
+      <tr><td colspan="5" style="text-align:center;color:var(--gray-400);padding:24px;">No submissions for this month.</td></tr>`;
+  }
+
   function openSignModal(reportName) {
     document.getElementById('sign-report-name').value = reportName;
     prefillEmail();
@@ -197,6 +297,8 @@
       showToast(`"${name}" signed and exported successfully.`);
     }
   }
+
+  renderHistory();
 </script>
 </body>
 </html>
