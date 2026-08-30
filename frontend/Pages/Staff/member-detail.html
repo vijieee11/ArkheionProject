@@ -12,17 +12,42 @@
     .badge-warn{background:#fff3e0;color:#b06a00;}
     .badge-info{background:#e3f2fd;color:#1565c0;}
     .badge-danger{background:#fde8e8;color:#c0392b;}
+
+    /* Self-contained modal styling, guarded with !important so it always shows
+       regardless of any conflicting rule in styles.css */
+    .mdl-overlay { display:none !important; position:fixed !important; inset:0; background:rgba(15,23,42,.45); align-items:center; justify-content:center; z-index:2147483000; }
+    .mdl-overlay.open { display:flex !important; }
+    .mdl { background:#fff; width:440px; max-width:92vw; max-height:88vh; overflow-y:auto; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,.25); }
+    .mdl-header { display:flex; align-items:flex-start; justify-content:space-between; padding:18px 20px 12px; border-bottom:.5px solid var(--gray-200); }
+    .mdl-title { font-size:14.5px; font-weight:600; color:var(--gray-900,#0f172a); }
+    .mdl-subtitle { font-size:11px; color:var(--gray-500); margin-top:2px; }
+    .mdl-close { border:none; background:transparent; color:var(--gray-500); width:28px; height:28px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+    .mdl-close:hover { background:var(--gray-100); color:var(--navy); }
+    .mdl-body { padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
+    .mdl-footer { display:flex; gap:8px; justify-content:flex-end; padding:14px 20px 20px; border-top:.5px solid var(--gray-200); }
+    .mdl-row { display:flex; justify-content:space-between; font-size:12.5px; gap:12px; }
+    .mdl-row span:first-child { color:var(--gray-500); flex-shrink:0; }
+    .mdl-row span:last-child { color:var(--gray-900); font-weight:500; text-align:right; }
+    .form-group { display:flex; flex-direction:column; gap:6px; font-size:12.5px; }
+    .form-group label { color:var(--gray-600,#475569); font-weight:500; }
+    .form-group input, .form-group select { border:1px solid var(--gray-200,#e5e7eb); border-radius:8px; padding:8px 10px; font-size:13px; }
+    .required { color:#c0392b; }
+
+    /* Print fallback only — the real hiding is done in JS via printMemberDetails(),
+       since sidebar.js injects the sidebar with an unknown structure we can't target reliably in CSS */
+    @media print {
+      .mdl-overlay { display: none !important; }
+    }
   </style>
 </head>
 <body>
 <script src="sidebar.js"></script>
 <div class="main">
   <div class="topbar">
-    <button class="btn btn-ghost btn-sm btn-icon" onclick="history.back()"><i class="ti ti-arrow-left"></i></button>
     <span class="topbar-title">Member details</span>
   </div>
 
-  <div class="content">
+  <div class="content" id="print-area">
 
     <!-- Profile summary -->
     <div class="card" style="padding:20px;">
@@ -39,10 +64,10 @@
             &nbsp;·&nbsp; Registered <span id="m-year">2024</span>
           </div>
         </div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn btn-ghost btn-sm"><i class="ti ti-printer"></i> Print</button>
-          <button class="btn btn-ghost btn-sm"><i class="ti ti-download"></i> Export</button>
-          <button class="btn btn-navy btn-sm"><i class="ti ti-pencil"></i> Edit</button>
+        <div style="display:flex;gap:8px;" id="profile-actions">
+          <button class="btn btn-ghost btn-sm" onclick="printMemberDetails()"><i class="ti ti-printer"></i> Print</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportMemberData()"><i class="ti ti-download"></i> Export</button>
+          <button class="btn btn-navy btn-sm" onclick="openEditMemberModal()"><i class="ti ti-pencil"></i> Edit</button>
         </div>
       </div>
     </div>
@@ -98,11 +123,11 @@
           <div class="card-title">Documents on file</div>
           <div class="card-subtitle" id="docs-sub">All submitted documents for this member</div>
         </div>
-        <button class="btn btn-ghost btn-sm"><i class="ti ti-upload"></i> Add document</button>
+        <button class="btn btn-ghost btn-sm" onclick="openAddDocumentModal()"><i class="ti ti-upload"></i> Add document</button>
       </div>
       <div id="docs-body">
         <table>
-          <thead><tr><th>Document</th><th>NLP Classification</th><th>Year</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Document</th><th>NLP Classification</th><th>Year</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody id="docs-rows"></tbody>
         </table>
       </div>
@@ -111,9 +136,101 @@
   </div>
 </div>
 
+<!-- Modal: View document -->
+<div class="mdl-overlay" id="modal-view-doc" onclick="if(event.target===this)closeMdl('modal-view-doc')">
+  <div class="mdl">
+    <div class="mdl-header">
+      <div>
+        <div class="mdl-title" id="vd-title">Document</div>
+        <div class="mdl-subtitle" id="vd-subtitle"></div>
+      </div>
+      <button class="mdl-close" onclick="closeMdl('modal-view-doc')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="mdl-body">
+      <div class="mdl-row"><span>Document type</span><span id="vd-type"></span></div>
+      <div class="mdl-row"><span>NLP classification</span><span id="vd-cls"></span></div>
+      <div class="mdl-row"><span>Year filed</span><span id="vd-year"></span></div>
+      <div class="mdl-row"><span>Status</span><span id="vd-status"></span></div>
+      <div class="mdl-row"><span>OSCA ID</span><span id="vd-osca"></span></div>
+    </div>
+    <div class="mdl-footer">
+      <button class="btn btn-ghost" onclick="closeMdl('modal-view-doc')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add document -->
+<div class="mdl-overlay" id="modal-add-doc" onclick="if(event.target===this)closeMdl('modal-add-doc')">
+  <div class="mdl">
+    <div class="mdl-header">
+      <span class="mdl-title">Add document</span>
+      <button class="mdl-close" onclick="closeMdl('modal-add-doc')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="mdl-body">
+      <div class="form-group"><label>Document type <span class="required">*</span></label><input type="text" id="ad-type" placeholder="e.g. OSCA Form No. 1"></div>
+      <div class="form-group"><label>NLP classification <span class="required">*</span></label><input type="text" id="ad-cls" placeholder="e.g. Registration form"></div>
+      <div class="form-group"><label>Year filed <span class="required">*</span></label><input type="text" id="ad-year" placeholder="e.g. 2026"></div>
+      <div class="form-group"><label>Status <span class="required">*</span></label>
+        <select id="ad-status">
+          <option value="Verified">Verified</option>
+          <option value="For validation">For validation</option>
+          <option value="Pending">Pending</option>
+          <option value="Missing">Missing</option>
+        </select>
+      </div>
+    </div>
+    <div class="mdl-footer">
+      <button class="btn btn-ghost" onclick="closeMdl('modal-add-doc')">Cancel</button>
+      <button class="btn btn-navy" onclick="addDocument()"><i class="ti ti-upload"></i> Add document</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Edit member -->
+<div class="mdl-overlay" id="modal-edit-member" onclick="if(event.target===this)closeMdl('modal-edit-member')">
+  <div class="mdl">
+    <div class="mdl-header">
+      <span class="mdl-title">Edit member information</span>
+      <button class="mdl-close" onclick="closeMdl('modal-edit-member')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="mdl-body">
+      <div class="form-group"><label>Full name <span class="required">*</span></label><input type="text" id="em-name"></div>
+      <div class="form-group"><label>Birthdate <span class="required">*</span></label><input type="text" id="em-birthdate" placeholder="e.g. May 14, 1958"></div>
+      <div class="form-group"><label>Age <span class="required">*</span></label><input type="text" id="em-age"></div>
+      <div class="form-group"><label>Sex <span class="required">*</span></label>
+        <select id="em-sex"><option value="Male">Male</option><option value="Female">Female</option></select>
+      </div>
+      <div class="form-group"><label>Civil status <span class="required">*</span></label>
+        <select id="em-civil">
+          <option value="Single">Single</option>
+          <option value="Married">Married</option>
+          <option value="Widowed">Widowed</option>
+          <option value="Separated">Separated</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Barangay <span class="required">*</span></label><input type="text" id="em-brgy"></div>
+      <div class="form-group"><label>Contact number</label><input type="text" id="em-contact"></div>
+      <div class="form-group"><label>Address</label><input type="text" id="em-address"></div>
+    </div>
+    <div class="mdl-footer">
+      <button class="btn btn-ghost" onclick="closeMdl('modal-edit-member')">Cancel</button>
+      <button class="btn btn-navy" onclick="saveMemberEdits()"><i class="ti ti-device-floppy"></i> Save changes</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <script>
-  renderSidebar('members');
+  // Declare shared state before anything that could throw, so it's never left uninitialized.
+  let currentMember = null;
+  let currentOsca = null;
+
+  if (typeof renderSidebar === 'function') {
+    renderSidebar('members');
+  }
+
+  function openMdl(id) { document.getElementById(id).classList.add('open'); }
+  function closeMdl(id) { document.getElementById(id).classList.remove('open'); }
 
   // Sample records — mirrors the dataset used in search.html.
   // In production, fetch by OSCA ID from the query string instead.
@@ -161,16 +278,67 @@
     }
   }
 
-  function loadMember() {
-    const params = new URLSearchParams(location.search);
-    const osca = params.get('id') || '2024-001';
-    const m = allMembers[osca] || allMembers['2024-001'];
+  function renderDocsTable() {
+    document.getElementById('docs-sub').textContent =
+      `${currentMember.docs.length} document(s) on file for OSCA ID ${currentOsca}`;
+    document.getElementById('docs-rows').innerHTML = currentMember.docs.map((d, i) => `
+      <tr>
+        <td class="td-bold">${d.type}</td>
+        <td><span class="badge ${statusClass(d.statusLabel)}">${d.cls}</span></td>
+        <td class="td-muted">${d.year}</td>
+        <td><span class="badge ${statusClass(d.statusLabel)}">${d.statusLabel}</span></td>
+        <td><button class="btn btn-ghost btn-sm btn-icon" title="View" onclick="viewDocument(${i})"><i class="ti ti-eye"></i></button></td>
+      </tr>`).join('');
+  }
 
+  function viewDocument(index) {
+    const d = currentMember.docs[index];
+    if (!d) return;
+    document.getElementById('vd-title').textContent = d.type;
+    document.getElementById('vd-subtitle').textContent = currentMember.name;
+    document.getElementById('vd-type').textContent = d.type;
+    document.getElementById('vd-cls').textContent = d.cls;
+    document.getElementById('vd-year').textContent = d.year;
+    document.getElementById('vd-status').innerHTML = '<span class="badge ' + statusClass(d.statusLabel) + '">' + d.statusLabel + '</span>';
+    document.getElementById('vd-osca').textContent = currentOsca;
+    openMdl('modal-view-doc');
+  }
+
+  function openAddDocumentModal() {
+    ['ad-type','ad-cls','ad-year'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('ad-status').value = 'Pending';
+    openMdl('modal-add-doc');
+  }
+
+  function addDocument() {
+    const type = document.getElementById('ad-type').value.trim();
+    const cls = document.getElementById('ad-cls').value.trim();
+    const year = document.getElementById('ad-year').value.trim();
+    const statusLabel = document.getElementById('ad-status').value;
+
+    if (!type || !cls || !year) {
+      showToast('Please fill in all required fields', 'error');
+      return;
+    }
+
+    currentMember.docs.push({
+      type, cls, year,
+      status: statusLabel === 'Verified' ? 'ok' : statusLabel === 'For validation' ? 'proc' : statusLabel === 'Missing' ? 'danger' : 'pending',
+      statusLabel
+    });
+
+    renderDocsTable();
+    closeMdl('modal-add-doc');
+    showToast('Document added successfully!');
+  }
+
+  function renderMemberInfo() {
+    const m = currentMember;
     document.getElementById('avatar').textContent = initials(m.name);
     document.getElementById('m-name').textContent = m.name;
     document.getElementById('m-status').textContent = m.statusLabel;
     document.getElementById('m-status').className = 'badge ' + statusClass(m.statusLabel);
-    document.getElementById('m-osca').textContent = osca;
+    document.getElementById('m-osca').textContent = currentOsca;
     document.getElementById('m-brgy').textContent = m.brgy;
     document.getElementById('m-year').textContent = m.year;
 
@@ -182,16 +350,119 @@
     document.getElementById('i-brgy').textContent = m.brgy;
     document.getElementById('i-contact').textContent = m.contact;
     document.getElementById('i-address').textContent = m.address;
+  }
 
-    document.getElementById('docs-sub').textContent = `${m.docs.length} document(s) on file for OSCA ID ${osca}`;
-    document.getElementById('docs-rows').innerHTML = m.docs.map(d => `
-      <tr>
-        <td class="td-bold">${d.type}</td>
-        <td><span class="badge ${statusClass(d.statusLabel)}">${d.cls}</span></td>
-        <td class="td-muted">${d.year}</td>
-        <td><span class="badge ${statusClass(d.statusLabel)}">${d.statusLabel}</span></td>
-        <td><button class="btn btn-ghost btn-sm btn-icon" title="View"><i class="ti ti-eye"></i></button></td>
-      </tr>`).join('');
+  function loadMember() {
+    const params = new URLSearchParams(location.search);
+    const osca = params.get('id') || '2024-001';
+    const m = allMembers[osca] || allMembers['2024-001'];
+
+    currentMember = m;
+    currentOsca = osca;
+
+    renderMemberInfo();
+    renderDocsTable();
+  }
+
+  function exportMemberData() {
+    const m = currentMember;
+    const lines = [
+      'OSCA Member Record',
+      `OSCA ID,${currentOsca}`,
+      `Full Name,${m.name}`,
+      `Status,${m.statusLabel}`,
+      `Birthdate,${m.birthdate}`,
+      `Age,${m.age}`,
+      `Sex,${m.sex}`,
+      `Civil Status,${m.civil}`,
+      `Barangay,${m.brgy}`,
+      `Contact Number,${m.contact}`,
+      `Address,${m.address}`,
+      '',
+      'Documents on File',
+      'Document,Classification,Year,Status',
+      ...m.docs.map(d => `${d.type},${d.cls},${d.year},${d.statusLabel}`)
+    ];
+    const csv = lines.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `OSCA_${currentOsca}_${m.name.replace(/\s+/g, '_')}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Member record exported successfully!');
+  }
+
+  function openEditMemberModal() {
+    const m = currentMember;
+    document.getElementById('em-name').value = m.name;
+    document.getElementById('em-birthdate').value = m.birthdate;
+    document.getElementById('em-age').value = m.age;
+    document.getElementById('em-sex').value = m.sex;
+    document.getElementById('em-civil').value = m.civil;
+    document.getElementById('em-brgy').value = m.brgy;
+    document.getElementById('em-contact').value = m.contact;
+    document.getElementById('em-address').value = m.address;
+    openMdl('modal-edit-member');
+  }
+
+  function saveMemberEdits() {
+    const name = document.getElementById('em-name').value.trim();
+    const birthdate = document.getElementById('em-birthdate').value.trim();
+    const age = document.getElementById('em-age').value.trim();
+    const sex = document.getElementById('em-sex').value;
+    const civil = document.getElementById('em-civil').value;
+    const brgy = document.getElementById('em-brgy').value.trim();
+    const contact = document.getElementById('em-contact').value.trim();
+    const address = document.getElementById('em-address').value.trim();
+
+    if (!name || !birthdate || !age || !brgy) {
+      showToast('Please fill in all required fields', 'error');
+      return;
+    }
+
+    Object.assign(currentMember, { name, birthdate, age, sex, civil, brgy, contact, address });
+
+    renderMemberInfo();
+    closeMdl('modal-edit-member');
+    showToast('Member information updated successfully!');
+  }
+
+  function printMemberDetails() {
+    const printArea = document.getElementById('print-area');
+    const toRestore = [];
+
+    // Hide every top-level body child that does NOT contain the print area —
+    // this catches the sidebar no matter what tag/class sidebar.js gives it,
+    // since we never have to guess its selector.
+    Array.from(document.body.children).forEach(el => {
+      if (el.contains(printArea)) return;
+      if (getComputedStyle(el).display !== 'none') {
+        toRestore.push({ el, prev: el.style.display });
+        el.style.display = 'none';
+      }
+    });
+
+    // Inside the branch we kept (.main), also hide the topbar and the
+    // action buttons that don't belong on paper.
+    ['.topbar', '#profile-actions', '#docs-card .btn-ghost.btn-sm'].forEach(sel => {
+      const el = document.querySelector(sel);
+      if (el) {
+        toRestore.push({ el, prev: el.style.display });
+        el.style.display = 'none';
+      }
+    });
+    document.querySelectorAll('#docs-rows .btn-icon').forEach(el => {
+      toRestore.push({ el, prev: el.style.display });
+      el.style.display = 'none';
+    });
+
+    window.print();
+
+    toRestore.forEach(({ el, prev }) => { el.style.display = prev; });
   }
 
   loadMember();
