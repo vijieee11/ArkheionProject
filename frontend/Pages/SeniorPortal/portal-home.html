@@ -4,24 +4,62 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Arkheion — Senior Citizen Portal</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    .portal-menu-btn { display:none; }
+
+    @media (max-width: 768px) {
+      .portal-nav { flex-wrap:wrap; padding:12px 16px; height:auto; min-height:50px; position:relative; }
+      .portal-navlinks { display:none; width:100%; flex-direction:column; gap:0; order:3; background:var(--navy); position:relative; z-index:60; }
+      .portal-navlinks.open { display:flex; }
+      .portal-navlinks a { padding:14px 8px; font-size:16px; border-bottom:1px solid rgba(255,255,255,.08); }
+      .portal-menu-btn { display:flex; align-items:center; justify-content:center; width:40px; height:40px; background:rgba(255,255,255,.1); border:none; border-radius:8px; color:var(--white); font-size:20px; cursor:pointer; }
+      .portal-user { margin-left:auto; }
+      .portal-uname { display:none; }
+
+      .portal-hero { flex-direction:column; align-items:flex-start; gap:14px; padding:20px 16px; }
+      .portal-hero h2 { font-size:19px; }
+      .portal-hero p { font-size:13px; }
+      .portal-status { width:100%; }
+
+      .portal-content { padding:16px; gap:20px; }
+      .section-heading { font-size:17px; }
+      .section-sub { font-size:13px; }
+
+      .svc-grid { grid-template-columns:1fr; gap:14px; }
+      .svc-card { padding:16px; }
+      .svc-title { font-size:16px; }
+      .svc-label, .svc-value { font-size:13px; }
+      .svc-btn { height:48px; font-size:15px; }
+
+      .two-equal { grid-template-columns:1fr; gap:14px; }
+
+      .req-item p { font-size:14px !important; }
+      .chat-messages { max-height:320px; }
+      .chat-input { font-size:16px; }
+      .chat-send-btn { width:44px; height:44px; }
+      .quick-replies { flex-wrap:wrap; }
+      .qr { font-size:13px; padding:8px 12px; }
+    }
+  </style>
 </head>
 <body style="background:var(--gray-100)">
 
 <nav class="portal-nav">
-  <div class="portal-brand">
-    <div class="sb-logo-icon" style="width:26px;height:26px;"><i class="ti ti-archive" style="font-size:13px;color:var(--gold-dark)"></i></div>
-    <span style="color:var(--white);font-size:14px;font-weight:500;font-family:var(--font-display)">Arkheion</span>
-    <span style="color:var(--teal-100);font-size:11px;"> — OSCA Carmen</span>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <button class="portal-menu-btn" onclick="toggleMobileNav()"><i class="ti ti-menu-2"></i></button>
+    <div class="portal-brand">
+      <div class="sb-logo-icon" style="width:26px;height:26px;"><i class="ti ti-archive" style="font-size:13px;color:var(--gold-dark)"></i></div>
+      <span style="color:var(--white);font-size:14px;font-weight:500;font-family:var(--font-display)">Arkheion</span>
+      <span style="color:var(--teal-100);font-size:11px;"> — OSCA Carmen</span>
+    </div>
   </div>
-  <div class="portal-navlinks">
+  <div class="portal-navlinks" id="portalNavLinks">
     <a class="active" href="portal-home.html">Home</a>
     <a href="portal-records.html">My records</a>
     <a href="portal-services.html">Services</a>
     <a href="portal-faq.html">FAQ</a>
     <a href="portal-contact.html">Contact</a>
-
-    
   </div>
   <div class="portal-user">
     <div class="portal-avatar">JC</div>
@@ -61,7 +99,7 @@
           <div class="svc-row"><span class="svc-label">Your barangay</span><span class="svc-value">Brgy 2</span></div>
           <div class="svc-row"><span class="svc-label">Last received</span><span class="svc-value">June 12, 2026</span></div>
         </div>
-        <button class="svc-btn" style="background:var(--navy);color:var(--gold);">
+        <button class="svc-btn" style="background:var(--navy);color:var(--gold);" onclick="location.href='portal-services.html'">
           <i class="ti ti-eye"></i> Track my grocery
         </button>
       </div>
@@ -80,7 +118,7 @@
           <div class="svc-row"><span class="svc-label">Claim period</span><span class="svc-value">July 1–31, 2026</span></div>
           <div class="svc-row"><span class="svc-label">Last claimed</span><span class="svc-value">June 5, 2026</span></div>
         </div>
-        <button class="svc-btn" style="background:var(--amber-600);color:var(--amber-100);">
+        <button class="svc-btn" style="background:var(--amber-600);color:var(--amber-100);" onclick="location.href='portal-services.html'">
           <i class="ti ti-eye"></i> View pension details
         </button>
       </div>
@@ -99,7 +137,7 @@
           <div class="svc-row"><span class="svc-label">Next release</span><span class="svc-value">July 28, 2026</span></div>
           <div class="svc-row"><span class="svc-label">Booklet no.</span><span class="svc-value">MB-10613</span></div>
         </div>
-        <button class="svc-btn" style="background:var(--blue-900);color:var(--blue-50);">
+        <button class="svc-btn" style="background:var(--blue-900);color:var(--blue-50);" onclick="location.href='portal-services.html'">
           <i class="ti ti-book"></i> View medicine booklet
         </button>
       </div>
@@ -163,11 +201,11 @@
         <span class="chat-status">Online</span>
       </div>
       <div class="chat-messages" id="chatMessages">
-        <div class="msg bot" style="background:#E1F5EE;border-color:#9FE1CB;">Hello Lolo Juan! I am your Arkheion assistant. How can I help you today? 😊</div>
+        <div class="msg bot">Hello Lolo Juan! I am your Arkheion assistant. How can I help you today? 😊</div>
         <div class="msg usr">Kanus-a ang akong grocery?</div>
-        <div class="msg bot" style="background:#E1F5EE;border-color:#9FE1CB;">Ang sunod nga grocery distribution sa <strong>Brgy 2</strong> is on <strong>July 15, 2026</strong> — 8:00 AM sa OSCA Carmen office. Siguruha nga naa ka nianang adlawa!</div>
+        <div class="msg bot">Ang sunod nga grocery distribution sa <strong>Brgy 2</strong> is on <strong>July 15, 2026</strong> — 8:00 AM sa OSCA Carmen office. Siguruha nga naa ka nianang adlawa!</div>
         <div class="msg usr">Unsa pa akong kulang?</div>
-        <div class="msg bot" style="background:#E1F5EE;border-color:#9FE1CB;">Base sa imong rekord, kulang pa ang imong <strong>valid government ID</strong>. Pwede ka magdala og PhilSys card, passport, o driver's license para makompleto ang imong registration.</div>
+        <div class="msg bot">Base sa imong rekord, kulang pa ang imong <strong>valid government ID</strong>. Pwede ka magdala og PhilSys card, passport, o driver's license para makompleto ang imong registration.</div>
       </div>
       <div class="quick-replies">
         <div class="qr" onclick="sendMsg('Pension status ko?')">Pension status</div>
@@ -185,6 +223,10 @@
 </div>
 
 <script>
+  function toggleMobileNav() {
+    document.getElementById('portalNavLinks').classList.toggle('open');
+  }
+
   const responses = {
     'pension':       'Ang imong pension para sa Hulyo 2026 is <strong>unclaimed pa</strong>. Claim period: July 1–31, 2026. Punta sa OSCA Carmen office para makuha ang ₱500.00 nga pension. Magdala og valid ID.',
     'medicine':      'Ang imong sunod nga medicine release is <strong>July 28, 2026</strong>. Ang imong booklet no. is MB-10613. Makuha kini sa OSCA Carmen office.',
@@ -204,7 +246,6 @@
 
     const msgs = document.getElementById('chatMessages');
 
-    // User message
     const userDiv = document.createElement('div');
     userDiv.className = 'msg usr';
     userDiv.textContent = msg;
@@ -212,7 +253,6 @@
     input.value = '';
     msgs.scrollTop = msgs.scrollHeight;
 
-    // Typing indicator
     const typing = document.createElement('div');
     typing.className = 'msg bot';
     typing.innerHTML = '<i class="ti ti-dots" style="animation:pulse 1s infinite"></i> Typing...';
@@ -223,8 +263,6 @@
       typing.remove();
       const botDiv = document.createElement('div');
       botDiv.className = 'msg bot';
-      botDiv.style.background = '#E1F5EE';
-      botDiv.style.borderColor = '#9FE1CB';
       const lower = msg.toLowerCase();
       let reply = responses.default;
       for (const key in responses) {

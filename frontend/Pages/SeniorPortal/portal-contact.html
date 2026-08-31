@@ -4,17 +4,39 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Arkheion — Contact</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    .portal-menu-btn { display:none; }
+
+    @media (max-width: 768px) {
+      .portal-nav { flex-wrap:wrap; padding:12px 16px; height:auto; min-height:50px; position:relative; }
+      .portal-navlinks { display:none; width:100%; flex-direction:column; gap:0; order:3; background:var(--navy); position:relative; z-index:60; }
+      .portal-navlinks.open { display:flex; }
+      .portal-navlinks a { padding:14px 8px; font-size:16px; border-bottom:1px solid rgba(255,255,255,.08); }
+      .portal-menu-btn { display:flex; align-items:center; justify-content:center; width:40px; height:40px; background:rgba(255,255,255,.1); border:none; border-radius:8px; color:var(--white); font-size:20px; cursor:pointer; }
+      .portal-user { margin-left:auto; }
+      .portal-uname { display:none; }
+
+      .portal-content { padding:16px; }
+      .section-heading { font-size:17px; }
+      .section-sub { font-size:13px; }
+      .two-equal { grid-template-columns:1fr; gap:14px; }
+      .detail-grid, div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns:1fr !important; }
+    }
+  </style>
 </head>
 <body style="background:var(--gray-100)">
 
 <nav class="portal-nav">
-  <div class="portal-brand">
-    <div class="sb-logo-icon" style="width:26px;height:26px;"><i class="ti ti-archive" style="font-size:13px;color:var(--gold-dark)"></i></div>
-    <span style="color:var(--white);font-size:14px;font-weight:500;font-family:var(--font-display)">Arkheion</span>
-    <span style="color:var(--teal-100);font-size:11px;"> — OSCA Carmen</span>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <button class="portal-menu-btn" onclick="toggleMobileNav()"><i class="ti ti-menu-2"></i></button>
+    <div class="portal-brand">
+      <div class="sb-logo-icon" style="width:26px;height:26px;"><i class="ti ti-archive" style="font-size:13px;color:var(--gold-dark)"></i></div>
+      <span style="color:var(--white);font-size:14px;font-weight:500;font-family:var(--font-display)">Arkheion</span>
+      <span style="color:var(--teal-100);font-size:11px;"> — OSCA Carmen</span>
+    </div>
   </div>
-  <div class="portal-navlinks">
+  <div class="portal-navlinks" id="portalNavLinks">
     <a href="portal-home.html">Home</a>
     <a href="portal-records.html">My records</a>
     <a href="portal-services.html">Services</a>
@@ -59,12 +81,15 @@
 
 <div class="toast" id="toast"></div>
 <script>
-function showToast(msg){
-  const toast = document.getElementById('toast');
-  toast.innerHTML = `<i class="ti ti-circle-check"></i> ${msg}`;
-  toast.classList.add('show');
-  setTimeout(()=>toast.classList.remove('show'), 3000);
-}
+  function toggleMobileNav() {
+    document.getElementById('portalNavLinks').classList.toggle('open');
+  }
+  function showToast(msg){
+    const toast = document.getElementById('toast');
+    toast.innerHTML = `<i class="ti ti-circle-check"></i> ${msg}`;
+    toast.classList.add('show');
+    setTimeout(()=>toast.classList.remove('show'), 3000);
+  }
 </script>
 </body>
 </html>

@@ -35,6 +35,18 @@
     .login-hint { font-size:12px; color:var(--gray-400); text-align:center; line-height:1.8; }
     .login-hint a { color:var(--navy-light); text-decoration:underline; cursor:pointer; }
     .login-error { background:var(--coral-50); border:.5px solid #F5C4B3; color:var(--coral-900); border-radius:var(--radius-sm); padding:9px 12px; font-size:12px; display:flex; align-items:center; gap:8px; display:none; }
+
+    /* ===== Mobile-responsive overrides ===== */
+    @media (max-width: 900px) {
+      body { padding:16px; }
+      .login-page { width:100%; max-width:420px; flex-direction:column; min-height:auto; }
+      .login-left { width:100%; padding:28px 24px; }
+      .login-left h2 { font-size:19px; }
+      .login-left p:not(.login-footer) { display:none; }
+      .login-footer { margin-top:12px; }
+      .login-right { padding:28px 24px; }
+      .acc-pick { flex-direction:column; }
+    }
   </style>
 </head>
 <body>
@@ -173,14 +185,6 @@
     }, 800);
   }
 
-  // Fixes the "stuck on Signing in..." symptom: when a user successfully
-  // logs in, the browser navigates away while the button is still disabled
-  // and reading "Signing in...". If they then hit the Back button, some
-  // browsers restore that exact frozen DOM from the back/forward cache
-  // (bfcache) instead of re-running this script — so the button looks
-  // permanently stuck. `pageshow` with `event.persisted` fires whenever a
-  // page is restored that way, letting us reset the button (and clear the
-  // password field, since it's no longer a fresh session).
   window.addEventListener('pageshow', function (event) {
     if (event.persisted) {
       resetLoginButton();
