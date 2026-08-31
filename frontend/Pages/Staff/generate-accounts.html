@@ -124,10 +124,28 @@
           <div class="card-subtitle">Check the members you want to generate credentials for</div>
         </div>
         <div class="card-actions">
-          <select class="filter-select">
+          <select id="filter-brgy" class="filter-select" onchange="renderTable()">
             <option>All barangays</option>
-            <option>Brgy 1</option><option>Brgy 2</option><option>Brgy 3</option>
-            <option>Brgy 4</option><option>Brgy 5</option>
+            <option>Alejal</option>
+            <option>Anibongan</option>
+            <option>Asuncion</option>
+            <option>Cebulano</option>
+            <option>Guadalupe</option>
+            <option>Ising (Pob.)</option>
+            <option>La Paz</option>
+            <option>Mabaus</option>
+            <option>Mabuhay</option>
+            <option>Magsaysay</option>
+            <option>Mangalcal</option>
+            <option>Minda</option>
+            <option>New Camiling</option>
+            <option>Salvacion</option>
+            <option>San Isidro</option>
+            <option>Santo Niño</option>
+            <option>Taba</option>
+            <option>Tibulao</option>
+            <option>Tubod</option>
+            <option>Tuganay</option>
           </select>
         </div>
       </div>
@@ -192,20 +210,27 @@
 
   // Sample existing members — replace with real data from database once backend exists
   let members = [
-    { osca:'2024-001', name:'Juan dela Cruz',    brgy:'Brgy 2', hasAccount:true,  pw:null },
-    { osca:'2023-087', name:'Maria Santos',      brgy:'Brgy 5', hasAccount:true,  pw:null },
-    { osca:'2024-033', name:'Pedro Ramos',       brgy:'Brgy 1', hasAccount:false, pw:null },
-    { osca:'2022-114', name:'Lourdes Garcia',    brgy:'Brgy 3', hasAccount:false, pw:null },
-    { osca:'2025-012', name:'Rosario Mendoza',   brgy:'Brgy 4', hasAccount:false, pw:null },
-    { osca:'2023-055', name:'Felipe Torres',     brgy:'Brgy 2', hasAccount:false, pw:null },
-    { osca:'2021-078', name:'Cristina Villareal',brgy:'Brgy 3', hasAccount:false, pw:null },
-    { osca:'2020-045', name:'Ambrosio Reyes',    brgy:'Brgy 1', hasAccount:false, pw:null },
+    { osca:'2024-001', name:'Juan dela Cruz',    brgy:'Ising (Pob.)',      hasAccount:true,  pw:null },
+    { osca:'2023-087', name:'Maria Santos',      brgy:'Anibongan',    hasAccount:true,  pw:null },
+    { osca:'2024-033', name:'Pedro Ramos',       brgy:'Ising (Pob.)', hasAccount:false, pw:null },
+    { osca:'2022-114', name:'Lourdes Garcia',    brgy:'Alejal',       hasAccount:false, pw:null },
+    { osca:'2025-012', name:'Rosario Mendoza',   brgy:'Tubod',        hasAccount:false, pw:null },
+    { osca:'2023-055', name:'Felipe Torres',     brgy:'Tuganay',      hasAccount:false, pw:null },
+    { osca:'2021-078', name:'Cristina Villareal',brgy:'Alejal',       hasAccount:false, pw:null },
+    { osca:'2020-045', name:'Ambrosio Reyes',    brgy:'Cebulano', hasAccount:false, pw:null },
+    { osca:'2024-056', name:'Wyndell Joshua Camacho', brgy:'Tuganay', hasAccount:false, pw:null },
   ];
 
+  // Renders the table filtered by the selected barangay. Checkboxes keep
+  // referencing the ORIGINAL index in `members` (data-i) even while the
+  // table is filtered, so "select all" / generate-credentials logic still
+  // updates the correct record regardless of which rows are currently shown.
   function renderTable() {
+    const brgyFilter = document.getElementById('filter-brgy').value;
     const tbody = document.getElementById('member-tbody');
     tbody.innerHTML = '';
     members.forEach((m, i) => {
+      if (brgyFilter !== 'All barangays' && m.brgy !== brgyFilter) return;
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${m.hasAccount ? '' : `<input type="checkbox" class="row-check" data-i="${i}">`}</td>

@@ -71,7 +71,7 @@
       <div class="stat-card">
         <div class="stat-label"><i class="ti ti-calendar"></i> Next schedule</div>
         <div class="stat-value" id="stat-next-date" style="font-size:18px;">Jul 15</div>
-        <div class="stat-sub" id="stat-next-sub">Brgy 2 — 8:00 AM at OSCA Carmen</div>
+        <div class="stat-sub" id="stat-next-sub">Tuganay — 8:00 AM at OSCA Carmen</div>
       </div>
     </div>
 
@@ -90,7 +90,26 @@
         <div class="card-actions">
           <select id="filter-brgy" class="filter-select" onchange="renderTable()">
             <option>All barangays</option>
-            <option>Brgy 1</option><option>Brgy 2</option><option>Brgy 3</option><option>Brgy 4</option><option>Brgy 5</option>
+            <option>Alejal</option>
+            <option>Anibongan</option>
+            <option>Asuncion</option>
+            <option>Cebulano</option>
+            <option>Guadalupe</option>
+            <option>Ising (Pob.)</option>
+            <option>La Paz</option>
+            <option>Mabaus</option>
+            <option>Mabuhay</option>
+            <option>Magsaysay</option>
+            <option>Mangalcal</option>
+            <option>Minda</option>
+            <option>New Camiling</option>
+            <option>Salvacion</option>
+            <option>San Isidro</option>
+            <option>Santo Niño</option>
+            <option>Taba</option>
+            <option>Tibulao</option>
+            <option>Tubod</option>
+            <option>Tuganay</option>
           </select>
           <select id="filter-status" class="filter-select" onchange="renderTable()">
             <option>All status</option>
@@ -156,7 +175,29 @@
     <div class="modal-body">
       <div class="form-group">
         <label>Barangay</label>
-        <select id="schedule-brgy"><option>All barangays</option><option>Brgy 1</option><option>Brgy 2</option><option>Brgy 3</option><option>Brgy 4</option><option>Brgy 5</option></select>
+        <select id="schedule-brgy">
+          <option>All barangays</option>
+          <option>Alejal</option>
+          <option>Anibongan</option>
+          <option>Asuncion</option>
+          <option>Cebulano</option>
+          <option>Guadalupe</option>
+          <option>Ising (Pob.)</option>
+          <option>La Paz</option>
+          <option>Mabaus</option>
+          <option>Mabuhay</option>
+          <option>Magsaysay</option>
+          <option>Mangalcal</option>
+          <option>Minda</option>
+          <option>New Camiling</option>
+          <option>Salvacion</option>
+          <option>San Isidro</option>
+          <option>Santo Niño</option>
+          <option>Taba</option>
+          <option>Tibulao</option>
+          <option>Tubod</option>
+          <option>Tuganay</option>
+        </select>
       </div>
       <div class="form-2col">
         <div class="form-group">
@@ -186,11 +227,11 @@
 
   // Distribution records — in production, fetch/patch these via the backend instead.
   const records = [
-    { osca: '2024-001', name: 'Juan dela Cruz',   brgy: 'Brgy 2', status: 'released', dateReceived: 'Jul 5, 2026', receivedBy: 'Self' },
-    { osca: '2023-087', name: 'Maria Santos',     brgy: 'Brgy 5', status: 'pending',  dateReceived: null,          receivedBy: null },
-    { osca: '2024-033', name: 'Pedro Ramos',      brgy: 'Brgy 1', status: 'urgent',   dateReceived: null,          receivedBy: null },
-    { osca: '2022-114', name: 'Lourdes Garcia',   brgy: 'Brgy 3', status: 'released', dateReceived: 'Jul 6, 2026', receivedBy: 'Daughter' },
-    { osca: '2025-012', name: 'Rosario Mendoza',  brgy: 'Brgy 4', status: 'pending',  dateReceived: null,          receivedBy: null },
+    { osca: '2024-001', name: 'Juan dela Cruz',   brgy: 'Ising',      status: 'released', dateReceived: 'Jul 5, 2026', receivedBy: 'Self' },
+    { osca: '2023-087', name: 'Maria Santos',     brgy: 'Anibongan',    status: 'pending',  dateReceived: null,          receivedBy: null },
+    { osca: '2024-033', name: 'Pedro Ramos',      brgy: 'Alejal',       status: 'urgent',   dateReceived: null,          receivedBy: null },
+    { osca: '2022-114', name: 'Lourdes Garcia',   brgy: 'Asuncion',     status: 'released', dateReceived: 'Jul 6, 2026', receivedBy: 'Daughter' },
+    { osca: '2025-012', name: 'Rosario Mendoza',  brgy: 'Tubod',        status: 'pending',  dateReceived: null,          receivedBy: null },
   ];
 
   let activeOsca = null; // which record the "Mark received" modal is currently open for

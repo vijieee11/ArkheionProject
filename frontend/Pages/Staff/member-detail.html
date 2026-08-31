@@ -33,11 +33,38 @@
     .form-group input, .form-group select { border:1px solid var(--gray-200,#e5e7eb); border-radius:8px; padding:8px 10px; font-size:13px; }
     .required { color:#c0392b; }
 
-    /* Print fallback only — the real hiding is done in JS via printMemberDetails(),
-       since sidebar.js injects the sidebar with an unknown structure we can't target reliably in CSS */
+    /* Print fallback + formatting — the sidebar-hiding itself is done in JS via
+       printMemberDetails(), since sidebar.js injects the sidebar with an unknown
+       structure we can't target reliably in CSS. This block just makes the
+       printed page look like a document instead of a website. */
     @media print {
       .mdl-overlay { display: none !important; }
+
+      #print-header { display: block !important; }
+
+      body { font-size: 11pt; color: #111; }
+      .content { padding: 0 !important; }
+
+      .card {
+        border: 1px solid #ccc !important;
+        box-shadow: none !important;
+        border-radius: 4px !important;
+        margin-bottom: 14px !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      .card-header { padding: 10px 14px !important; }
+      #info-grid { gap: 12px 18px !important; padding: 12px 14px !important; }
+
+      #avatar {
+        width: 44px !important; height: 44px !important;
+        font-size: 16px !important; box-shadow: none !important;
+      }
+      h3 { font-size: 15pt !important; }
+
+      .badge { border: 1px solid currentColor; background: none !important; padding: 1px 8px; }
     }
+    #print-header { display: none; }
   </style>
 </head>
 <body>
@@ -48,6 +75,12 @@
   </div>
 
   <div class="content" id="print-area">
+
+    <!-- Print-only letterhead: hidden on screen, shown only in @media print -->
+    <div id="print-header" style="margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #111;">
+      <div style="font-size:14pt;font-weight:700;">OSCA Carmen — Member Record</div>
+      <div style="font-size:9.5pt;color:#444;margin-top:2px;" id="print-date"></div>
+    </div>
 
     <!-- Profile summary -->
     <div class="card" style="padding:20px;">
@@ -100,16 +133,16 @@
           <div class="card-subtitle">Current standing across OSCA services</div>
         </div>
       </div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;padding:16px 0;">
-        <div style="flex:1;min-width:160px;border:1.5px solid var(--teal-100);border-radius:var(--radius);padding:12px 14px;">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;padding:16px 24px;">
+        <div style="flex:1;min-width:160px;background:var(--gray-100,#e5e7eb);border-radius:var(--radius);padding:12px 14px;">
           <div class="td-muted" style="font-size:12px;">Pension</div>
           <div style="margin-top:6px;"><span class="badge badge-ok">Active</span></div>
         </div>
-        <div style="flex:1;min-width:160px;border:1.5px solid var(--teal-100);border-radius:var(--radius);padding:12px 14px;">
+        <div style="flex:1;min-width:160px;background:var(--gray-100,#e5e7eb);border-radius:var(--radius);padding:12px 14px;">
           <div class="td-muted" style="font-size:12px;">Medicine assistance</div>
           <div style="margin-top:6px;"><span class="badge badge-proc">Pending refill</span></div>
         </div>
-        <div style="flex:1;min-width:160px;border:1.5px solid var(--teal-100);border-radius:var(--radius);padding:12px 14px;">
+        <div style="flex:1;min-width:160px;background:var(--gray-100,#e5e7eb);border-radius:var(--radius);padding:12px 14px;">
           <div class="td-muted" style="font-size:12px;">Grocery assistance</div>
           <div style="margin-top:6px;"><span class="badge badge-ok">Claimed - Aug 2026</span></div>
         </div>
@@ -236,9 +269,9 @@
   // In production, fetch by OSCA ID from the query string instead.
   const allMembers = {
     '2024-001': {
-      name: 'Juan dela Cruz', brgy: 'Brgy 2', year: '2024', status: 'ok', statusLabel: 'Verified',
+      name: 'Juan dela Cruz', brgy: 'Ising', year: '2024', status: 'ok', statusLabel: 'Verified',
       birthdate: 'May 14, 1958', age: 68, sex: 'Male', civil: 'Married',
-      contact: '09171234567', address: 'Purok 3, Brgy 2',
+      contact: '09171234567', address: 'Purok 3, Brgy. Ising',
       docs: [
         { type: 'OSCA Form No. 1',       cls: 'Registration form', year: '2024', status: 'ok',   statusLabel: 'Verified' },
         { type: 'PSA Birth Certificate', cls: 'Birth certificate', year: '2024', status: 'ok',   statusLabel: 'Verified' },
@@ -246,17 +279,17 @@
       ]
     },
     '2023-087': {
-      name: 'Maria Santos', brgy: 'Brgy 5', year: '2023', status: 'ok', statusLabel: 'Verified',
+      name: 'Maria Santos', brgy: 'Anobongan', year: '2023', status: 'ok', statusLabel: 'Verified',
       birthdate: 'Jan 22, 1961', age: 65, sex: 'Female', civil: 'Widowed',
-      contact: '09209876543', address: 'Purok 1, Brgy 5',
+      contact: '09209876543', address: 'Purok 1, Brgy. Anobongan',
       docs: [
         { type: 'PhilSys ID', cls: 'Government ID', year: '2023', status: 'ok', statusLabel: 'Verified' },
       ]
     },
     '2024-056': {
-      name: 'Wyndell Joshua Camacho', brgy: 'Brgy 2', year: '2024', status: 'pending', statusLabel: 'Pending',
-      birthdate: 'Sep 3, 1959', age: 67, sex: 'Male', civil: 'Single',
-      contact: '09173456789', address: 'Purok 2, Brgy 2',
+      name: 'Wyndell Joshua Camacho', brgy: 'Tuganay', year: '2024', status: 'pending', statusLabel: 'Pending',
+      birthdate: 'March 30, 1959', age: 67, sex: 'Male', civil: 'Single',
+      contact: '09173456789', address: 'Purok 2, Brgy. Tuganay',
       docs: [
         { type: 'PhilSys ID', cls: 'Government ID', year: '2024', status: 'pending', statusLabel: 'Pending' },
       ]
@@ -434,6 +467,10 @@
   function printMemberDetails() {
     const printArea = document.getElementById('print-area');
     const toRestore = [];
+
+    document.getElementById('print-date').textContent =
+      'Printed ' + new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) +
+      ' · OSCA ID ' + currentOsca;
 
     // Hide every top-level body child that does NOT contain the print area —
     // this catches the sidebar no matter what tag/class sidebar.js gives it,

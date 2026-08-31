@@ -52,7 +52,6 @@
     <span class="topbar-title">Social pension — July 2026</span>
     <div class="topbar-actions" style="margin-left:auto;">
       <button class="btn btn-ghost btn-sm" onclick="exportPayroll()"><i class="ti ti-download"></i> Export payroll</button>
-      <button class="btn btn-navy btn-sm" onclick="openClaimModal()"><i class="ti ti-check"></i> Mark claimed</button>
     </div>
   </div>
 
@@ -84,7 +83,26 @@
         <div class="card-actions">
           <select id="filter-brgy" class="filter-select" onchange="renderTable()">
             <option>All barangays</option>
-            <option>Brgy 1</option><option>Brgy 2</option><option>Brgy 3</option><option>Brgy 5</option>
+            <option>Alejal</option>
+            <option>Anibongan</option>
+            <option>Asuncion</option>
+            <option>Cebulano</option>
+            <option>Guadalupe</option>
+            <option>Ising (Pob.)</option>
+            <option>La Paz</option>
+            <option>Mabaus</option>
+            <option>Mabuhay</option>
+            <option>Magsaysay</option>
+            <option>Mangalcal</option>
+            <option>Minda</option>
+            <option>New Camiling</option>
+            <option>Salvacion</option>
+            <option>San Isidro</option>
+            <option>Santo Niño</option>
+            <option>Taba</option>
+            <option>Tibulao</option>
+            <option>Tubod</option>
+            <option>Tuganay</option>
           </select>
           <select id="filter-status" class="filter-select" onchange="renderTable()">
             <option>All status</option>
@@ -130,10 +148,10 @@
 
   // Pension records — in production, fetch/patch these via the backend instead.
   const records = [
-    { osca: '2024-001', name: 'Juan dela Cruz',  brgy: 'Brgy 2', amount: 500, status: 'claimed',   dateClaimed: 'Jul 5, 2026', claimedBy: 'Self' },
-    { osca: '2024-033', name: 'Pedro Ramos',     brgy: 'Brgy 1', amount: 500, status: 'unclaimed', dateClaimed: null,          claimedBy: null },
-    { osca: '2022-114', name: 'Lourdes Garcia',  brgy: 'Brgy 3', amount: 500, status: 'urgent',    dateClaimed: null,          claimedBy: null },
-    { osca: '2023-087', name: 'Maria Santos',    brgy: 'Brgy 5', amount: 500, status: 'claimed',   dateClaimed: 'Jul 7, 2026', claimedBy: 'Son' },
+    { osca: '2024-001', name: 'Juan dela Cruz',  brgy: 'Ising (Pob.)', amount: 500, status: 'claimed',   dateClaimed: 'Jul 5, 2026', claimedBy: 'Self' },
+    { osca: '2024-033', name: 'Pedro Ramos',     brgy: 'Alejal',       amount: 500, status: 'unclaimed', dateClaimed: null,          claimedBy: null },
+    { osca: '2022-114', name: 'Lourdes Garcia',  brgy: 'Asuncion',     amount: 500, status: 'urgent',    dateClaimed: null,          claimedBy: null },
+    { osca: '2023-087', name: 'Maria Santos',    brgy: 'Tuganay',      amount: 500, status: 'claimed',   dateClaimed: 'Jul 7, 2026', claimedBy: 'Son' },
   ];
 
   let activeOsca = null; // which record the "Mark claimed" modal is currently open for
@@ -187,16 +205,11 @@
     }).join('');
   }
 
-  // Opens the modal pre-filled for a given OSCA ID, or for the first unclaimed
-  // record when opened from the topbar's generic "Mark claimed" button.
+  // Opens the modal pre-filled for a given OSCA ID.
   function openClaimModal(osca) {
-    const target = osca || (records.find(r => r.status !== 'claimed') || {}).osca;
-    if (!target) {
-      showToast('No unclaimed pensions left to mark.');
-      return;
-    }
-    const r = records.find(x => x.osca === target);
-    activeOsca = target;
+    const r = records.find(x => x.osca === osca);
+    if (!r) return;
+    activeOsca = osca;
     document.getElementById('claim-name').value = `${r.name} — ${r.osca}`;
     document.getElementById('claim-amount').value = peso(r.amount) + '.00';
     document.getElementById('claim-remarks').value = '';

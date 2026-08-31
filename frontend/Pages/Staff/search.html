@@ -62,7 +62,26 @@
         </select>
         <select id="filter-brgy" class="filter-select" onchange="doSearch()">
           <option>All barangays</option>
-          <option>Brgy 1</option><option>Brgy 2</option><option>Brgy 3</option><option>Brgy 5</option>
+          <option>Alejal</option>
+          <option>Anibongan</option>
+          <option>Asuncion</option>
+          <option>Cebulano</option>
+          <option>Guadalupe</option>
+          <option>Ising (Pob.)</option>
+          <option>La Paz</option>
+          <option>Mabaus</option>
+          <option>Mabuhay</option>
+          <option>Magsaysay</option>
+          <option>Mangalcal</option>
+          <option>Minda</option>
+          <option>New Camiling</option>
+          <option>Salvacion</option>
+          <option>San Isidro</option>
+          <option>Santo Niño</option>
+          <option>Taba</option>
+          <option>Tibulao</option>
+          <option>Tubod</option>
+          <option>Tuganay</option>
         </select>
         <select id="filter-year" class="filter-select" onchange="doSearch()">
           <option>All years</option>
@@ -100,16 +119,16 @@
   renderSidebar('search');
 
   const sampleResults = [
-    { osca: '2024-001', name: 'Juan dela Cruz', type: 'OSCA Form No. 1',        cls: 'Registration form',    brgy: 'Brgy 2', year: '2024', status: 'ok',   statusLabel: 'Verified' },
-    { osca: '2024-001', name: 'Juan dela Cruz', type: 'PSA Birth Certificate',  cls: 'Birth certificate',    brgy: 'Brgy 2', year: '2024', status: 'ok',   statusLabel: 'Verified' },
-    { osca: '2024-001', name: 'Juan dela Cruz', type: 'NCSC Annex A',           cls: 'NCSC application',     brgy: 'Brgy 2', year: '2025', status: 'proc', statusLabel: 'For validation' },
-    { osca: '2023-087', name: 'Maria Santos',   type: 'PhilSys ID',             cls: 'Government ID',        brgy: 'Brgy 5', year: '2023', status: 'ok',   statusLabel: 'Verified' },
-    { osca: '2025-014', name: 'Juana Ramos',    type: 'OSCA Form No. 1',        cls: 'Registration form',    brgy: 'Brgy 1', year: '2025', status: 'ok',   statusLabel: 'Verified' },
-    { osca: '2022-039', name: 'Pedro San Juan', type: 'PSA Birth Certificate',  cls: 'Birth certificate',    brgy: 'Brgy 3', year: '2023', status: 'missing', statusLabel: 'Pending' },
-    { osca: '2024-056', name: 'Wyndell Joshua Camacho',     type: 'PhilSys ID',             cls: 'Government ID',        brgy: 'Brgy 2', year: '2024', status: 'pending', statusLabel: 'Pending' },
-    { osca: '2023-078', name: 'Carlos Mendoza',  type: 'NCSC Annex A',           cls: 'NCSC application',     brgy: 'Brgy 5', year: '2023', status: 'missing', statusLabel: 'Missing' },
-    { osca: '2025-022', name: 'Ana Villanueva',  type: 'Medicine booklet',       cls: 'Medical document',     brgy: 'Brgy 1', year: '2025', status: 'ok',   statusLabel: 'Verified' },
-    { osca: '2024-099', name: 'Ramon Bautista',  type: 'OSCA Form No. 1',        cls: 'Registration form',    brgy: 'Brgy 3', year: '2024', status: 'proc', statusLabel: 'For validation' }
+    { osca: '2024-001', name: 'Juan dela Cruz', type: 'OSCA Form No. 1',        cls: 'Registration form',    brgy: 'Ising (Pob.)', year: '2024', status: 'ok',   statusLabel: 'Verified' },
+    { osca: '2024-001', name: 'Juan dela Cruz', type: 'PSA Birth Certificate',  cls: 'Birth certificate',    brgy: 'Ising (Pob.)', year: '2024', status: 'ok',   statusLabel: 'Verified' },
+    { osca: '2024-001', name: 'Juan dela Cruz', type: 'NCSC Annex A',           cls: 'NCSC application',     brgy: 'Ising (Pob.)', year: '2025', status: 'proc', statusLabel: 'For validation' },
+    { osca: '2023-087', name: 'Maria Santos',   type: 'PhilSys ID',             cls: 'Government ID',        brgy: 'Anibongan',    year: '2023', status: 'ok',   statusLabel: 'Verified' },
+    { osca: '2025-014', name: 'Christian Ramos',type: 'OSCA Form No. 1',        cls: 'Registration form',    brgy: 'Ising (Pob.)', year: '2025', status: 'ok',   statusLabel: 'Verified' },
+    { osca: '2022-039', name: 'Pedro San Juan', type: 'PSA Birth Certificate',  cls: 'Birth certificate',    brgy: 'Alejal',       year: '2023', status: 'missing', statusLabel: 'Pending' },
+    { osca: '2024-056', name: 'Wyndell Joshua Camacho',     type: 'PhilSys ID',             cls: 'Government ID',        brgy: 'Tuganay',      year: '2024', status: 'pending', statusLabel: 'Pending' },
+    { osca: '2023-078', name: 'Carlos Mendoza',  type: 'NCSC Annex A',           cls: 'NCSC application',     brgy: 'Anibongan',    year: '2023', status: 'missing', statusLabel: 'Missing' },
+    { osca: '2025-022', name: 'Ana Villanueva',  type: 'Medicine booklet',       cls: 'Medical document',     brgy: 'Ising (Pob.)', year: '2025', status: 'ok',   statusLabel: 'Verified' },
+    { osca: '2024-099', name: 'Ramon Bautista',  type: 'OSCA Form No. 1',        cls: 'Registration form',    brgy: 'Alejal',       year: '2024', status: 'proc', statusLabel: 'For validation' }
   ];
 
   let lastResults = [];

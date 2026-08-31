@@ -19,8 +19,26 @@
     <div class="topbar-actions">
       <select id="filter-brgy" class="filter-select" onchange="renderTable()">
         <option>All barangays</option>
-        <option>Brgy 1</option><option>Brgy 2</option><option>Brgy 3</option>
-        <option>Brgy 4</option><option>Brgy 5</option>
+        <option>Alejal</option>
+        <option>Anibongan</option>
+        <option>Asuncion</option>
+        <option>Cebulano</option>
+        <option>Guadalupe</option>
+        <option>Ising (Poblacion)</option>
+        <option>La Paz</option>
+        <option>Mabaus</option>
+        <option>Mabuhay</option>
+        <option>Magsaysay</option>
+        <option>Mangalcal</option>
+        <option>Minda</option>
+        <option>New Camiling</option>
+        <option>Salvacion</option>
+        <option>San Isidro</option>
+        <option>Santo Niño</option>
+        <option>Taba</option>
+        <option>Tibulao</option>
+        <option>Tubod</option>
+        <option>Tuganay</option>
       </select>
       <select id="filter-status" class="filter-select" onchange="renderTable()">
         <option>All status</option>
@@ -92,12 +110,12 @@
 
   // Sample members — in production, fetch/sort/filter these via the backend instead.
   const members = [
-    { osca: '2024-001', name: 'Juan dela Cruz',  age: 81, sex: 'M', brgy: 'Brgy 2', civil: 'Widowed', milestone: '80+', reg: 'complete', dateAdded: '2024-01-05' },
-    { osca: '2023-087', name: 'Maria Santos',    age: 72, sex: 'F', brgy: 'Brgy 5', civil: 'Married', milestone: null,  reg: 'complete', dateAdded: '2023-03-10' },
-    { osca: '2025-012', name: 'Rosario Mendoza', age: 68, sex: 'F', brgy: 'Brgy 4', civil: 'Widowed', milestone: null,  reg: 'missing',  dateAdded: '2025-02-01' },
-    { osca: '2024-033', name: 'Pedro Ramos',     age: 85, sex: 'M', brgy: 'Brgy 1', civil: 'Widowed', milestone: '80+', reg: 'urgent',   dateAdded: '2024-04-20' },
-    { osca: '2022-114', name: 'Lourdes Garcia',  age: 76, sex: 'F', brgy: 'Brgy 3', civil: 'Married', milestone: null,  reg: 'complete', dateAdded: '2022-11-14' },
-    { osca: '2023-055', name: 'Felipe Torres',   age: 70, sex: 'M', brgy: 'Brgy 2', civil: 'Married', milestone: null,  reg: 'pending',  dateAdded: '2023-05-15' },
+    { osca: '2023-087', name: 'Juan dela Cruz',  age: 81, sex: 'M', brgy: 'Ising (Pob.)',          civil: 'Widowed', milestone: '80+', reg: 'complete', dateAdded: '2024-01-05' },
+    { osca: '2024-097', name: 'Maria Santos',    age: 72, sex: 'F', brgy: 'Anibongan',         civil: 'Married', milestone: null,  reg: 'complete', dateAdded: '2023-03-10' },
+    { osca: '2025-012', name: 'Rosario Mendoza', age: 68, sex: 'F', brgy: 'Tubod',             civil: 'Widowed', milestone: null,  reg: 'missing',  dateAdded: '2025-02-01' },
+    { osca: '2024-033', name: 'Pedro Ramos',     age: 85, sex: 'M', brgy: 'Ising (Poblacion)',  civil: 'Widowed', milestone: '80+', reg: 'urgent',   dateAdded: '2024-04-20' },
+    { osca: '2022-114', name: 'Lourdes Garcia',  age: 76, sex: 'F', brgy: 'Alejal',            civil: 'Married', milestone: null,  reg: 'complete', dateAdded: '2022-11-14' },
+    { osca: '2023-055', name: 'Felipe Torres',   age: 70, sex: 'M', brgy: 'Tuganay',           civil: 'Married', milestone: null,  reg: 'pending',  dateAdded: '2023-05-15' },
   ];
 
   const regMeta = {
