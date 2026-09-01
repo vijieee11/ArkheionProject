@@ -21,7 +21,7 @@ function renderSidebar(activePage) {
   const rawUsername = localStorage.getItem('ark_username') || 'Staff';
   const displayName = formatStaffName(rawUsername, role);
   const initials = role === 'head_staff' ? 'HS' : 'S';
-  const roleLabel = role === 'head_staff' ? 'Head Staff' : 'Regular Staff';
+  const roleLabel = role === 'head_staff' ? 'OSCA Head Staff' : 'Regular Staff';
 
   const navGroups = [
     { section: 'Main', items: [

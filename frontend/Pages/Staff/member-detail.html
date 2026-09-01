@@ -121,7 +121,7 @@
         <div><div class="td-muted" style="font-size:12px;">Civil status</div><div class="td-bold" id="i-civil">Married</div></div>
         <div><div class="td-muted" style="font-size:12px;">Barangay</div><div class="td-bold" id="i-brgy">Brgy 2</div></div>
         <div><div class="td-muted" style="font-size:12px;">Contact number</div><div class="td-bold" id="i-contact">09171234567</div></div>
-        <div><div class="td-muted" style="font-size:12px;">Address</div><div class="td-bold" id="i-address">Purok 3, Brgy 2</div></div>
+        <div><div class="td-muted" style="font-size:12px;">Address</div><div class="td-bold" id="i-address">Purok 3, Brgy. Ising (Pob.)</div></div>
       </div>
     </div>
 
@@ -136,15 +136,15 @@
       <div style="display:flex;gap:12px;flex-wrap:wrap;padding:16px 24px;">
         <div style="flex:1;min-width:160px;background:var(--gray-100,#e5e7eb);border-radius:var(--radius);padding:12px 14px;">
           <div class="td-muted" style="font-size:12px;">Pension</div>
-          <div style="margin-top:6px;"><span class="badge badge-ok">Active</span></div>
+          <div style="margin-top:6px;"><span class="badge" id="svc-pension">—</span></div>
         </div>
         <div style="flex:1;min-width:160px;background:var(--gray-100,#e5e7eb);border-radius:var(--radius);padding:12px 14px;">
           <div class="td-muted" style="font-size:12px;">Medicine assistance</div>
-          <div style="margin-top:6px;"><span class="badge badge-proc">Pending refill</span></div>
+          <div style="margin-top:6px;"><span class="badge" id="svc-medicine">—</span></div>
         </div>
         <div style="flex:1;min-width:160px;background:var(--gray-100,#e5e7eb);border-radius:var(--radius);padding:12px 14px;">
           <div class="td-muted" style="font-size:12px;">Grocery assistance</div>
-          <div style="margin-top:6px;"><span class="badge badge-ok">Claimed - Aug 2026</span></div>
+          <div style="margin-top:6px;"><span class="badge" id="svc-grocery">—</span></div>
         </div>
       </div>
     </div>
@@ -271,7 +271,12 @@
     '2024-001': {
       name: 'Juan dela Cruz', brgy: 'Ising', year: '2024', status: 'ok', statusLabel: 'Verified',
       birthdate: 'May 14, 1958', age: 68, sex: 'Male', civil: 'Married',
-      contact: '09171234567', address: 'Purok 3, Brgy. Ising',
+      contact: '09171234567', address: 'Purok 3, Brgy. Ising (Pob.)',
+      services: {
+        pension:  { label: 'Active',              cls: 'badge-ok' },
+        medicine: { label: 'Pending refill',       cls: 'badge-proc' },
+        grocery:  { label: 'Claimed - Aug 2026',   cls: 'badge-ok' },
+      },
       docs: [
         { type: 'OSCA Form No. 1',       cls: 'Registration form', year: '2024', status: 'ok',   statusLabel: 'Verified' },
         { type: 'PSA Birth Certificate', cls: 'Birth certificate', year: '2024', status: 'ok',   statusLabel: 'Verified' },
@@ -282,6 +287,11 @@
       name: 'Maria Santos', brgy: 'Anobongan', year: '2023', status: 'ok', statusLabel: 'Verified',
       birthdate: 'Jan 22, 1961', age: 65, sex: 'Female', civil: 'Widowed',
       contact: '09209876543', address: 'Purok 1, Brgy. Anobongan',
+      services: {
+        pension:  { label: 'Unclaimed - 2 months', cls: 'badge-danger' },
+        medicine: { label: 'No active request',    cls: 'badge-proc' },
+        grocery:  { label: 'Claimed - Jul 2026',    cls: 'badge-ok' },
+      },
       docs: [
         { type: 'PhilSys ID', cls: 'Government ID', year: '2023', status: 'ok', statusLabel: 'Verified' },
       ]
@@ -290,6 +300,11 @@
       name: 'Wyndell Joshua Camacho', brgy: 'Tuganay', year: '2024', status: 'pending', statusLabel: 'Pending',
       birthdate: 'March 30, 1959', age: 67, sex: 'Male', civil: 'Single',
       contact: '09173456789', address: 'Purok 2, Brgy. Tuganay',
+      services: {
+        pension:  { label: 'Application pending', cls: 'badge-info' },
+        medicine: { label: 'No active request',   cls: 'badge-proc' },
+        grocery:  { label: 'Not yet claimed',      cls: 'badge-warn' },
+      },
       docs: [
         { type: 'PhilSys ID', cls: 'Government ID', year: '2024', status: 'pending', statusLabel: 'Pending' },
       ]
@@ -383,6 +398,16 @@
     document.getElementById('i-brgy').textContent = m.brgy;
     document.getElementById('i-contact').textContent = m.contact;
     document.getElementById('i-address').textContent = m.address;
+
+    // Services status — per-member, so each record shows its own real standing
+    // (e.g. Maria Santos shows her actual unclaimed pension, not a shared default).
+    const svc = m.services || {};
+    ['pension', 'medicine', 'grocery'].forEach(key => {
+      const el = document.getElementById('svc-' + key);
+      const data = svc[key] || { label: 'No data', cls: 'badge-proc' };
+      el.textContent = data.label;
+      el.className = 'badge ' + data.cls;
+    });
   }
 
   function loadMember() {

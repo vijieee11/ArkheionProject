@@ -14,10 +14,10 @@
     <span class="topbar-title">Members</span>
     <div class="topbar-search">
       <i class="ti ti-search"></i>
-      <input type="text" id="member-search" placeholder="Search by name, OSCA ID, barangay..." oninput="renderTable()">
+      <input type="text" id="member-search" placeholder="Search by name, OSCA ID, barangay..." oninput="onFiltersChanged()">
     </div>
     <div class="topbar-actions">
-      <select id="filter-brgy" class="filter-select" onchange="renderTable()">
+      <select id="filter-brgy" class="filter-select" onchange="onFiltersChanged()">
         <option>All barangays</option>
         <option>Alejal</option>
         <option>Anibongan</option>
@@ -40,7 +40,7 @@
         <option>Tubod</option>
         <option>Tuganay</option>
       </select>
-      <select id="filter-status" class="filter-select" onchange="renderTable()">
+      <select id="filter-status" class="filter-select" onchange="onFiltersChanged()">
         <option>All status</option>
         <option>Complete</option><option>Incomplete</option><option>Urgent</option>
       </select>
@@ -94,13 +94,7 @@
       </table>
       <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:.5px solid var(--gray-200);">
         <span style="font-size:12px;color:var(--gray-500)" id="members-count">Showing 6 of 1,284 members</span>
-        <div style="display:flex;gap:4px;">
-          <button class="btn btn-ghost btn-sm"><i class="ti ti-chevron-left"></i></button>
-          <button class="btn btn-navy btn-sm">1</button>
-          <button class="btn btn-ghost btn-sm">2</button>
-          <button class="btn btn-ghost btn-sm">3</button>
-          <button class="btn btn-ghost btn-sm"><i class="ti ti-chevron-right"></i></button>
-        </div>
+        <div style="display:flex;gap:4px;" id="pagination-controls"></div>
       </div>
     </div>
   </div>
@@ -110,12 +104,36 @@
 
   // Sample members — in production, fetch/sort/filter these via the backend instead.
   const members = [
-    { osca: '2023-087', name: 'Juan dela Cruz',  age: 81, sex: 'M', brgy: 'Ising (Pob.)',          civil: 'Widowed', milestone: '80+', reg: 'complete', dateAdded: '2024-01-05' },
-    { osca: '2024-097', name: 'Maria Santos',    age: 72, sex: 'F', brgy: 'Anibongan',         civil: 'Married', milestone: null,  reg: 'complete', dateAdded: '2023-03-10' },
+    { osca: '2024-001', name: 'Juan dela Cruz',  age: 81, sex: 'M', brgy: 'Ising (Pob.)',          civil: 'Widowed', milestone: '80+', reg: 'complete', dateAdded: '2024-01-05' },
+    { osca: '2023-087', name: 'Maria Santos',    age: 72, sex: 'F', brgy: 'Anibongan',         civil: 'Married', milestone: null,  reg: 'complete', dateAdded: '2023-03-10' },
     { osca: '2025-012', name: 'Rosario Mendoza', age: 68, sex: 'F', brgy: 'Tubod',             civil: 'Widowed', milestone: null,  reg: 'missing',  dateAdded: '2025-02-01' },
-    { osca: '2024-033', name: 'Pedro Ramos',     age: 85, sex: 'M', brgy: 'Ising (Poblacion)',  civil: 'Widowed', milestone: '80+', reg: 'urgent',   dateAdded: '2024-04-20' },
+    { osca: '2024-033', name: 'Pedro Ramos',     age: 85, sex: 'M', brgy: 'Ising (Pob.)',  civil: 'Widowed', milestone: '80+', reg: 'urgent',   dateAdded: '2024-04-20' },
     { osca: '2022-114', name: 'Lourdes Garcia',  age: 76, sex: 'F', brgy: 'Alejal',            civil: 'Married', milestone: null,  reg: 'complete', dateAdded: '2022-11-14' },
     { osca: '2023-055', name: 'Felipe Torres',   age: 70, sex: 'M', brgy: 'Tuganay',           civil: 'Married', milestone: null,  reg: 'pending',  dateAdded: '2023-05-15' },
+    { osca: '2023-052', name: 'Avi Eshma', age: 62, sex: 'F', brgy: 'Tubod', civil: 'Married', milestone: null, reg: 'missing', dateAdded: '2023-05-17' },
+    { osca: '2025-111', name: 'Taylor Batumbakal', age: 66, sex: 'F', brgy: 'Tubod', civil: 'Widowed', milestone: null, reg: 'missing', dateAdded: '2024-05-19' },
+    { osca: '2023-052', name: 'Julieto Dimaguiba', age: 72, sex: 'M', brgy: 'Tubod', civil: 'Married', milestone: null, reg: 'missing', dateAdded: '2023-05-29' },
+    { osca: '2021-034', name: 'Corazon Villaruel', age: 90, sex: 'F', brgy: 'Salvacion', civil: 'Widowed', milestone: '90+', reg: 'complete', dateAdded: '2021-06-02' },
+    { osca: '2022-078', name: 'Bartolome Reyes', age: 65, sex: 'M', brgy: 'San Isidro', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2022-02-18' },
+    { osca: '2023-101', name: 'Fe Villanueva', age: 74, sex: 'F', brgy: 'Magsaysay', civil: 'Widowed', milestone: null, reg: 'urgent', dateAdded: '2023-07-09' },
+    { osca: '2024-045', name: 'Domingo Salazar', age: 69, sex: 'M', brgy: 'Mabuhay', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2024-03-22' },
+    { osca: '2024-060', name: 'Remedios Aquino', age: 88, sex: 'F', brgy: "Santo Niño", civil: 'Widowed', milestone: '80+', reg: 'pending', dateAdded: '2024-06-11' },
+    { osca: '2022-091', name: 'Herminio Bautista', age: 61, sex: 'M', brgy: 'La Paz', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2022-09-30' },
+    { osca: '2023-115', name: 'Perlita Navarro', age: 77, sex: 'F', brgy: 'Tubod', civil: 'Separated', milestone: null, reg: 'missing', dateAdded: '2023-01-25' },
+    { osca: '2025-003', name: 'Anselmo Cruz', age: 92, sex: 'M', brgy: 'Asuncion', civil: 'Widowed', milestone: '90+', reg: 'urgent', dateAdded: '2025-01-08' },
+    { osca: '2021-058', name: 'Trinidad Molina', age: 60, sex: 'F', brgy: 'Mabaus', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2021-10-14' },
+    { osca: '2022-140', name: 'Eugenio Pascual', age: 79, sex: 'M', brgy: 'Mangalcal', civil: 'Widowed', milestone: null, reg: 'complete', dateAdded: '2022-12-05' },
+    { osca: '2023-076', name: 'Consolacion Ramirez', age: 83, sex: 'F', brgy: 'Minda', civil: 'Widowed', milestone: '80+', reg: 'pending', dateAdded: '2023-08-19' },
+    { osca: '2024-021', name: 'Leoncio Fernandez', age: 64, sex: 'M', brgy: 'Taba', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2024-02-14' },
+    { osca: '2024-089', name: 'Adoracion Castillo', age: 71, sex: 'F', brgy: 'Tubod', civil: 'Widowed', milestone: null, reg: 'missing', dateAdded: '2024-07-27' },
+    { osca: '2025-050', name: 'Filomeno Ocampo', age: 95, sex: 'M', brgy: 'Cebulano', civil: 'Widowed', milestone: '90+', reg: 'urgent', dateAdded: '2025-03-16' },
+    { osca: '2022-063', name: 'Bibiana Torres', age: 67, sex: 'F', brgy: 'New Camiling', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2022-05-08' },
+    { osca: '2023-029', name: 'Sotero Villanueva', age: 73, sex: 'M', brgy: 'Alejal', civil: 'Widowed', milestone: null, reg: 'complete', dateAdded: '2023-04-03' },
+    { osca: '2021-081', name: 'Milagros Santos', age: 86, sex: 'F', brgy: 'Anibongan', civil: 'Widowed', milestone: '80+', reg: 'pending', dateAdded: '2021-11-27' },
+    { osca: '2024-102', name: 'Ernesto Dizon', age: 63, sex: 'M', brgy: 'Salvacion', civil: 'Married', milestone: null, reg: 'missing', dateAdded: '2024-08-30' },
+    { osca: '2022-017', name: 'Presentacion Lopez', age: 78, sex: 'F', brgy: 'Tubod', civil: 'Widowed', milestone: null, reg: 'complete', dateAdded: '2022-01-12' },
+    { osca: '2023-140', name: 'Roberto Aguilar', age: 91, sex: 'M', brgy: 'San Isidro', civil: 'Widowed', milestone: '90+', reg: 'urgent', dateAdded: '2023-09-21' },
+    { osca: '2024-013', name: 'Concepcion Mercado', age: 66, sex: 'F', brgy: 'Ising (Pob.)', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2024-01-19' },
   ];
 
   const regMeta = {
@@ -133,6 +151,43 @@
     if (filterValue === 'Urgent') return m.reg === 'urgent';
     if (filterValue === 'Incomplete') return m.reg !== 'complete';
     return true;
+  }
+
+  // --- Pagination state --------------------------------------------------
+  const PAGE_SIZE = 10;
+  let currentPage = 1;
+
+  // Any change to search/barangay/status invalidates the current page —
+  // jump back to page 1 so the user isn't stranded on an empty page.
+  function onFiltersChanged() {
+    currentPage = 1;
+    renderTable();
+  }
+
+  function goToPage(page, totalPages) {
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
+    renderTable();
+  }
+
+  function renderPagination(totalPages) {
+    const el = document.getElementById('pagination-controls');
+
+    if (totalPages <= 1) {
+      el.innerHTML = '';
+      return;
+    }
+
+    let html = `<button class="btn btn-ghost btn-sm" ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1}, ${totalPages})"><i class="ti ti-chevron-left"></i></button>`;
+
+    for (let p = 1; p <= totalPages; p++) {
+      const isActive = p === currentPage;
+      html += `<button class="btn ${isActive ? 'btn-navy' : 'btn-ghost'} btn-sm" onclick="goToPage(${p}, ${totalPages})">${p}</button>`;
+    }
+
+    html += `<button class="btn btn-ghost btn-sm" ${currentPage === totalPages ? 'disabled' : ''} onclick="goToPage(${currentPage + 1}, ${totalPages})"><i class="ti ti-chevron-right"></i></button>`;
+
+    el.innerHTML = html;
   }
 
   function renderTable() {
@@ -157,9 +212,19 @@
       return 0;
     });
 
-    document.getElementById('members-count').textContent = `Showing ${rows.length} of 1,284 members`;
+    const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
 
-    document.getElementById('members-rows').innerHTML = rows.map(m => {
+    const startIdx = (currentPage - 1) * PAGE_SIZE;
+    const pageRows = rows.slice(startIdx, startIdx + PAGE_SIZE);
+
+    const rangeStart = rows.length === 0 ? 0 : startIdx + 1;
+    const rangeEnd = Math.min(startIdx + PAGE_SIZE, rows.length);
+    document.getElementById('members-count').textContent =
+      `Showing ${rangeStart}–${rangeEnd} of ${rows.length} members`;
+
+    document.getElementById('members-rows').innerHTML = pageRows.map(m => {
       const meta = regMeta[m.reg];
       const milestoneCell = m.milestone ? `<span class="badge badge-urgent">${m.milestone}</span>` : '—';
       return `
@@ -173,6 +238,8 @@
           <td><button class="btn btn-ghost btn-sm btn-icon" onclick="location.href='member-detail.html?id=${encodeURIComponent(m.osca)}'" title="View"><i class="ti ti-eye"></i></button></td>
         </tr>`;
     }).join('');
+
+    renderPagination(totalPages);
   }
 
   function exportMembers() {

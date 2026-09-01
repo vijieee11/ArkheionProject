@@ -143,22 +143,22 @@
           </thead>
           <tbody>
             <tr style="cursor:pointer" onclick="location.href='member-detail.html'">
-              <td class="td-bold">Juan dela Cruz</td><td class="td-muted">2024-001</td><td class="td-muted">Brgy 2</td><td class="td-muted">Registration</td><td><span class="badge badge-ok">Complete</span></td>
+              <td class="td-bold">Juan dela Cruz</td><td class="td-muted">2024-001</td><td class="td-muted">Ising (Pob.)</td><td class="td-muted">Registration</td><td><span class="badge badge-ok">Complete</span></td>
             </tr>
             <tr style="cursor:pointer" onclick="location.href='grocery.html'">
-              <td class="td-bold">Maria Santos</td><td class="td-muted">2023-087</td><td class="td-muted">Brgy 5</td><td class="td-muted">Grocery</td><td><span class="badge badge-ok">Released</span></td>
+              <td class="td-bold">Maria Santos</td><td class="td-muted">2023-087</td><td class="td-muted">Anobongan</td><td class="td-muted">Grocery</td><td><span class="badge badge-ok">Released</span></td>
             </tr>
             <tr style="cursor:pointer" onclick="location.href='pension.html'">
-              <td class="td-bold">Pedro Ramos</td><td class="td-muted">2024-033</td><td class="td-muted">Brgy 1</td><td class="td-muted">Pension</td><td><span class="badge badge-urgent">Urgent</span></td>
+              <td class="td-bold">Pedro Ramos</td><td class="td-muted">2024-033</td><td class="td-muted">Tuganay</td><td class="td-muted">Pension</td><td><span class="badge badge-urgent">Urgent</span></td>
             </tr>
             <tr style="cursor:pointer" onclick="location.href='medicine.html'">
-              <td class="td-bold">Lourdes Garcia</td><td class="td-muted">2022-114</td><td class="td-muted">Brgy 3</td><td class="td-muted">Medicine</td><td><span class="badge badge-proc">Processing</span></td>
+              <td class="td-bold">Lourdes Garcia</td><td class="td-muted">2022-114</td><td class="td-muted">Tubod</td><td class="td-muted">Medicine</td><td><span class="badge badge-proc">Processing</span></td>
             </tr>
             <tr style="cursor:pointer" onclick="location.href='members.html'">
-              <td class="td-bold">Rosario Mendoza</td><td class="td-muted">2025-012</td><td class="td-muted">Brgy 4</td><td class="td-muted">Registration</td><td><span class="badge badge-miss">Missing ID</span></td>
+              <td class="td-bold">Rosario Mendoza</td><td class="td-muted">2025-012</td><td class="td-muted">New Camiling</td><td class="td-muted">Registration</td><td><span class="badge badge-miss">Missing ID</span></td>
             </tr>
             <tr style="cursor:pointer" onclick="location.href='grocery.html'">
-              <td class="td-bold">Felipe Torres</td><td class="td-muted">2023-055</td><td class="td-muted">Brgy 2</td><td class="td-muted">Grocery</td><td><span class="badge badge-pend">Pending</span></td>
+              <td class="td-bold">Felipe Torres</td><td class="td-muted">2023-055</td><td class="td-muted">Cebulano</td><td class="td-muted">Grocery</td><td><span class="badge badge-pend">Pending</span></td>
             </tr>
           </tbody>
         </table>
@@ -228,7 +228,7 @@
       <div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;">
         <div class="alert alert-coral">
           <i class="ti ti-alert-circle"></i>
-          <div><strong>Pedro Ramos (2024-033)</strong> — Pension unclaimed for 2 months. Possible home visit needed.</div>
+          <div><strong>Maria Santos (2023-087)</strong> — Pension unclaimed for 2 months. Possible home visit needed.</div>
         </div>
         <div class="alert alert-amber">
           <i class="ti ti-clock"></i>
@@ -236,7 +236,7 @@
         </div>
         <div class="alert alert-teal">
           <i class="ti ti-calendar"></i>
-          <div><strong>Next grocery distribution</strong> — Brgy 2 on July 15, 2026. 8:00 AM at OSCA Carmen office.</div>
+          <div><strong>Next grocery distribution</strong> — Brgy. Salvacion on July 15, 2026. 8:00 AM at OSCA Carmen office.</div>
         </div>
       </div>
     </div>
@@ -265,8 +265,8 @@ document.getElementById('pageGreeting').textContent = timeGreeting + ', ' + disp
 const notifications = [
   {
     id: 'n1', unread: true, icon: 'ti-alert-circle', tint: 'var(--coral-50)', iconColor: 'var(--coral-900)',
-    html: '<strong>Pedro Ramos</strong> (2024-033) — Pension unclaimed for 2 months.',
-    time: '2 months overdue', href: 'member-detail.html?id=2024-033'
+    html: '<strong>Maria Santos</strong> (2023-087) — Pension unclaimed for 2 months.',
+    time: '2 months overdue', href: 'member-detail.html?id=2023-087'
   },
   {
     id: 'n2', unread: true, icon: 'ti-clock', tint: 'var(--amber-100)', iconColor: 'var(--gold-dark)',

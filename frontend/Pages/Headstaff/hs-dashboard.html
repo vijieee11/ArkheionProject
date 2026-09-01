@@ -16,6 +16,56 @@
     .brgy-bar-fill { height:100%; border-radius:4px; }
     .brgy-pct { width:36px; text-align:right; font-size:11px; font-weight:500; color:var(--gray-600); }
     .staff-avatar-sm { width:32px; height:32px; border-radius:50%; background:var(--teal-50); color:var(--navy); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; flex-shrink:0; }
+
+    /* Notification bell + dropdown — matches the Staff Dashboard's design */
+    .notif-wrap { position:relative; }
+    .topbar-icon-btn {
+      width:34px; height:34px; border-radius:8px; border:1px solid var(--gray-200);
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; color:var(--gray-600); flex-shrink:0; position:relative; background:#fff;
+    }
+    .topbar-icon-btn:hover { background:var(--gray-50, #f7f7f8); border-color:var(--gray-300, #d1d5db); }
+    .notif-badge {
+      position:absolute; top:-3px; right:-3px;
+      min-width:16px; height:16px; padding:0 3px;
+      border-radius:999px; background:#e74c3c; color:#fff;
+      font-size:10px; font-weight:700; line-height:16px; text-align:center;
+      border:1.5px solid #fff;
+    }
+    .notif-badge.zero { background:#9aa1ab; }
+    .notif-dropdown {
+      display:none !important;
+      position:absolute !important; top:calc(100% + 10px); right:0;
+      width:340px; max-width:88vw;
+      background:#fff; border-radius:12px;
+      box-shadow:0 16px 40px rgba(0,0,0,.18);
+      z-index:2147483000;
+      overflow:hidden;
+    }
+    .notif-dropdown.open { display:block !important; }
+    .notif-dropdown-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 16px; border-bottom:.5px solid var(--gray-200);
+      font-weight:600; font-size:13.5px; color:var(--gray-900);
+    }
+    .notif-dropdown-header a { font-size:11.5px; font-weight:500; color:var(--navy-light); cursor:pointer; }
+    .notif-item {
+      display:flex; gap:10px; align-items:flex-start;
+      padding:12px 16px; cursor:pointer;
+      border-bottom:1px solid #dfe2e6;
+      transition:background .12s;
+    }
+    .notif-item:last-child { border-bottom:none; }
+    .notif-item:hover { background:#e2e5e9 !important; }
+    .notif-item.unread { background: #eef0f2; border-left: 3px solid #c7ccd3; padding-left: 13px; }
+    .notif-item-icon {
+      width:30px; height:30px; border-radius:50%; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center; font-size:14px;
+    }
+    .notif-item-text { flex:1; font-size:12.5px; line-height:1.4; color:var(--gray-800,#1f2937); }
+    .notif-item-text strong { color:var(--gray-900); }
+    .notif-item-time { font-size:10.5px; color:var(--gray-500); margin-top:3px; }
+    .notif-empty { padding:24px 16px; text-align:center; font-size:12.5px; color:var(--gray-500); }
   </style>
 </head>
 <body>
@@ -26,6 +76,21 @@
     <div class="topbar-actions" style="margin-left:auto;">
       <button class="btn btn-ghost btn-sm" onclick="location.href='audit.html'"><i class="ti ti-shield-check"></i> Audit log</button>
       <button class="btn btn-navy btn-sm" onclick="location.href='staff-mgmt.html'"><i class="ti ti-plus"></i> Add staff</button>
+
+      <div class="notif-wrap">
+        <div class="topbar-icon-btn" id="notifBellBtn" onclick="toggleNotifDropdown(event)">
+          <i class="ti ti-bell"></i>
+          <span class="notif-badge" id="notifBadge">0</span>
+        </div>
+        <div class="notif-dropdown" id="notifDropdown">
+          <div class="notif-dropdown-header">
+            <span>Notifications</span>
+            <a onclick="markAllNotifsRead(event)">Mark all as read</a>
+          </div>
+          <div id="notifList"></div>
+        </div>
+      </div>
+
       <div class="topbar-avatar" style="background:var(--gold);color:var(--navy);">HS</div>
     </div>
   </div>
@@ -48,9 +113,9 @@
         <div class="stat-value">3</div>
         <div class="stat-sub">2 regular, 1 head</div>
       </div>
-      <div class="stat-card coral" style="cursor:pointer" onclick="location.href='../members.html'">
+      <div class="stat-card coral" style="cursor:pointer" onclick="location.href='../Staff/members.html'">
         <div class="stat-label"><i class="ti ti-map-pin"></i> Highest backlog barangay</div>
-        <div class="stat-value" style="font-size:18px;">Brgy 4 — 31%</div>
+        <div class="stat-value" style="font-size:18px;">Brgy. Tubod— 31%</div>
         <div class="stat-sub">Incomplete requirements</div>
       </div>
     </div>
@@ -208,6 +273,151 @@
 
   renderRateChart();
   renderStaff();
+
+  /* ---------------- Notifications ----------------
+     Content is pulled straight from this dashboard's real data
+     (pending approvals + staff activity) and filtered by the
+     categories the Head Staff has enabled in Settings.
+  */
+  const notifications = [
+    {
+      id: 'req-delete-record',
+      category: 'requests',
+      icon: 'ti-trash',
+      iconBg: 'var(--coral-50)',
+      iconColor: 'var(--coral-600)',
+      title: 'Delete record request',
+      desc: 'Regular Staff 1 — Duplicate entry for Felipe Torres',
+      time: 'Awaiting review',
+      goto: 'hs-pending-approval.html'
+    },
+    {
+      id: 'req-benefit-correction',
+      category: 'requests',
+      icon: 'ti-edit',
+      iconBg: 'var(--amber-100)',
+      iconColor: 'var(--gold-dark)',
+      title: 'Benefit status correction',
+      desc: 'Regular Staff 2 — Pension marked claimed in error',
+      time: 'Awaiting review',
+      goto: 'hs-pending-approval.html'
+    },
+    {
+      id: 'approval-staff-deactivation',
+      category: 'approvals',
+      icon: 'ti-user-off',
+      iconBg: 'var(--coral-50)',
+      iconColor: 'var(--coral-600)',
+      title: 'Staff deactivation request',
+      desc: 'System — Regular Staff 2 inactive for 30+ days',
+      time: 'Awaiting your approval',
+      goto: 'hs-pending-approval.html'
+    },
+    {
+      id: 'audit-no-login',
+      category: 'audit',
+      icon: 'ti-alert-triangle',
+      iconBg: 'var(--amber-100)',
+      iconColor: 'var(--gold-dark)',
+      title: 'Staff has never logged in',
+      desc: 'Regular Staff 2 (osca_staff2) — account created but unused',
+      time: 'Security check',
+      goto: 'staff-mgmt.html'
+    },
+    {
+      id: 'audit-backlog',
+      category: 'audit',
+      icon: 'ti-map-pin',
+      iconBg: 'var(--teal-50)',
+      iconColor: 'var(--navy)',
+      title: 'High incomplete-requirements backlog',
+      desc: 'Brgy. Tubod — 31% of records missing requirements',
+      time: 'System flag',
+      goto: '../Staff/members.html'
+    },
+  ];
+
+  function readNotifSettings() {
+    return {
+      requests: localStorage.getItem('ark_hs_notif_requests') !== 'off',
+      approvals: localStorage.getItem('ark_hs_notif_approvals') !== 'off',
+      audit: localStorage.getItem('ark_hs_notif_audit') !== 'off',
+    };
+  }
+
+  // Read state (which notification ids have been opened/clicked)
+  function getReadIds() {
+    try { return JSON.parse(localStorage.getItem('ark_hs_notif_read') || '[]'); }
+    catch (e) { return []; }
+  }
+  function saveReadIds(ids) {
+    localStorage.setItem('ark_hs_notif_read', JSON.stringify(ids));
+  }
+
+  function renderNotifDropdown() {
+    const prefs = readNotifSettings();
+    const readIds = getReadIds();
+    const visible = notifications.filter(n => prefs[n.category]);
+
+    const list = document.getElementById('notifList');
+    if (!visible.length) {
+      list.innerHTML = '<div class="notif-empty">You are all caught up.</div>';
+    } else {
+      list.innerHTML = visible.map(n => {
+        const unread = !readIds.includes(n.id);
+        return `
+        <div class="notif-item ${unread ? 'unread' : ''}" onclick="openNotif('${n.id}')">
+          <div class="notif-item-icon" style="background:${n.iconBg};color:${n.iconColor};"><i class="ti ${n.icon}"></i></div>
+          <div class="notif-item-text">
+            <div><strong>${n.title}</strong> — ${n.desc}</div>
+            <div class="notif-item-time">${n.time}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    const unreadCount = visible.filter(n => !readIds.includes(n.id)).length;
+    const badge = document.getElementById('notifBadge');
+    badge.textContent = unreadCount;
+    badge.classList.toggle('zero', unreadCount === 0);
+  }
+
+  function toggleNotifDropdown(evt) {
+    evt.stopPropagation();
+    document.getElementById('notifDropdown').classList.toggle('open');
+  }
+
+  function openNotif(id) {
+    const n = notifications.find(x => x.id === id);
+    if (!n) return;
+
+    const ids = getReadIds();
+    if (!ids.includes(id)) {
+      ids.push(id);
+      saveReadIds(ids);
+    }
+    location.href = n.goto;
+  }
+
+  function markAllNotifsRead(evt) {
+    if (evt) evt.stopPropagation();
+    saveReadIds(notifications.map(n => n.id));
+    renderNotifDropdown();
+  }
+
+  document.addEventListener('click', function (e) {
+    const wrap = document.querySelector('.notif-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+      document.getElementById('notifDropdown').classList.remove('open');
+    }
+  });
+
+  renderNotifDropdown();
+
+  // Re-sync on bfcache restore (Back/Forward), same as the Staff Dashboard.
+  window.addEventListener('pageshow', function () {
+    renderNotifDropdown();
+  });
 </script>
 </body>
 </html>
