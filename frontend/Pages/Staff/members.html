@@ -5,7 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Arkheion — Members</title>
   <link rel="stylesheet" href="styles.css">
-  <style>body{display:flex;}</style>
+  <style>
+    body{display:flex;}
+    .badge-deceased {
+      background:#fee2e2;
+      color:#b91c1c;
+    }
+  </style>
 </head>
 <body>
 <script src="sidebar.js"></script>
@@ -44,6 +50,12 @@
         <option>All status</option>
         <option>Complete</option><option>Incomplete</option><option>Urgent</option>
       </select>
+      <!-- NEW: life status filter -->
+      <select id="filter-life" class="filter-select" onchange="onFiltersChanged()">
+        <option>All members</option>
+        <option>Active</option>
+        <option>Deceased</option>
+      </select>
       <button class="btn btn-ghost btn-sm" onclick="exportMembers()"><i class="ti ti-download"></i> Export</button>
       <button class="btn btn-navy btn-sm" onclick="location.href='register.html'"><i class="ti ti-plus"></i> Register</button>
     </div>
@@ -79,6 +91,7 @@
             <option value="name-asc">Sort: Name A-Z</option>
             <option value="recent">Sort: Recently added</option>
             <option value="age-desc">Sort: Age (oldest)</option>
+            <option value="age-asc">Sort: Age (youngest)</option>
           </select>
         </div>
       </div>
@@ -87,7 +100,7 @@
           <tr>
             <th>OSCA ID</th><th>Name</th><th>Age</th><th>Sex</th>
             <th>Barangay</th><th>Civil Status</th><th>Milestone</th>
-            <th>Reg. Status</th><th>Actions</th>
+            <th>Reg. Status</th><th>Life Status</th><th>Actions</th>
           </tr>
         </thead>
         <tbody id="members-rows"></tbody>
@@ -103,37 +116,38 @@
   renderSidebar('members');
 
   // Sample members — in production, fetch/sort/filter these via the backend instead.
+  // NEW: each member now has `life`: 'active' | 'deceased' (default 'active').
   const members = [
-    { osca: '2024-001', name: 'Juan dela Cruz',  age: 81, sex: 'M', brgy: 'Ising (Pob.)',          civil: 'Widowed', milestone: '80+', reg: 'complete', dateAdded: '2024-01-05' },
-    { osca: '2023-087', name: 'Maria Santos',    age: 72, sex: 'F', brgy: 'Anibongan',         civil: 'Married', milestone: null,  reg: 'complete', dateAdded: '2023-03-10' },
-    { osca: '2025-012', name: 'Rosario Mendoza', age: 68, sex: 'F', brgy: 'Tubod',             civil: 'Widowed', milestone: null,  reg: 'missing',  dateAdded: '2025-02-01' },
-    { osca: '2024-033', name: 'Pedro Ramos',     age: 85, sex: 'M', brgy: 'Ising (Pob.)',  civil: 'Widowed', milestone: '80+', reg: 'urgent',   dateAdded: '2024-04-20' },
-    { osca: '2022-114', name: 'Lourdes Garcia',  age: 76, sex: 'F', brgy: 'Alejal',            civil: 'Married', milestone: null,  reg: 'complete', dateAdded: '2022-11-14' },
-    { osca: '2023-055', name: 'Felipe Torres',   age: 70, sex: 'M', brgy: 'Tuganay',           civil: 'Married', milestone: null,  reg: 'pending',  dateAdded: '2023-05-15' },
-    { osca: '2023-052', name: 'Avi Eshma', age: 62, sex: 'F', brgy: 'Tubod', civil: 'Married', milestone: null, reg: 'missing', dateAdded: '2023-05-17' },
-    { osca: '2025-111', name: 'Taylor Batumbakal', age: 66, sex: 'F', brgy: 'Tubod', civil: 'Widowed', milestone: null, reg: 'missing', dateAdded: '2024-05-19' },
-    { osca: '2023-052', name: 'Julieto Dimaguiba', age: 72, sex: 'M', brgy: 'Tubod', civil: 'Married', milestone: null, reg: 'missing', dateAdded: '2023-05-29' },
-    { osca: '2021-034', name: 'Corazon Villaruel', age: 90, sex: 'F', brgy: 'Salvacion', civil: 'Widowed', milestone: '90+', reg: 'complete', dateAdded: '2021-06-02' },
-    { osca: '2022-078', name: 'Bartolome Reyes', age: 65, sex: 'M', brgy: 'San Isidro', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2022-02-18' },
-    { osca: '2023-101', name: 'Fe Villanueva', age: 74, sex: 'F', brgy: 'Magsaysay', civil: 'Widowed', milestone: null, reg: 'urgent', dateAdded: '2023-07-09' },
-    { osca: '2024-045', name: 'Domingo Salazar', age: 69, sex: 'M', brgy: 'Mabuhay', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2024-03-22' },
-    { osca: '2024-060', name: 'Remedios Aquino', age: 88, sex: 'F', brgy: "Santo Niño", civil: 'Widowed', milestone: '80+', reg: 'pending', dateAdded: '2024-06-11' },
-    { osca: '2022-091', name: 'Herminio Bautista', age: 61, sex: 'M', brgy: 'La Paz', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2022-09-30' },
-    { osca: '2023-115', name: 'Perlita Navarro', age: 77, sex: 'F', brgy: 'Tubod', civil: 'Separated', milestone: null, reg: 'missing', dateAdded: '2023-01-25' },
-    { osca: '2025-003', name: 'Anselmo Cruz', age: 92, sex: 'M', brgy: 'Asuncion', civil: 'Widowed', milestone: '90+', reg: 'urgent', dateAdded: '2025-01-08' },
-    { osca: '2021-058', name: 'Trinidad Molina', age: 60, sex: 'F', brgy: 'Mabaus', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2021-10-14' },
-    { osca: '2022-140', name: 'Eugenio Pascual', age: 79, sex: 'M', brgy: 'Mangalcal', civil: 'Widowed', milestone: null, reg: 'complete', dateAdded: '2022-12-05' },
-    { osca: '2023-076', name: 'Consolacion Ramirez', age: 83, sex: 'F', brgy: 'Minda', civil: 'Widowed', milestone: '80+', reg: 'pending', dateAdded: '2023-08-19' },
-    { osca: '2024-021', name: 'Leoncio Fernandez', age: 64, sex: 'M', brgy: 'Taba', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2024-02-14' },
-    { osca: '2024-089', name: 'Adoracion Castillo', age: 71, sex: 'F', brgy: 'Tubod', civil: 'Widowed', milestone: null, reg: 'missing', dateAdded: '2024-07-27' },
-    { osca: '2025-050', name: 'Filomeno Ocampo', age: 95, sex: 'M', brgy: 'Cebulano', civil: 'Widowed', milestone: '90+', reg: 'urgent', dateAdded: '2025-03-16' },
-    { osca: '2022-063', name: 'Bibiana Torres', age: 67, sex: 'F', brgy: 'New Camiling', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2022-05-08' },
-    { osca: '2023-029', name: 'Sotero Villanueva', age: 73, sex: 'M', brgy: 'Alejal', civil: 'Widowed', milestone: null, reg: 'complete', dateAdded: '2023-04-03' },
-    { osca: '2021-081', name: 'Milagros Santos', age: 86, sex: 'F', brgy: 'Anibongan', civil: 'Widowed', milestone: '80+', reg: 'pending', dateAdded: '2021-11-27' },
-    { osca: '2024-102', name: 'Ernesto Dizon', age: 63, sex: 'M', brgy: 'Salvacion', civil: 'Married', milestone: null, reg: 'missing', dateAdded: '2024-08-30' },
-    { osca: '2022-017', name: 'Presentacion Lopez', age: 78, sex: 'F', brgy: 'Tubod', civil: 'Widowed', milestone: null, reg: 'complete', dateAdded: '2022-01-12' },
-    { osca: '2023-140', name: 'Roberto Aguilar', age: 91, sex: 'M', brgy: 'San Isidro', civil: 'Widowed', milestone: '90+', reg: 'urgent', dateAdded: '2023-09-21' },
-    { osca: '2024-013', name: 'Concepcion Mercado', age: 66, sex: 'F', brgy: 'Ising (Pob.)', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2024-01-19' },
+    { osca: '2024-001', name: 'Juan dela Cruz',  age: 81, sex: 'M', brgy: 'Ising (Pob.)',          civil: 'Widowed', milestone: '80+', reg: 'complete', dateAdded: '2024-01-05', life: 'active' },
+    { osca: '2023-087', name: 'Maria Santos',    age: 72, sex: 'F', brgy: 'Anibongan',         civil: 'Married', milestone: null,  reg: 'complete', dateAdded: '2023-03-10', life: 'active' },
+    { osca: '2025-012', name: 'Rosario Mendoza', age: 68, sex: 'F', brgy: 'Tubod',             civil: 'Widowed', milestone: null,  reg: 'missing',  dateAdded: '2025-02-01', life: 'active' },
+    { osca: '2024-033', name: 'Pedro Ramos',     age: 85, sex: 'M', brgy: 'Ising (Pob.)',  civil: 'Widowed', milestone: '80+', reg: 'urgent',   dateAdded: '2024-04-20', life: 'active' },
+    { osca: '2022-114', name: 'Lourdes Garcia',  age: 76, sex: 'F', brgy: 'Alejal',            civil: 'Married', milestone: null,  reg: 'complete', dateAdded: '2022-11-14', life: 'active' },
+    { osca: '2023-055', name: 'Felipe Torres',   age: 70, sex: 'M', brgy: 'Tuganay',           civil: 'Married', milestone: null,  reg: 'pending',  dateAdded: '2023-05-15', life: 'active' },
+    { osca: '2023-052', name: 'Avi Eshma', age: 62, sex: 'F', brgy: 'Tubod', civil: 'Married', milestone: null, reg: 'missing', dateAdded: '2023-05-17', life: 'active' },
+    { osca: '2025-111', name: 'Taylor Batumbakal', age: 66, sex: 'F', brgy: 'Tubod', civil: 'Widowed', milestone: null, reg: 'missing', dateAdded: '2024-05-19', life: 'active' },
+    { osca: '2023-052', name: 'Julieto Dimaguiba', age: 72, sex: 'M', brgy: 'Tubod', civil: 'Married', milestone: null, reg: 'missing', dateAdded: '2023-05-29', life: 'active' },
+    { osca: '2021-034', name: 'Corazon Villaruel', age: 90, sex: 'F', brgy: 'Salvacion', civil: 'Widowed', milestone: '90+', reg: 'complete', dateAdded: '2021-06-02', life: 'active' },
+    { osca: '2022-078', name: 'Bartolome Reyes', age: 65, sex: 'M', brgy: 'San Isidro', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2022-02-18', life: 'active' },
+    { osca: '2023-101', name: 'Fe Villanueva', age: 74, sex: 'F', brgy: 'Magsaysay', civil: 'Widowed', milestone: null, reg: 'urgent', dateAdded: '2023-07-09', life: 'active' },
+    { osca: '2024-045', name: 'Domingo Salazar', age: 69, sex: 'M', brgy: 'Mabuhay', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2024-03-22', life: 'active' },
+    { osca: '2024-060', name: 'Remedios Aquino', age: 88, sex: 'F', brgy: "Santo Niño", civil: 'Widowed', milestone: '80+', reg: 'pending', dateAdded: '2024-06-11', life: 'active' },
+    { osca: '2022-091', name: 'Herminio Bautista', age: 61, sex: 'M', brgy: 'La Paz', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2022-09-30', life: 'active' },
+    { osca: '2023-115', name: 'Perlita Navarro', age: 77, sex: 'F', brgy: 'Tubod', civil: 'Separated', milestone: null, reg: 'missing', dateAdded: '2023-01-25', life: 'active' },
+    { osca: '2025-003', name: 'Anselmo Cruz', age: 92, sex: 'M', brgy: 'Asuncion', civil: 'Widowed', milestone: '90+', reg: 'urgent', dateAdded: '2025-01-08', life: 'active' },
+    { osca: '2021-058', name: 'Trinidad Molina', age: 60, sex: 'F', brgy: 'Mabaus', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2021-10-14', life: 'active' },
+    { osca: '2022-140', name: 'Eugenio Pascual', age: 79, sex: 'M', brgy: 'Mangalcal', civil: 'Widowed', milestone: null, reg: 'complete', dateAdded: '2022-12-05', life: 'deceased' },
+    { osca: '2023-076', name: 'Consolacion Ramirez', age: 83, sex: 'F', brgy: 'Minda', civil: 'Widowed', milestone: '80+', reg: 'pending', dateAdded: '2023-08-19', life: 'active' },
+    { osca: '2024-021', name: 'Leoncio Fernandez', age: 64, sex: 'M', brgy: 'Taba', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2024-02-14', life: 'active' },
+    { osca: '2024-089', name: 'Adoracion Castillo', age: 71, sex: 'F', brgy: 'Tubod', civil: 'Widowed', milestone: null, reg: 'missing', dateAdded: '2024-07-27', life: 'active' },
+    { osca: '2025-050', name: 'Filomeno Ocampo', age: 95, sex: 'M', brgy: 'Cebulano', civil: 'Widowed', milestone: '90+', reg: 'urgent', dateAdded: '2025-03-16', life: 'active' },
+    { osca: '2022-063', name: 'Bibiana Torres', age: 67, sex: 'F', brgy: 'New Camiling', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2022-05-08', life: 'active' },
+    { osca: '2023-029', name: 'Sotero Villanueva', age: 73, sex: 'M', brgy: 'Alejal', civil: 'Widowed', milestone: null, reg: 'complete', dateAdded: '2023-04-03', life: 'active' },
+    { osca: '2021-081', name: 'Milagros Santos', age: 86, sex: 'F', brgy: 'Anibongan', civil: 'Widowed', milestone: '80+', reg: 'pending', dateAdded: '2021-11-27', life: 'active' },
+    { osca: '2024-102', name: 'Ernesto Dizon', age: 63, sex: 'M', brgy: 'Salvacion', civil: 'Married', milestone: null, reg: 'missing', dateAdded: '2024-08-30', life: 'active' },
+    { osca: '2022-017', name: 'Presentacion Lopez', age: 78, sex: 'F', brgy: 'Tubod', civil: 'Widowed', milestone: null, reg: 'complete', dateAdded: '2022-01-12', life: 'active' },
+    { osca: '2023-140', name: 'Roberto Aguilar', age: 91, sex: 'M', brgy: 'San Isidro', civil: 'Widowed', milestone: '90+', reg: 'urgent', dateAdded: '2023-09-21', life: 'active' },
+    { osca: '2024-013', name: 'Concepcion Mercado', age: 66, sex: 'F', brgy: 'Ising (Pob.)', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2024-01-19', life: 'active' },
   ];
 
   const regMeta = {
@@ -141,6 +155,14 @@
     missing:  { badge: 'badge-miss',   label: 'Missing ID' },
     urgent:   { badge: 'badge-urgent', label: 'Urgent' },
     pending:  { badge: 'badge-pend',   label: 'Pending' },
+  };
+
+  // NEW: badge meta for life status — red so it's easy to spot at a glance.
+  // `.badge-deceased` / `.row-deceased` styles are now inline in the <head>
+  // of this file, so no need to touch styles.css.
+  const lifeMeta = {
+    active:   { badge: 'badge-ok',       label: 'Active' },
+    deceased: { badge: 'badge-deceased', label: 'Deceased' },
   };
 
   // "Complete"/"Incomplete"/"Urgent" in the filter maps onto our finer-grained
@@ -153,11 +175,19 @@
     return true;
   }
 
+  // NEW: life status filter
+  function matchesLifeFilter(m, filterValue) {
+    if (filterValue === 'All members') return true;
+    if (filterValue === 'Active') return m.life === 'active';
+    if (filterValue === 'Deceased') return m.life === 'deceased';
+    return true;
+  }
+
   // --- Pagination state --------------------------------------------------
   const PAGE_SIZE = 10;
   let currentPage = 1;
 
-  // Any change to search/barangay/status invalidates the current page —
+  // Any change to search/barangay/status/life invalidates the current page —
   // jump back to page 1 so the user isn't stranded on an empty page.
   function onFiltersChanged() {
     currentPage = 1;
@@ -194,6 +224,7 @@
     const q = document.getElementById('member-search').value.trim().toLowerCase();
     const brgy = document.getElementById('filter-brgy').value;
     const status = document.getElementById('filter-status').value;
+    const life = document.getElementById('filter-life').value; // NEW
     const sortBy = document.getElementById('sort-select').value;
 
     let rows = members.filter(m => {
@@ -202,12 +233,13 @@
         m.osca.toLowerCase().includes(q) ||
         m.brgy.toLowerCase().includes(q);
       const matchesBrgy = brgy === 'All barangays' || m.brgy === brgy;
-      return matchesQuery && matchesBrgy && matchesStatusFilter(m, status);
+      return matchesQuery && matchesBrgy && matchesStatusFilter(m, status) && matchesLifeFilter(m, life);
     });
 
     rows = rows.slice().sort((a, b) => {
       if (sortBy === 'name-asc') return a.name.localeCompare(b.name);
       if (sortBy === 'age-desc') return b.age - a.age;
+      if (sortBy === 'age-asc') return a.age - b.age;
       if (sortBy === 'recent') return new Date(b.dateAdded) - new Date(a.dateAdded);
       return 0;
     });
@@ -226,6 +258,7 @@
 
     document.getElementById('members-rows').innerHTML = pageRows.map(m => {
       const meta = regMeta[m.reg];
+      const lmeta = lifeMeta[m.life] || lifeMeta.active; // NEW
       const milestoneCell = m.milestone ? `<span class="badge badge-urgent">${m.milestone}</span>` : '—';
       return `
         <tr>
@@ -235,6 +268,7 @@
           <td class="td-muted">${m.brgy}</td><td class="td-muted">${m.civil}</td>
           <td>${milestoneCell}</td>
           <td><span class="badge ${meta.badge}">${meta.label}</span></td>
+          <td><span class="badge ${lmeta.badge}">${lmeta.label}</span></td>
           <td><button class="btn btn-ghost btn-sm btn-icon" onclick="location.href='member-detail.html?id=${encodeURIComponent(m.osca)}'" title="View"><i class="ti ti-eye"></i></button></td>
         </tr>`;
     }).join('');
@@ -243,9 +277,9 @@
   }
 
   function exportMembers() {
-    const headers = ['OSCA ID', 'Name', 'Age', 'Sex', 'Barangay', 'Civil Status', 'Milestone', 'Reg. Status'];
+    const headers = ['OSCA ID', 'Name', 'Age', 'Sex', 'Barangay', 'Civil Status', 'Milestone', 'Reg. Status', 'Life Status'];
     const csvRows = members.map(m => [
-      m.osca, m.name, m.age, m.sex, m.brgy, m.civil, m.milestone || '', regMeta[m.reg].label
+      m.osca, m.name, m.age, m.sex, m.brgy, m.civil, m.milestone || '', regMeta[m.reg].label, lifeMeta[m.life]?.label || 'Active'
     ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
     const csv = [headers.join(','), ...csvRows].join('\n');
 
