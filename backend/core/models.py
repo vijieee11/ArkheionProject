@@ -1,7 +1,40 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 
 
+class Barangay(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    code = models.CharField(max_length=20, unique=True)
+    municipality = models.CharField(max_length=100, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name_plural = "barangays"
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+
+
+class StaffProfile(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="staff_profile",
+    )
+    barangay = models.ForeignKey(
+        Barangay,
+        on_delete=models.PROTECT,
+        related_name="staff",
+    )
+
+    def __str__(self):
+        return f"{self.user.get_username()} — {self.barangay.name}"
+
+
+
+    
 class User(AbstractUser):
     ROLE_CHOICES = [
         ('head_staff',    'Head Staff'),
