@@ -109,6 +109,7 @@
         <div class="tab active" onclick="filterApprovals('All', this)">All (5)</div>
         <div class="tab" onclick="filterApprovals('Delete record', this)">Delete record</div>
         <div class="tab" onclick="filterApprovals('Benefit correction', this)">Benefit correction</div>
+        <div class="tab" onclick="filterApprovals('New member record', this)">New member records</div>
         <div class="tab" onclick="filterApprovals('Staff deactivation', this)">Staff deactivation</div>
       </div>
       <div class="alert" id="approvalsNoResults" style="display:none;margin:0 16px 12px;padding:10px 14px;font-size:12.5px;color:var(--gray-500);background:var(--gray-50,#f8fafc);border-radius:8px;">
@@ -119,7 +120,7 @@
         <thead>
           <tr><th>Request</th><th>Type</th><th>Requested by</th><th>Submitted</th><th>Status</th><th>Actions</th></tr>
         </thead>
-        <tbody>
+        <tbody id="approvalsRows">
           <tr data-id="REQ-2026-0801" data-title="Delete duplicate entry — Perlita Domingo" data-type="Delete record"
               data-by="Regular Staff 1" data-submitted="Jul 24, 2026" data-status="Awaiting review"
               data-desc="Duplicate member record. Flagged because two OSCA IDs exist for the same senior citizen — this is the older, unused entry.">
@@ -254,6 +255,61 @@
     renderHeadStaffSidebar('approvals');
   }
 
+  function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[char]);
+  }
+
+  function renderSubmittedRecords() {
+    const submissions = JSON.parse(localStorage.getItem('ark_record_submissions') || '[]');
+    const tbody = document.getElementById('approvalsRows');
+    submissions.forEach(record => {
+      if (tbody.querySelector(`[data-id="${CSS.escape(record.id)}"]`)) return;
+      const submitted = new Date(record.submittedAt);
+      const submittedLabel = Number.isNaN(submitted.getTime()) ? '—' : submitted.toLocaleDateString();
+      const details = [
+        `OSCA ID: ${record.oscaId || '—'}`,
+        `Barangay: ${record.barangay || '—'}`,
+        `Age: ${record.age || '—'}`,
+        `Sex: ${record.sex || '—'}`,
+        `Association membership: ${record.membershipStatus || 'Non-member'}`,
+        `Date of birth: ${record.dateOfBirth || '—'}`,
+        `Civil status: ${record.civilStatus || '—'}`,
+        `Address: ${record.address || '—'}`,
+        `Place of birth: ${record.placeOfBirth || '—'}`,
+      ].join(' · ');
+      const status = record.status || 'Awaiting review';
+      const resolved = status !== 'Awaiting review';
+      const statusClass = status === 'Approved' ? 'badge-ok' : status === 'Rejected' ? 'badge-miss' : 'badge-pend';
+      const row = document.createElement('tr');
+      row.dataset.id = record.id;
+      row.dataset.title = record.title || `New member registration — ${record.name || ''}`;
+      row.dataset.type = 'New member record';
+      row.dataset.by = record.submittedBy || 'Barangay Staff';
+      row.dataset.barangay = record.barangay || '';
+      row.dataset.submitted = submittedLabel;
+      row.dataset.status = status;
+      row.dataset.desc = details;
+      row.dataset.resolved = String(resolved);
+      row.innerHTML = `
+        <td><div class="td-bold">${escapeHTML(row.dataset.title)}</div>
+          <div class="td-muted" style="font-size:11.5px;margin-top:2px;">${escapeHTML(record.id)} · ${escapeHTML(record.barangay || 'Barangay not set')}</div></td>
+        <td><span class="badge badge-ok">New member record</span></td>
+        <td class="td-muted">${escapeHTML(row.dataset.by)}</td>
+        <td class="td-muted">${escapeHTML(submittedLabel)}</td>
+        <td><span class="badge ${statusClass}">${escapeHTML(status)}</span></td>
+        <td><div class="action-btns">${resolved ? '<span class="rm-resolved-note">Resolved</span>' : `
+          <button class="pill-btn pill-approve" onclick="resolveApproval(this, 'approve')">Approve</button>
+          <button class="pill-btn pill-reject" onclick="resolveApproval(this, 'reject')">Reject</button>`}
+          <button class="action-icon-btn" title="View details" onclick="openRequestModal(this)"><i class="ti ti-eye"></i></button>
+        </div></td>`;
+      tbody.prepend(row);
+    });
+    updateApprovalStats();
+    applyApprovalFilters();
+  }
+
   function openRequestModal(btn) {
     const row = btn.closest('tr');
     document.getElementById('rmTitle').textContent = row.dataset.title;
@@ -308,6 +364,17 @@
     row.dataset.status = statusText;
     row.dataset.resolved = 'true';
 
+    if (row.dataset.type === 'New member record') {
+      const submissions = JSON.parse(localStorage.getItem('ark_record_submissions') || '[]');
+      const submission = submissions.find(item => item.id === id);
+      if (submission) {
+        submission.status = statusText;
+        submission.reviewedAt = new Date().toISOString();
+        submissions.splice(submissions.indexOf(submission), 1, submission);
+        localStorage.setItem('ark_record_submissions', JSON.stringify(submissions));
+      }
+    }
+
     row.querySelectorAll('.pill-btn').forEach(b => { b.disabled = true; });
 
     showToast(toastMsg, action === 'reject' ? 'error' : undefined);
@@ -346,6 +413,7 @@
       const searchMatch = !query
         || row.dataset.title.toLowerCase().includes(query)
         || row.dataset.by.toLowerCase().includes(query)
+        || (row.dataset.barangay || '').toLowerCase().includes(query)
         || row.dataset.id.toLowerCase().includes(query);
       const match = typeMatch && searchMatch;
       row.style.display = match ? '' : 'none';
@@ -356,6 +424,11 @@
       'Showing ' + visibleCount + ' of ' + rows.length + ' pending record actions';
     document.getElementById('approvalsNoResults').style.display = visibleCount === 0 ? 'block' : 'none';
   }
+
+  renderSubmittedRecords();
+  window.addEventListener('storage', event => {
+    if (event.key === 'ark_record_submissions') renderSubmittedRecords();
+  });
 </script>
 </body>
 </html>

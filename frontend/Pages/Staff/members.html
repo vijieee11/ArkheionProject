@@ -177,10 +177,23 @@
 
   // NEW: life status filter
   function matchesLifeFilter(m, filterValue) {
+    const lifeStatus = effectiveLifeStatus(m);
     if (filterValue === 'All members') return true;
-    if (filterValue === 'Active') return m.life === 'active';
-    if (filterValue === 'Deceased') return m.life === 'deceased';
+    if (filterValue === 'Active') return lifeStatus === 'active';
+    if (filterValue === 'Deceased') return lifeStatus === 'deceased';
     return true;
+  }
+
+  function effectiveLifeStatus(member) {
+    try {
+      const deaths = JSON.parse(localStorage.getItem('ark_death_records') || '[]');
+      const verifiedDeath = Array.isArray(deaths) && deaths.some(record =>
+        record.status === 'Verified' && String(record.oscaId).toLowerCase() === String(member.osca).toLowerCase()
+      );
+      return verifiedDeath ? 'deceased' : member.life;
+    } catch {
+      return member.life;
+    }
   }
 
   // --- Pagination state --------------------------------------------------
@@ -258,7 +271,7 @@
 
     document.getElementById('members-rows').innerHTML = pageRows.map(m => {
       const meta = regMeta[m.reg];
-      const lmeta = lifeMeta[m.life] || lifeMeta.active; // NEW
+      const lmeta = lifeMeta[effectiveLifeStatus(m)] || lifeMeta.active; // Includes Headstaff-verified death reports.
       const milestoneCell = m.milestone ? `<span class="badge badge-urgent">${m.milestone}</span>` : '—';
       return `
         <tr>
@@ -279,7 +292,7 @@
   function exportMembers() {
     const headers = ['OSCA ID', 'Name', 'Age', 'Sex', 'Barangay', 'Civil Status', 'Milestone', 'Reg. Status', 'Life Status'];
     const csvRows = members.map(m => [
-      m.osca, m.name, m.age, m.sex, m.brgy, m.civil, m.milestone || '', regMeta[m.reg].label, lifeMeta[m.life]?.label || 'Active'
+      m.osca, m.name, m.age, m.sex, m.brgy, m.civil, m.milestone || '', regMeta[m.reg].label, lifeMeta[effectiveLifeStatus(m)]?.label || 'Active'
     ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
     const csv = [headers.join(','), ...csvRows].join('\n');
 
@@ -293,6 +306,10 @@
     a.remove();
     URL.revokeObjectURL(url);
   }
+
+  window.addEventListener('storage', event => {
+    if (event.key === 'ark_death_records') renderTable();
+  });
 
   renderTable();
 </script>

@@ -137,8 +137,13 @@
             <label>Barangay <span class="required">*</span></label>
             <select id="barangay">
               <option value="">Select barangay</option>
-              <option>Brgy 1</option><option>Brgy 2</option><option>Brgy 3</option>
-              <option>Brgy 4</option><option>Brgy 5</option>
+              <option>Alejal</option><option>Anibongan</option><option>Asuncion</option>
+              <option>Cebulano</option><option>Guadalupe</option><option>Ising (Poblacion)</option>
+              <option>La Paz</option><option>Mabaus</option><option>Mabuhay</option>
+              <option>Magsaysay</option><option>Mangalcal</option><option>Minda</option>
+              <option>New Camiling</option><option>Salvacion</option><option>San Isidro</option>
+              <option>Santo Niño</option><option>Taba</option><option>Tibulao</option>
+              <option>Tubod</option><option>Tuganay</option>
             </select>
           </div>
         </div>
@@ -186,6 +191,13 @@
       <div id="tab-association" class="card-body" style="display:none;flex-direction:column;gap:12px;">
         <div class="form-section-title"><i class="ti ti-building-community"></i> Membership to Sr. Citizens Association</div>
         <div class="form-2col">
+          <div class="form-group">
+            <label>Association membership status</label>
+            <select id="membership-status">
+              <option value="Non-member">Non-member</option>
+              <option value="Member">Member</option>
+            </select>
+          </div>
           <div class="form-group">
             <label>Association name</label>
             <input type="text" placeholder="e.g. Brgy 2 Senior Citizens Association">
@@ -442,9 +454,38 @@
       generateCredentials();
     }
     const oscaId = document.getElementById('gen-osca-id').value;
-    const tempPw = document.getElementById('gen-temp-pw').value;
-    alert('Member registered successfully!\n\nOSCA ID (username): ' + oscaId + '\nTemporary password: ' + tempPw + '\n\nPlease give these credentials to the senior citizen. They will be required to set a new password on first portal login.');
-    setTimeout(() => location.href = 'members.html', 500);
+    const fullName = [
+      document.getElementById('first-name').value.trim(),
+      document.getElementById('middle-name').value.trim(),
+      document.getElementById('last-name').value.trim(),
+    ].filter(Boolean).join(' ');
+    const submission = {
+      id: 'SUB-' + Date.now(),
+      type: 'New member record',
+      title: 'New member registration — ' + fullName,
+      name: fullName,
+      oscaId,
+      barangay: document.getElementById('barangay').value,
+      age: document.getElementById('age').value,
+      sex: document.getElementById('sex').value,
+      dateOfBirth: document.getElementById('dob').value,
+      civilStatus: document.getElementById('civil-status').value,
+      membershipStatus: document.getElementById('membership-status').value,
+      address: document.getElementById('address').value.trim(),
+      placeOfBirth: document.getElementById('pob').value.trim(),
+      submittedBy: localStorage.getItem('ark_username') || 'Barangay Staff',
+      submittedAt: new Date().toISOString(),
+      status: 'Awaiting review',
+    };
+    const submissions = JSON.parse(localStorage.getItem('ark_record_submissions') || '[]');
+    submissions.unshift(submission);
+    localStorage.setItem('ark_record_submissions', JSON.stringify(submissions));
+
+    showToast('Record sent to Headstaff for review.');
+    setTimeout(() => {
+      alert('Record sent to Headstaff for review.\n\nOSCA ID: ' + oscaId + '\nThis frontend demo stores the submission in this browser only.');
+      location.href = 'members.html';
+    }, 350);
   }
 </script>
 </body>

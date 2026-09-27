@@ -27,6 +27,7 @@ function renderSidebar(activePage) {
     { section: 'Main', items: [
       { id: 'dashboard', label: 'Dashboard', icon: 'ti-layout-dashboard', href: 'dashboard.html' },
       { id: 'members',   label: 'Members',   icon: 'ti-users',            href: 'members.html' },
+      { id: 'deaths',    label: 'Death records', icon: 'ti-heart-x',       href: 'deaths.html' },
     ]},
     { section: 'Services', items: [
       { id: 'grocery',  label: 'Groceries', icon: 'ti-shopping-cart', href: 'grocery.html' },

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Death Records Oversight</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body{display:flex}
+    .death-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .death-toolbar input,.death-toolbar select{min-height:38px;padding:7px 10px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);background:#fff;color:var(--gray-800)}
+    .death-toolbar input{min-width:205px}
+    .death-alert{display:flex;gap:10px;padding:13px 15px;border-radius:var(--radius-sm);background:#fff7ed;color:#9a3412;font-size:12.5px;line-height:1.5}
+    .death-alert i{font-size:18px;flex-shrink:0}
+    .death-table-wrap{overflow-x:auto}
+    .death-table{width:100%;border-collapse:collapse}
+    .death-table th,.death-table td{padding:12px 13px;text-align:left;border-bottom:1px solid var(--gray-200);font-size:12px;white-space:nowrap}
+    .death-table th{color:var(--gray-500);font-weight:600}
+    .death-empty{padding:28px 16px;text-align:center;color:var(--gray-500)}
+    .death-actions{display:flex;gap:6px;align-items:center}
+    .death-review-btn{border:0;border-radius:999px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap}
+    .death-verify{background:#dcfce7;color:#166534}
+    .death-return{background:#ffedd5;color:#9a3412}
+    .death-status-review{background:#ffedd5;color:#9a3412}
+    .death-status-verified{background:#dcfce7;color:#166534}
+    .death-status-correction{background:#fee2e2;color:#b91c1c}
+    .death-risk{background:#fee2e2;color:#b91c1c}
+    .death-modal-backdrop{display:none;position:fixed;inset:0;z-index:1000;padding:20px;background:rgba(15,23,42,.48);align-items:center;justify-content:center}
+    .death-modal-backdrop.open{display:flex}
+    .death-modal{width:min(560px,100%);max-height:90vh;overflow:auto;background:white;border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.22)}
+    .death-modal-header,.death-modal-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 20px;border-bottom:1px solid var(--gray-200)}
+    .death-modal-footer{justify-content:flex-end;border-top:1px solid var(--gray-200);border-bottom:0}
+    .death-modal-body{padding:17px 20px;display:flex;flex-direction:column;gap:12px}
+    .death-detail{display:flex;justify-content:space-between;gap:14px;font-size:12.5px}
+    .death-detail span:first-child{color:var(--gray-500);flex-shrink:0}
+    .death-detail span:last-child{text-align:right;color:var(--gray-900);font-weight:500;white-space:pre-wrap}
+    .death-note{font-size:12px;line-height:1.5;padding:10px 12px;background:var(--gray-50);border-radius:8px;white-space:pre-wrap}
+    .death-toast{position:fixed;right:20px;bottom:20px;z-index:1200;display:none;padding:12px 16px;border-radius:8px;color:#fff;background:#166534;box-shadow:0 8px 24px rgba(0,0,0,.18);font-size:13px}
+    .death-toast.show{display:block}
+    @media(max-width:700px){.death-detail{flex-direction:column;gap:3px}.death-detail span:last-child{text-align:left}}
+  </style>
+</head>
+<body>
+<script src="sidebar-headstaff.js"></script>
+<div class="main">
+  <div class="topbar">
+    <span class="topbar-title">Death records oversight</span>
+    <div class="topbar-actions" style="margin-left:auto"><span class="badge badge-pend" id="reviewQueueBadge">0 for review</span></div>
+  </div>
+
+  <div class="content">
+    <div class="death-alert">
+      <i class="ti ti-alert-triangle"></i>
+      <div><strong>Pension audit follow-up.</strong> Pensioner death records are flagged for review. This page records OSCA review only; it does not stop or change pension payments.</div>
+    </div>
+
+    <div class="stats-grid stats-4" style="margin-top:14px">
+      <div class="stat-card"><div class="stat-label"><i class="ti ti-users"></i> Total death reports</div><div class="stat-value" id="totalDeaths">0</div><div class="stat-sub">All barangays</div></div>
+      <div class="stat-card coral"><div class="stat-label"><i class="ti ti-calendar"></i> Reported this year</div><div class="stat-value" id="deathsThisYear">0</div><div class="stat-sub" id="yearLabel"></div></div>
+      <div class="stat-card teal"><div class="stat-label"><i class="ti ti-circle-check"></i> Verified</div><div class="stat-value" id="verifiedDeaths">0</div><div class="stat-sub">Reviewed by Headstaff</div></div>
+      <div class="stat-card"><div class="stat-label"><i class="ti ti-cash"></i> Pension follow-ups</div><div class="stat-value" id="pensionReviews">0</div><div class="stat-sub">Pensioner reports to check</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" style="gap:12px;flex-wrap:wrap">
+        <div><div class="card-title">Reports from barangay staff</div><div class="card-subtitle">Review reported deaths, verify details, or return incomplete reports for correction.</div></div>
+        <div class="death-toolbar" style="margin-left:auto">
+          <input id="deathSearch" type="search" placeholder="Search name or OSCA ID" oninput="renderDeaths()">
+          <select id="deathBarangay" onchange="renderDeaths()">
+            <option value="">All barangays</option>
+            <option>Alejal</option><option>Anibongan</option><option>Asuncion</option><option>Cebulano</option><option>Guadalupe</option>
+            <option>Ising (Pob.)</option><option>Ising (Poblacion)</option><option>La Paz</option><option>Mabaus</option><option>Mabuhay</option><option>Magsaysay</option>
+            <option>Mangalcal</option><option>Minda</option><option>New Camiling</option><option>Salvacion</option><option>San Isidro</option>
+            <option>Santo Niño</option><option>Taba</option><option>Tibulao</option><option>Tubod</option><option>Tuganay</option>
+          </select>
+          <select id="deathMonth" onchange="renderDeaths()">
+            <option value="">All months</option><option value="01">January</option><option value="02">February</option>
+            <option value="03">March</option><option value="04">April</option><option value="05">May</option><option value="06">June</option>
+            <option value="07">July</option><option value="08">August</option><option value="09">September</option><option value="10">October</option>
+            <option value="11">November</option><option value="12">December</option>
+          </select>
+          <select id="deathYear" onchange="renderDeaths()"><option value="">All years</option></select>
+          <select id="deathStatus" onchange="renderDeaths()">
+            <option value="">All statuses</option><option>For review</option><option>Verified</option><option>Needs correction</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="exportDeaths()"><i class="ti ti-download"></i> Export CSV</button>
+        </div>
+      </div>
+      <div class="death-table-wrap">
+        <table class="death-table">
+          <thead><tr><th>OSCA ID</th><th>Senior citizen</th><th>Barangay</th><th>Date of death</th><th>Pension</th><th>Status</th><th>Reported by</th><th>Actions</th></tr></thead>
+          <tbody id="deathRows"></tbody>
+        </table>
+        <div class="death-empty" id="deathEmpty" style="display:none">No death reports match these filters.</div>
+      </div>
+      <div style="padding:11px 14px;color:var(--gray-500);font-size:12px;border-top:1px solid var(--gray-200)" id="deathCount">Showing 0 reports</div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="card-header"><div><div class="card-title">Recent review activity</div><div class="card-subtitle">Headstaff decisions recorded for audit.</div></div></div>
+      <div class="death-table-wrap">
+        <table class="death-table"><thead><tr><th>When</th><th>OSCA ID</th><th>Senior citizen</th><th>Action</th><th>Reviewed by</th><th>Note</th></tr></thead><tbody id="auditRows"></tbody></table>
+        <div class="death-empty" id="auditEmpty" style="display:none">No Headstaff review activity yet.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="death-modal-backdrop" id="deathModal" onclick="if(event.target===this)closeDeathDetails()">
+  <section class="death-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="death-modal-header"><div><div class="card-title" id="modalTitle">Death report</div><div class="card-subtitle" id="modalSubtitle"></div></div><button class="btn btn-ghost btn-sm" onclick="closeDeathDetails()" aria-label="Close">✕</button></div>
+    <div class="death-modal-body" id="deathDetails"></div>
+    <div class="death-modal-footer" id="deathModalActions"></div>
+  </section>
+</div>
+<div class="death-toast" id="deathToast" role="status"></div>
+
+<script>
+  const DEATH_STORAGE_KEY = 'ark_death_records';
+  const DEATH_AUDIT_KEY = 'ark_death_audit';
+  let selectedDeathId = null;
+  renderHeadStaffSidebar('deaths');
+  document.getElementById('yearLabel').textContent = String(new Date().getFullYear());
+
+  function readStoredArray(key) {
+    try { const value = JSON.parse(localStorage.getItem(key) || '[]'); return Array.isArray(value) ? value : []; }
+    catch { return []; }
+  }
+  function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  }
+  function shortDate(value) {
+    if (!value) return '—';
+    const parts = value.slice(0, 10).split('-');
+    if (parts.length !== 3) return value;
+    return new Date(Number(parts[0]), Number(parts[1])-1, Number(parts[2])).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+  }
+  function statusClass(status) {
+    if (status === 'Verified') return 'death-status-verified';
+    if (status === 'Needs correction') return 'death-status-correction';
+    return 'death-status-review';
+  }
+  function refreshYearFilter(records) {
+    const select = document.getElementById('deathYear');
+    const selected = select.value;
+    const years = [...new Set(records.map(row => (row.dateOfDeath || '').slice(0,4)).filter(Boolean))].sort().reverse();
+    select.innerHTML = '<option value="">All years</option>' + years.map(year => `<option value="${escapeHTML(year)}">${escapeHTML(year)}</option>`).join('');
+    if (years.includes(selected)) select.value = selected;
+  }
+  function renderDeaths() {
+    const records = readStoredArray(DEATH_STORAGE_KEY);
+    const yearNow = String(new Date().getFullYear());
+    const pending = records.filter(record => (record.status || 'For review') !== 'Verified').length;
+    document.getElementById('totalDeaths').textContent = records.length;
+    document.getElementById('deathsThisYear').textContent = records.filter(record => (record.dateOfDeath || '').startsWith(yearNow)).length;
+    document.getElementById('verifiedDeaths').textContent = records.filter(record => record.status === 'Verified').length;
+    document.getElementById('pensionReviews').textContent = records.filter(record => record.pensionStatus === 'Pensioner').length;
+    document.getElementById('reviewQueueBadge').textContent = `${pending} for review`;
+    refreshYearFilter(records);
+
+    const query = document.getElementById('deathSearch').value.trim().toLowerCase();
+    const barangay = document.getElementById('deathBarangay').value;
+    const month = document.getElementById('deathMonth').value;
+    const year = document.getElementById('deathYear').value;
+    const status = document.getElementById('deathStatus').value;
+    const filtered = records.filter(record => {
+      const [recordYear, recordMonth] = (record.dateOfDeath || '').split('-');
+      const matchesQuery = !query || (record.name || '').toLowerCase().includes(query) || (record.oscaId || '').toLowerCase().includes(query);
+      return matchesQuery && (!barangay || record.barangay === barangay) && (!month || month === recordMonth) && (!year || year === recordYear) && (!status || (record.status || 'For review') === status);
+    });
+    document.getElementById('deathRows').innerHTML = filtered.map(record => {
+      const recordStatus = record.status || 'For review';
+      const actions = recordStatus === 'Verified'
+        ? '<span style="color:var(--gray-500)">Reviewed</span>'
+        : `<div class="death-actions"><button class="death-review-btn death-verify" data-action="verify" data-id="${escapeHTML(record.id)}">Verify</button><button class="death-review-btn death-return" data-action="return" data-id="${escapeHTML(record.id)}">Return</button><button class="action-icon-btn" title="View details" data-action="details" data-id="${escapeHTML(record.id)}"><i class="ti ti-eye"></i></button></div>`;
+      return `<tr><td>${escapeHTML(record.oscaId)}</td><td class="td-bold">${escapeHTML(record.name)}</td><td>${escapeHTML(record.barangay)}</td><td>${escapeHTML(shortDate(record.dateOfDeath))}</td><td>${record.pensionStatus === 'Pensioner' ? '<span class="badge death-risk">Review pension</span>' : escapeHTML(record.pensionStatus || 'Unknown')}</td><td><span class="badge ${statusClass(recordStatus)}">${escapeHTML(recordStatus)}</span></td><td>${escapeHTML(record.recordedBy || '—')}</td><td>${actions}</td></tr>`;
+    }).join('');
+    document.getElementById('deathEmpty').style.display = filtered.length ? 'none' : 'block';
+    document.getElementById('deathCount').textContent = `Showing ${filtered.length} of ${records.length} death reports`;
+    renderAudit();
+  }
+  function renderAudit() {
+    const entries = readStoredArray(DEATH_AUDIT_KEY).slice(0, 10);
+    document.getElementById('auditRows').innerHTML = entries.map(entry => `<tr><td>${escapeHTML(new Date(entry.at).toLocaleString())}</td><td>${escapeHTML(entry.oscaId)}</td><td class="td-bold">${escapeHTML(entry.name)}</td><td>${escapeHTML(entry.action)}</td><td>${escapeHTML(entry.reviewedBy)}</td><td>${escapeHTML(entry.note || '—')}</td></tr>`).join('');
+    document.getElementById('auditEmpty').style.display = entries.length ? 'none' : 'block';
+  }
+  function recordById(id) { return readStoredArray(DEATH_STORAGE_KEY).find(record => record.id === id); }
+  function openDeathDetails(id) {
+    const record = recordById(id);
+    if (!record) return;
+    selectedDeathId = id;
+    document.getElementById('modalTitle').textContent = record.name || 'Death report';
+    document.getElementById('modalSubtitle').textContent = `${record.oscaId || 'No OSCA ID'} · ${record.barangay || 'Barangay not set'}`;
+    const details = [
+      ['Date of death', shortDate(record.dateOfDeath)], ['Pension status', record.pensionStatus || 'Unknown'],
+      ['Record status', record.status || 'For review'], ['Reported by', record.recordedBy || '—'],
+      ['Date reported', record.recordedAt ? new Date(record.recordedAt).toLocaleString() : '—'],
+      ['Last review note', record.reviewNote || '—']
+    ];
+    document.getElementById('deathDetails').innerHTML = details.map(([label,value]) => `<div class="death-detail"><span>${escapeHTML(label)}</span><span>${escapeHTML(value)}</span></div>`).join('') + `<div><div style="font-size:11px;color:var(--gray-500);margin-bottom:5px">Staff notes / source</div><div class="death-note">${escapeHTML(record.notes || 'No notes provided.')}</div></div>`;
+    const actions = document.getElementById('deathModalActions');
+    actions.innerHTML = '';
+    if (record.status !== 'Verified') {
+      const returnBtn = document.createElement('button'); returnBtn.className = 'btn btn-ghost'; returnBtn.textContent = 'Return for correction'; returnBtn.onclick = () => reviewDeath('Needs correction'); actions.appendChild(returnBtn);
+      const verifyBtn = document.createElement('button'); verifyBtn.className = 'btn btn-navy'; verifyBtn.innerHTML = '<i class="ti ti-circle-check"></i> Mark verified'; verifyBtn.onclick = () => reviewDeath('Verified'); actions.appendChild(verifyBtn);
+    } else {
+      const done = document.createElement('span'); done.className = 'badge death-status-verified'; done.textContent = 'Verified'; actions.appendChild(done);
+    }
+    const closeBtn = document.createElement('button'); closeBtn.className = 'btn btn-ghost'; closeBtn.textContent = 'Close'; closeBtn.onclick = closeDeathDetails; actions.appendChild(closeBtn);
+    document.getElementById('deathModal').classList.add('open');
+  }
+  function closeDeathDetails() { document.getElementById('deathModal').classList.remove('open'); selectedDeathId = null; }
+  function showDeathToast(message) {
+    const toast = document.getElementById('deathToast'); toast.textContent = message; toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2800);
+  }
+  function reviewDeath(newStatus) {
+    const recordId = selectedDeathId;
+    if (!recordId) return;
+    const records = readStoredArray(DEATH_STORAGE_KEY);
+    const record = records.find(row => row.id === recordId);
+    if (!record) return;
+    let note = '';
+    if (newStatus === 'Needs correction') {
+      note = window.prompt('What should the barangay staff correct?') || '';
+      if (!note.trim()) { showDeathToast('Please enter a correction note before returning the report.'); return; }
+    }
+    record.status = newStatus;
+    record.reviewNote = note.trim();
+    record.reviewedBy = localStorage.getItem('ark_username') || 'Head Staff';
+    record.reviewedAt = new Date().toISOString();
+    localStorage.setItem(DEATH_STORAGE_KEY, JSON.stringify(records));
+    const audit = readStoredArray(DEATH_AUDIT_KEY);
+    audit.unshift({id:record.id,oscaId:record.oscaId,name:record.name,action:newStatus,reviewedBy:record.reviewedBy,note:record.reviewNote,at:record.reviewedAt});
+    localStorage.setItem(DEATH_AUDIT_KEY, JSON.stringify(audit));
+    closeDeathDetails(); renderDeaths(); showDeathToast(newStatus === 'Verified' ? 'Death report verified.' : 'Report returned for correction.');
+  }
+  document.getElementById('deathRows').addEventListener('click', event => {
+    const button = event.target.closest('[data-action]'); if (!button) return;
+    const record = recordById(button.dataset.id); if (!record) return;
+    if (button.dataset.action === 'details') { openDeathDetails(record.id); return; }
+    selectedDeathId = record.id;
+    reviewDeath(button.dataset.action === 'verify' ? 'Verified' : 'Needs correction');
+  });
+  function exportDeaths() {
+    const records = readStoredArray(DEATH_STORAGE_KEY);
+    const headers = ['OSCA ID','Name','Barangay','Date of death','Pension status','Record status','Reported by','Reviewed by','Review note'];
+    const rows = records.map(record => [record.oscaId,record.name,record.barangay,record.dateOfDeath,record.pensionStatus,record.status,record.recordedBy,record.reviewedBy,record.reviewNote].map(value => `"${String(value ?? '').replace(/"/g,'""')}"`).join(','));
+    const blob = new Blob([headers.join(',')+'\n'+rows.join('\n')],{type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href=url; link.download='osca-death-review.csv'; link.click(); URL.revokeObjectURL(url);
+  }
+  window.addEventListener('storage', event => { if (event.key === DEATH_STORAGE_KEY || event.key === DEATH_AUDIT_KEY) renderDeaths(); });
+  renderDeaths();
+</script>
+</body>
+</html>

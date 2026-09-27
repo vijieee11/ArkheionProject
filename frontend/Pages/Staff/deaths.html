@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Death Records</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { display: flex; }
+    .deaths-page { width: 100%; }
+    .death-toolbar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .death-toolbar input, .death-toolbar select {
+      min-height:38px; padding:7px 10px; border:1px solid var(--gray-200);
+      border-radius:var(--radius-sm); background:white; color:var(--gray-800);
+    }
+    .death-toolbar input { min-width:220px; }
+    .death-warning {
+      display:flex; align-items:flex-start; gap:10px; padding:13px 15px;
+      border-radius:var(--radius-sm); background:#fff7ed; color:#9a3412;
+      font-size:12.5px; line-height:1.5;
+    }
+    .death-warning i { font-size:18px; flex-shrink:0; }
+    .death-table-wrap { overflow-x:auto; }
+    .death-table { width:100%; border-collapse:collapse; }
+    .death-table th, .death-table td {
+      padding:12px 14px; text-align:left; border-bottom:1px solid var(--gray-200);
+      font-size:12.5px; white-space:nowrap;
+    }
+    .death-table th { color:var(--gray-500); font-weight:600; }
+    .death-empty { padding:32px 16px; text-align:center; color:var(--gray-500); }
+    .death-empty i { display:block; font-size:28px; margin-bottom:8px; }
+    .death-modal-backdrop {
+      display:none; position:fixed; inset:0; z-index:1000; padding:20px;
+      background:rgba(15,23,42,.48); align-items:center; justify-content:center;
+    }
+    .death-modal-backdrop.open { display:flex; }
+    .death-modal {
+      width:min(620px, 100%); max-height:90vh; overflow:auto; background:white;
+      border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,.22);
+    }
+    .death-modal-header, .death-modal-footer {
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:16px 20px; border-bottom:1px solid var(--gray-200);
+    }
+    .death-modal-footer { justify-content:flex-end; border-top:1px solid var(--gray-200); border-bottom:0; }
+    .death-modal-body { padding:18px 20px; display:grid; gap:13px; }
+    .death-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .death-field { display:flex; flex-direction:column; gap:5px; }
+    .death-field.full { grid-column:1/-1; }
+    .death-field label { font-size:12px; font-weight:600; color:var(--gray-700); }
+    .death-field input, .death-field select, .death-field textarea {
+      width:100%; box-sizing:border-box; padding:9px 10px;
+      border:1px solid var(--gray-200); border-radius:var(--radius-sm);
+      font:inherit; color:var(--gray-900); background:white;
+    }
+    .death-field textarea { min-height:75px; resize:vertical; }
+    .badge-death-review { background:#ffedd5; color:#9a3412; }
+    .badge-death-verified { background:#dcfce7; color:#166534; }
+    .badge-death-risk { background:#fee2e2; color:#b91c1c; }
+    .death-toast {
+      position:fixed; right:20px; bottom:20px; z-index:1200; display:none;
+      padding:12px 16px; border-radius:8px; color:white; background:#166534;
+      box-shadow:0 8px 24px rgba(0,0,0,.18); font-size:13px;
+    }
+    .death-toast.show { display:block; }
+    @media(max-width:700px) {
+      .death-form-grid { grid-template-columns:1fr; }
+      .death-field.full { grid-column:auto; }
+    }
+  </style>
+</head>
+<body>
+<script src="sidebar.js"></script>
+
+<div class="main deaths-page">
+  <div class="topbar">
+    <span class="topbar-title">Death records</span>
+    <div class="topbar-actions" style="margin-left:auto;">
+      <button class="btn btn-ghost btn-sm" onclick="resetDeathDemo()">
+        <i class="ti ti-refresh"></i> Reset demo
+      </button>
+      <button class="btn btn-navy btn-sm" onclick="openDeathForm()">
+        <i class="ti ti-plus"></i> Record a death
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="death-warning">
+      <i class="ti ti-alert-triangle"></i>
+      <div>
+        <strong>Pension audit reminder.</strong>
+        A death record flags a pension for review; it does not stop or change pension payments.
+        Verify the report and follow the proper OSCA and pension-office process.
+      </div>
+    </div>
+
+    <div class="stats-grid stats-3" style="margin-top:14px;">
+      <div class="stat-card">
+        <div class="stat-label"><i class="ti ti-users"></i> Deaths recorded</div>
+        <div class="stat-value" id="totalDeaths">0</div>
+        <div class="stat-sub">All recorded years</div>
+      </div>
+      <div class="stat-card coral">
+        <div class="stat-label"><i class="ti ti-calendar"></i> Deaths this year</div>
+        <div class="stat-value" id="deathsThisYear">0</div>
+        <div class="stat-sub" id="currentYearLabel"></div>
+      </div>
+      <div class="stat-card teal">
+        <div class="stat-label"><i class="ti ti-cash"></i> Pension reviews</div>
+        <div class="stat-value" id="pensionReviews">0</div>
+        <div class="stat-sub">Recorded pensioners to review</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" style="gap:12px;flex-wrap:wrap;">
+        <div>
+          <div class="card-title">Recorded deaths</div>
+          <div class="card-subtitle">Search and filter death records by barangay, month, and year.</div>
+        </div>
+        <div class="death-toolbar" style="margin-left:auto;">
+          <input id="deathSearch" type="search" placeholder="Search name or OSCA ID" oninput="renderDeaths()">
+          <select id="deathBarangay" onchange="renderDeaths()">
+            <option value="">All barangays</option>
+            <option>Alejal</option><option>Anibongan</option><option>Asuncion</option>
+            <option>Cebulano</option><option>Guadalupe</option><option>Ising (Poblacion)</option>
+            <option>La Paz</option><option>Mabaus</option><option>Mabuhay</option>
+            <option>Magsaysay</option><option>Mangalcal</option><option>Minda</option>
+            <option>New Camiling</option><option>Salvacion</option><option>San Isidro</option>
+            <option>Santo Niño</option><option>Taba</option><option>Tibulao</option>
+            <option>Tubod</option><option>Tuganay</option>
+          </select>
+          <select id="deathMonth" onchange="renderDeaths()">
+            <option value="">All months</option>
+            <option value="01">January</option><option value="02">February</option>
+            <option value="03">March</option><option value="04">April</option>
+            <option value="05">May</option><option value="06">June</option>
+            <option value="07">July</option><option value="08">August</option>
+            <option value="09">September</option><option value="10">October</option>
+            <option value="11">November</option><option value="12">December</option>
+          </select>
+          <select id="deathYear" onchange="renderDeaths()">
+            <option value="">All years</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="exportDeaths()">
+            <i class="ti ti-download"></i> Export CSV
+          </button>
+        </div>
+      </div>
+
+      <div class="death-table-wrap">
+        <table class="death-table">
+          <thead>
+            <tr>
+              <th>OSCA ID</th><th>Senior citizen</th><th>Barangay</th>
+              <th>Date of death</th><th>Pension status</th><th>Record status</th>
+              <th>Recorded by</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="deathRows"></tbody>
+        </table>
+        <div id="deathEmpty" class="death-empty" style="display:none;">
+          <i class="ti ti-clipboard-heart"></i>
+          No death records match these filters.
+        </div>
+      </div>
+      <div style="padding:11px 14px;color:var(--gray-500);font-size:12px;border-top:1px solid var(--gray-200);" id="deathCount">
+        Showing 0 records
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="death-modal-backdrop" id="deathModal" onclick="if(event.target===this)closeDeathForm()">
+  <form class="death-modal" onsubmit="saveDeathRecord(event)">
+    <div class="death-modal-header">
+      <div>
+        <div class="card-title">Record a death</div>
+        <div class="card-subtitle">Enter the verified information available to OSCA.</div>
+      </div>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="closeDeathForm()" aria-label="Close">✕</button>
+    </div>
+    <div class="death-modal-body">
+      <div class="death-form-grid">
+        <div class="death-field">
+          <label for="deathOscaId">OSCA ID <span style="color:#b91c1c">*</span></label>
+          <div style="display:flex;gap:6px">
+            <input id="deathOscaId" required maxlength="40" placeholder="e.g. 2024-001" style="min-width:0;flex:1" oninput="clearMemberLookup()">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="findDeathMember()">Find</button>
+          </div>
+          <span id="memberLookupMessage" style="font-size:10.5px;color:var(--gray-500)">Demo lookup: try OSCA ID 2024-001.</span>
+        </div>
+        <div class="death-field">
+          <label for="deathName">Senior citizen name <span style="color:#b91c1c">*</span></label>
+          <input id="deathName" required maxlength="120" placeholder="Full name">
+        </div>
+        <div class="death-field">
+          <label for="deathBarangayInput">Barangay <span style="color:#b91c1c">*</span></label>
+          <select id="deathBarangayInput" required>
+            <option value="">Select barangay</option>
+            <option>Alejal</option><option>Anibongan</option><option>Asuncion</option>
+            <option>Cebulano</option><option>Guadalupe</option><option>Ising (Pob.)</option><option>Ising (Poblacion)</option>
+            <option>La Paz</option><option>Mabaus</option><option>Mabuhay</option>
+            <option>Magsaysay</option><option>Mangalcal</option><option>Minda</option>
+            <option>New Camiling</option><option>Salvacion</option><option>San Isidro</option>
+            <option>Santo Niño</option><option>Taba</option><option>Tibulao</option>
+            <option>Tubod</option><option>Tuganay</option>
+          </select>
+        </div>
+        <div class="death-field">
+          <label for="dateOfDeath">Date of death <span style="color:#b91c1c">*</span></label>
+          <input id="dateOfDeath" type="date" required>
+        </div>
+        <div class="death-field">
+          <label for="pensionStatus">Pension status</label>
+          <select id="pensionStatus">
+            <option value="Unknown">Unknown / needs checking</option>
+            <option value="Pensioner">Pensioner</option>
+            <option value="Non-pensioner">Non-pensioner</option>
+          </select>
+        </div>
+        <div class="death-field">
+          <label for="recordStatus">Record status</label>
+          <input id="recordStatus" value="For review" readonly>
+        </div>
+        <div class="death-field full">
+          <label for="deathNotes">Notes / source of report</label>
+          <textarea id="deathNotes" maxlength="500" placeholder="Optional: source of report or verification notes"></textarea>
+        </div>
+      </div>
+      <p style="font-size:11.5px;color:var(--gray-500);margin:0;">
+        A “For review” entry is a report awaiting confirmation. Mark it “Verified” only after checking the appropriate information or document.
+      </p>
+    </div>
+    <div class="death-modal-footer">
+      <button type="button" class="btn btn-ghost" onclick="closeDeathForm()">Cancel</button>
+      <button type="submit" class="btn btn-navy"><i class="ti ti-device-floppy"></i> Save record</button>
+    </div>
+  </form>
+</div>
+
+<div class="death-toast" id="deathToast" role="status"></div>
+
+<script>
+  renderSidebar('deaths');
+
+  const DEATH_STORAGE_KEY = 'ark_death_records';
+  const DEMO_MEMBER_PROFILES = [
+    { oscaId: '2024-001', name: 'Juan dela Cruz', barangay: 'Ising (Pob.)', pensionStatus: 'Pensioner' },
+    { oscaId: '2023-087', name: 'Maria Santos', barangay: 'Anibongan', pensionStatus: 'Pensioner' },
+    { oscaId: '2024-033', name: 'Pedro Ramos', barangay: 'Ising (Pob.)', pensionStatus: 'Non-pensioner' },
+  ];
+  let editingDeathId = null;
+  let selectedMember = null;
+  const todayISO = new Date().toISOString().slice(0, 10);
+  document.getElementById('dateOfDeath').max = todayISO;
+  document.getElementById('currentYearLabel').textContent = new Date().getFullYear();
+
+  function readDeathRecords() {
+    try {
+      const records = JSON.parse(localStorage.getItem(DEATH_STORAGE_KEY) || '[]');
+      return Array.isArray(records) ? records : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[char]);
+  }
+
+  function formatDeathDate(isoDate) {
+    if (!isoDate) return '—';
+    const [year, month, day] = isoDate.split('-').map(Number);
+    return new Date(year, month - 1, day).toLocaleDateString(undefined, {
+      year: 'numeric', month: 'short', day: 'numeric'
+    });
+  }
+
+  function openDeathForm(recordId = null) {
+    const form = document.querySelector('#deathModal form');
+    form.reset();
+    editingDeathId = recordId;
+    if (recordId) {
+      const record = readDeathRecords().find(item => item.id === recordId);
+      if (!record) return;
+      document.getElementById('deathOscaId').value = record.oscaId || '';
+      document.getElementById('deathName').value = record.name || '';
+      document.getElementById('deathBarangayInput').value = record.barangay || '';
+      document.getElementById('dateOfDeath').value = record.dateOfDeath || '';
+      document.getElementById('pensionStatus').value = record.pensionStatus || 'Unknown';
+      document.getElementById('recordStatus').value = 'For review';
+      document.getElementById('deathNotes').value = record.notes || '';
+      selectedMember = DEMO_MEMBER_PROFILES.find(member => member.oscaId === record.oscaId) || { oscaId: record.oscaId };
+      document.getElementById('memberLookupMessage').textContent = 'Existing member record loaded.';
+      document.getElementById('deathModal').querySelector('.card-title').textContent = 'Correct death report';
+    } else {
+      selectedMember = null;
+      document.getElementById('memberLookupMessage').textContent = 'Demo lookup: try OSCA ID 2024-001.';
+      document.getElementById('deathModal').querySelector('.card-title').textContent = 'Record a death';
+    }
+    document.getElementById('deathModal').classList.add('open');
+    document.getElementById('deathOscaId').focus();
+  }
+
+  function closeDeathForm() {
+    document.getElementById('deathModal').classList.remove('open');
+    editingDeathId = null;
+  }
+
+  function clearMemberLookup() {
+    selectedMember = null;
+    document.getElementById('deathName').value = '';
+    document.getElementById('deathBarangayInput').value = '';
+    document.getElementById('pensionStatus').value = 'Unknown';
+    document.getElementById('memberLookupMessage').textContent = 'Click Find to load the existing member. Demo OSCA ID: 2024-001.';
+  }
+
+  function findDeathMember() {
+    const oscaId = document.getElementById('deathOscaId').value.trim().toLowerCase();
+    const member = DEMO_MEMBER_PROFILES.find(item => item.oscaId.toLowerCase() === oscaId);
+    const message = document.getElementById('memberLookupMessage');
+    if (!member) {
+      selectedMember = null;
+      message.textContent = 'No matching member in this demo. Try 2024-001, 2023-087, or 2024-033.';
+      message.style.color = 'var(--coral-600)';
+      return;
+    }
+    selectedMember = member;
+    document.getElementById('deathName').value = member.name;
+    document.getElementById('deathBarangayInput').value = member.barangay;
+    document.getElementById('pensionStatus').value = member.pensionStatus;
+    message.textContent = `Member found: ${member.name} · ${member.barangay}`;
+    message.style.color = 'var(--navy-light)';
+  }
+
+  function showDeathToast(message) {
+    const toast = document.getElementById('deathToast');
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2800);
+  }
+
+  function resetDeathDemo() {
+    const demoOscaId = '2024-001';
+    const records = readDeathRecords();
+    if (!records.some(record => record.oscaId === demoOscaId)) {
+      showDeathToast('No 2024-001 demo death record to reset.');
+      return;
+    }
+    if (!window.confirm('Remove the demo death report for OSCA ID 2024-001 and its review history? Other records will remain.')) return;
+
+    localStorage.setItem(DEATH_STORAGE_KEY, JSON.stringify(records.filter(record => record.oscaId !== demoOscaId)));
+    try {
+      const audit = JSON.parse(localStorage.getItem('ark_death_audit') || '[]');
+      localStorage.setItem('ark_death_audit', JSON.stringify(audit.filter(entry => entry.oscaId !== demoOscaId)));
+    } catch {
+      localStorage.setItem('ark_death_audit', '[]');
+    }
+    renderDeaths();
+    showDeathToast('Demo record reset. Other death records were kept.');
+  }
+
+  function saveDeathRecord(event) {
+    event.preventDefault();
+    const wasEditing = Boolean(editingDeathId);
+
+    const oscaId = document.getElementById('deathOscaId').value.trim();
+    if (!selectedMember || selectedMember.oscaId.toLowerCase() !== oscaId.toLowerCase()) {
+      showDeathToast('Find the existing member by OSCA ID before saving.');
+      return;
+    }
+    const existing = readDeathRecords().some(record => record.id !== editingDeathId &&
+      (record.oscaId || '').toLowerCase() === oscaId.toLowerCase());
+    if (existing) {
+      showDeathToast('There is already a death record with this OSCA ID. Check the existing record first.');
+      return;
+    }
+
+    const deathDate = document.getElementById('dateOfDeath').value;
+    if (deathDate > todayISO) {
+      showDeathToast('Date of death cannot be in the future.');
+      return;
+    }
+
+    const records = readDeathRecords();
+    const record = {
+      id: editingDeathId || 'DEATH-' + Date.now(),
+      oscaId,
+      name: document.getElementById('deathName').value.trim(),
+      barangay: document.getElementById('deathBarangayInput').value,
+      dateOfDeath: deathDate,
+      pensionStatus: document.getElementById('pensionStatus').value,
+      status: document.getElementById('recordStatus').value,
+      notes: document.getElementById('deathNotes').value.trim(),
+      reviewNote: '',
+      recordedBy: localStorage.getItem('ark_username') || 'Staff',
+      recordedAt: new Date().toISOString(),
+      memberLink: oscaId,
+    };
+    if (editingDeathId) {
+      const index = records.findIndex(item => item.id === editingDeathId);
+      if (index >= 0) records[index] = { ...records[index], ...record, correctedAt: new Date().toISOString() };
+    } else records.unshift(record);
+    localStorage.setItem(DEATH_STORAGE_KEY, JSON.stringify(records));
+
+    event.target.reset();
+    closeDeathForm();
+    renderDeaths();
+    showDeathToast(wasEditing ? 'Corrected record sent back for review.' : 'Death record saved.');
+  }
+
+  function updateYearFilter(records) {
+    const select = document.getElementById('deathYear');
+    const selected = select.value;
+    const years = [...new Set(records.map(record => record.dateOfDeath.slice(0, 4)))].sort().reverse();
+    select.innerHTML = '<option value="">All years</option>' +
+      years.map(year => `<option value="${escapeHTML(year)}">${escapeHTML(year)}</option>`).join('');
+    if (years.includes(selected)) select.value = selected;
+  }
+
+  function renderDeaths() {
+    const allRecords = readDeathRecords();
+    updateYearFilter(allRecords);
+
+    const currentYear = String(new Date().getFullYear());
+    const pensionReviews = allRecords.filter(record => record.pensionStatus === 'Pensioner').length;
+    document.getElementById('totalDeaths').textContent = allRecords.length;
+    document.getElementById('deathsThisYear').textContent =
+      allRecords.filter(record => record.dateOfDeath.startsWith(currentYear)).length;
+    document.getElementById('pensionReviews').textContent = pensionReviews;
+
+    const query = document.getElementById('deathSearch').value.trim().toLowerCase();
+    const barangay = document.getElementById('deathBarangay').value;
+    const month = document.getElementById('deathMonth').value;
+    const year = document.getElementById('deathYear').value;
+
+    const filtered = allRecords.filter(record => {
+      const [recordYear, recordMonth] = (record.dateOfDeath || '').split('-');
+      const matchesSearch = !query ||
+        record.name.toLowerCase().includes(query) ||
+        record.oscaId.toLowerCase().includes(query);
+      return matchesSearch &&
+        (!barangay || record.barangay === barangay) &&
+        (!month || recordMonth === month) &&
+        (!year || recordYear === year);
+    });
+
+    const rows = document.getElementById('deathRows');
+    rows.innerHTML = filtered.map(record => {
+      const statusClass = record.status === 'Verified' ? 'badge-death-verified' : 'badge-death-review';
+      const pensionBadge = record.pensionStatus === 'Pensioner'
+        ? '<span class="badge badge-death-risk">Review pension</span>'
+        : `<span class="badge">${escapeHTML(record.pensionStatus || 'Unknown')}</span>`;
+      return `<tr>
+        <td>${escapeHTML(record.oscaId)}</td>
+        <td class="td-bold">${escapeHTML(record.name)}</td>
+        <td>${escapeHTML(record.barangay)}</td>
+        <td>${escapeHTML(formatDeathDate(record.dateOfDeath))}</td>
+        <td>${pensionBadge}</td>
+        <td><span class="badge ${statusClass}">${escapeHTML(record.status || 'For review')}</span>${record.status === 'Needs correction' && record.reviewNote ? `<div style="font-size:10px;color:var(--coral-600);margin-top:4px;white-space:normal;max-width:180px">${escapeHTML(record.reviewNote)}</div>` : ''}</td>
+        <td>${escapeHTML(record.recordedBy || '—')}</td>
+        <td>${record.status === 'Needs correction' ? `<button class="btn btn-ghost btn-sm" data-edit-death="${escapeHTML(record.id)}"><i class="ti ti-edit"></i> Correct</button>` : '—'}</td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('deathEmpty').style.display = filtered.length ? 'none' : 'block';
+    document.getElementById('deathCount').textContent =
+      `Showing ${filtered.length} of ${allRecords.length} death records`;
+  }
+
+  function exportDeaths() {
+    const records = readDeathRecords();
+    const headers = ['OSCA ID', 'Name', 'Barangay', 'Date of death', 'Pension status', 'Record status', 'Recorded by'];
+    const csvRows = records.map(record => [
+      record.oscaId, record.name, record.barangay, record.dateOfDeath,
+      record.pensionStatus, record.status, record.recordedBy
+    ].map(value => `"${String(value ?? '').replace(/"/g, '""')}"`).join(','));
+    const blob = new Blob([headers.join(',') + '\n' + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'osca-death-records.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  window.addEventListener('storage', event => {
+    if (event.key === DEATH_STORAGE_KEY) renderDeaths();
+  });
+
+  document.getElementById('deathRows').addEventListener('click', event => {
+    const button = event.target.closest('[data-edit-death]');
+    if (button) openDeathForm(button.dataset.editDeath);
+  });
+
+  renderDeaths();
+</script>
+</body>
+</html>
