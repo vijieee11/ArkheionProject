@@ -81,7 +81,7 @@
           </select>
           <select id="deathYear" onchange="renderDeaths()"><option value="">All years</option></select>
           <select id="deathStatus" onchange="renderDeaths()">
-            <option value="">All statuses</option><option>For review</option><option>Verified</option><option>Needs correction</option>
+            <option value="">All statuses</option><option value="Needs action">Needs action</option><option>For review</option><option>Verified</option><option>Needs correction</option>
           </select>
           <button class="btn btn-ghost btn-sm" onclick="exportDeaths()"><i class="ti ti-download"></i> Export CSV</button>
         </div>
@@ -121,6 +121,9 @@
   let selectedDeathId = null;
   renderHeadStaffSidebar('deaths');
   document.getElementById('yearLabel').textContent = String(new Date().getFullYear());
+  if (new URLSearchParams(location.search).get('status') === 'review') {
+    document.getElementById('deathStatus').value = 'Needs action';
+  }
 
   function readStoredArray(key) {
     try { const value = JSON.parse(localStorage.getItem(key) || '[]'); return Array.isArray(value) ? value : []; }
@@ -166,7 +169,9 @@
     const filtered = records.filter(record => {
       const [recordYear, recordMonth] = (record.dateOfDeath || '').split('-');
       const matchesQuery = !query || (record.name || '').toLowerCase().includes(query) || (record.oscaId || '').toLowerCase().includes(query);
-      return matchesQuery && (!barangay || record.barangay === barangay) && (!month || month === recordMonth) && (!year || year === recordYear) && (!status || (record.status || 'For review') === status);
+      const currentStatus = record.status || 'For review';
+      const matchesStatus = !status || (status === 'Needs action' ? currentStatus !== 'Verified' : currentStatus === status);
+      return matchesQuery && (!barangay || record.barangay === barangay) && (!month || month === recordMonth) && (!year || year === recordYear) && matchesStatus;
     });
     document.getElementById('deathRows').innerHTML = filtered.map(record => {
       const recordStatus = record.status || 'For review';

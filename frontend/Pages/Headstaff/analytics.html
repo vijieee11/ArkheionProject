@@ -3,102 +3,87 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arkheion — Analytics (Head Staff)</title>
+  <title>Arkheion — Analytics</title>
   <link rel="stylesheet" href="styles.css">
   <style>
-    body{display:flex;}
-    .bar-chart { display:flex; align-items:flex-end; gap:10px; height:160px; padding:16px; }
-    .bar-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; }
-    .bar { width:100%; border-radius:4px 4px 0 0; background:var(--navy); transition:height .3s; }
-    .bar-label { font-size:10px; color:var(--gray-500); }
-    .bar-value { font-size:11px; font-weight:600; color:var(--gray-900); }
-    .brgy-row { display:flex; align-items:center; gap:10px; padding:9px 16px; }
-    .brgy-name { width:60px; font-size:12px; font-weight:500; color:var(--gray-700); flex-shrink:0; }
-    .brgy-bar-track { flex:1; height:8px; background:var(--gray-100); border-radius:4px; overflow:hidden; }
-    .brgy-bar-fill { height:100%; border-radius:4px; }
-    .brgy-pct { width:36px; text-align:right; font-size:11px; font-weight:500; color:var(--gray-600); }
-    .staff-row { display:flex; align-items:center; gap:12px; padding:10px 16px; border-bottom:.5px solid var(--gray-200); }
-    .staff-row:last-child { border-bottom:none; }
-    .staff-avatar-sm { width:32px; height:32px; border-radius:50%; background:var(--teal-50); color:var(--navy); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; flex-shrink:0; }
+    body{display:flex}
+    .analytics-filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .analytics-filters select{min-height:36px;padding:6px 10px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);background:#fff;color:var(--gray-800)}
+    .analytics-note{display:flex;gap:9px;align-items:flex-start;padding:11px 14px;background:#eff6ff;color:#1e40af;border-radius:var(--radius-sm);font-size:12px;line-height:1.5}
+    .analytics-note i{font-size:17px;flex-shrink:0}
+    .analytics-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .analytics-grid .wide{grid-column:1/-1}
+    .chart-area{padding:16px 18px 14px}
+    .month-chart{height:230px;display:flex;align-items:stretch;gap:8px;padding:10px 4px 0;border-bottom:1px solid var(--gray-200)}
+    .month-col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:7px}
+    .month-value{font-size:10px;font-weight:600;color:var(--gray-700);height:14px}
+    .month-bar-track{height:175px;width:min(28px,75%);display:flex;align-items:flex-end;background:var(--gray-50);border-radius:5px 5px 0 0;overflow:hidden}
+    .month-bar{width:100%;min-height:2px;background:var(--coral-600);border-radius:5px 5px 0 0;transition:height .2s}
+    .month-label{font-size:10px;color:var(--gray-500);padding-bottom:7px}
+    .population-bars{display:flex;flex-direction:column;gap:20px;padding:22px 4px}
+    .population-row{display:grid;grid-template-columns:155px minmax(0,1fr) 74px;gap:12px;align-items:center}
+    .population-label{font-size:12px;color:var(--gray-700)}
+    .population-track{height:20px;background:var(--gray-100);border-radius:5px;overflow:hidden}
+    .population-fill{height:100%;border-radius:5px;min-width:2px}
+    .population-value{text-align:right;font-size:12px;font-weight:600;color:var(--gray-800)}
+    .chart-legend{display:flex;gap:15px;flex-wrap:wrap;padding:0 18px 14px;color:var(--gray-600);font-size:11px}
+    .legend-item{display:flex;align-items:center;gap:6px}
+    .legend-dot{width:9px;height:9px;border-radius:3px;display:inline-block}
+    .age-chart{height:230px;display:flex;align-items:flex-end;gap:18px;padding:12px 15px 0;border-bottom:1px solid var(--gray-200)}
+    .age-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:7px;min-width:0}
+    .age-value{font-size:11px;font-weight:600;color:var(--gray-700)}
+    .age-track{width:min(62px,75%);height:160px;display:flex;align-items:flex-end;background:var(--gray-50);border-radius:6px 6px 0 0;overflow:hidden}
+    .age-fill{width:100%;background:var(--teal-600,var(--navy-light));border-radius:6px 6px 0 0;min-height:2px}
+    .age-label{font-size:11px;color:var(--gray-500);padding-bottom:8px;white-space:nowrap}
+    .chart-footnote{padding:10px 18px 14px;color:var(--gray-500);font-size:11px;line-height:1.45}
+    .empty-chart{height:230px;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--gray-500);font-size:12px;padding:14px}
+    @media(max-width:850px){.analytics-grid{grid-template-columns:1fr}.analytics-grid .wide{grid-column:auto}}
+    @media(max-width:560px){.population-row{grid-template-columns:110px minmax(0,1fr) 60px;gap:7px}.month-chart{gap:4px}.month-label{font-size:9px}}
   </style>
 </head>
 <body>
 <script src="sidebar-headstaff.js"></script>
 <div class="main">
   <div class="topbar">
-    <span class="topbar-title">Analytics — Head Staff overview</span>
-    <div class="topbar-actions" style="margin-left:auto;">
-      <select class="filter-select">
-        <option>Last 6 months</option>
-        <option>This year</option>
-        <option>Last 12 months</option>
+    <span class="topbar-title">Analytics</span>
+    <div class="topbar-actions analytics-filters" style="margin-left:auto">
+      <label for="analyticsYear" style="font-size:11px;color:var(--gray-500)">Death year</label>
+      <select id="analyticsYear" onchange="renderAnalytics()"></select>
+      <label for="analyticsBarangay" style="font-size:11px;color:var(--gray-500)">Barangay</label>
+      <select id="analyticsBarangay" onchange="renderAnalytics()">
+        <option value="">All barangays</option>
       </select>
-      <button class="btn btn-ghost btn-sm"><i class="ti ti-download"></i> Export report</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportAnalytics()"><i class="ti ti-download"></i> Export</button>
     </div>
   </div>
-
   <div class="content">
-    <div class="alert alert-amber">
-      <i class="ti ti-lock"></i>
-      This analytics view is only visible to <strong>Head Staff</strong> accounts.
+    <div class="analytics-note"><i class="ti ti-info-circle"></i><div><strong>Frontend demo data.</strong> Death totals use verified records saved in this browser. Population figures are illustrative sample values; connect the backend and official population data before using them as actual OSCA statistics.</div></div>
+
+    <div class="stats-grid stats-3" style="margin-top:14px">
+      <div class="stat-card coral"><div class="stat-label"><i class="ti ti-heart-broken"></i> Verified deaths</div><div class="stat-value" id="deathTotal">0</div><div class="stat-sub" id="deathPeriodLabel">Selected year · all barangays</div></div>
+      <div class="stat-card"><div class="stat-label"><i class="ti ti-users"></i> Resident population</div><div class="stat-value" id="residentTotal">0</div><div class="stat-sub" id="residentScope">All barangays · sample estimate</div></div>
+      <div class="stat-card teal"><div class="stat-label"><i class="ti ti-user-heart"></i> Senior citizens</div><div class="stat-value" id="seniorTotal">0</div><div class="stat-sub" id="seniorShare">— of resident population</div></div>
     </div>
 
-    <div class="stats-grid stats-4">
-      <div class="stat-card">
-        <div class="stat-label"><i class="ti ti-users"></i> Total members</div>
-        <div class="stat-value">1,284</div>
-        <div class="stat-sub">+38 this month</div>
-      </div>
-      <div class="stat-card teal">
-        <div class="stat-label"><i class="ti ti-shopping-cart"></i> Avg. grocery release rate</div>
-        <div class="stat-value">71%</div>
-        <div class="stat-sub">+4% vs last month</div>
-      </div>
-      <div class="stat-card amber">
-        <div class="stat-label"><i class="ti ti-cash"></i> Avg. pension claim rate</div>
-        <div class="stat-value">62%</div>
-        <div class="stat-sub">-3% vs last month</div>
-      </div>
-      <div class="stat-card coral">
-        <div class="stat-label"><i class="ti ti-alert-circle"></i> Total urgent cases</div>
-        <div class="stat-value">9</div>
-        <div class="stat-sub">Across all barangays</div>
-      </div>
-    </div>
-
-    <div class="two-col">
-      <!-- Monthly trend chart -->
+    <div class="analytics-grid" style="margin-top:14px">
       <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Monthly distribution trend</div>
-            <div class="card-subtitle">Grocery releases per month</div>
-          </div>
-        </div>
-        <div class="bar-chart" id="trend-chart"></div>
+        <div class="card-header"><div><div class="card-title">Deaths by month</div><div class="card-subtitle" id="deathChartSubtitle">Verified death reports for selected year</div></div></div>
+        <div class="chart-area"><div class="month-chart" id="deathMonthChart"></div></div>
+        <div class="chart-footnote">Only Headstaff-verified reports are counted. Use the year and barangay filters above to narrow the chart.</div>
       </div>
 
-      <!-- Barangay comparison -->
       <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Backlog by barangay</div>
-            <div class="card-subtitle">% of members with incomplete requirements</div>
-          </div>
-        </div>
-        <div style="padding:8px 0;" id="brgy-list"></div>
+        <div class="card-header"><div><div class="card-title">Residents vs. senior citizens</div><div class="card-subtitle" id="populationSubtitle">Population comparison</div></div></div>
+        <div class="chart-area"><div class="population-bars" id="populationChart"></div></div>
+        <div class="chart-legend"><span class="legend-item"><i class="legend-dot" style="background:var(--navy)"></i>Residents</span><span class="legend-item"><i class="legend-dot" style="background:var(--teal-600,var(--navy-light))"></i>Senior citizens</span></div>
+        <div class="chart-footnote">The senior count is part of the resident total. Figures shown here are sample estimates for the UI demo.</div>
       </div>
-    </div>
 
-    <!-- Staff productivity -->
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <div class="card-title">Staff productivity</div>
-          <div class="card-subtitle">Records processed this month, per staff member</div>
-        </div>
+      <div class="card wide">
+        <div class="card-header"><div><div class="card-title">Senior citizens by age group</div><div class="card-subtitle" id="ageChartSubtitle">Illustrative age distribution</div></div></div>
+        <div class="chart-area"><div class="age-chart" id="ageGroupChart"></div></div>
+        <div class="chart-footnote">Age bands: 60–69, 70–79, 80–89, and 90+. The demo divides the sample senior population across these bands; actual counts should come from member birth dates.</div>
       </div>
-      <div id="staff-list"></div>
     </div>
   </div>
 </div>
@@ -106,74 +91,114 @@
 <script>
   renderHeadStaffSidebar('analytics');
 
-  // Sample data — replace with real aggregated data from the database once backend exists
-  const trendData = [
-    { month:'Feb', value:610 },
-    { month:'Mar', value:655 },
-    { month:'Apr', value:690 },
-    { month:'May', value:720 },
-    { month:'Jun', value:760 },
-    { month:'Jul', value:891 },
+  const DEATH_STORAGE_KEY = 'ark_death_records';
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const DEMO_POPULATION = [
+    {name:'Alejal',residents:3950,seniors:392},{name:'Anibongan',residents:3260,seniors:348},
+    {name:'Asuncion',residents:1860,seniors:198},{name:'Cebulano',residents:2540,seniors:276},
+    {name:'Guadalupe',residents:2120,seniors:220},{name:'Ising (Pob.)',residents:4230,seniors:468},
+    {name:'La Paz',residents:1940,seniors:213},{name:'Mabaus',residents:1460,seniors:157},
+    {name:'Mabuhay',residents:1720,seniors:182},{name:'Magsaysay',residents:3080,seniors:320},
+    {name:'Mangalcal',residents:1660,seniors:179},{name:'Minda',residents:1420,seniors:150},
+    {name:'New Camiling',residents:1870,seniors:204},{name:'Salvacion',residents:2160,seniors:230},
+    {name:'San Isidro',residents:2650,seniors:288},{name:'Santo Niño',residents:1790,seniors:190},
+    {name:'Taba',residents:1490,seniors:161},{name:'Tibulao',residents:2340,seniors:251},
+    {name:'Tubod',residents:3620,seniors:387},{name:'Tuganay',residents:5120,seniors:546},
+  ];
+  const AGE_DISTRIBUTION = [
+    {label:'60–69',weight:11},{label:'70–79',weight:10},{label:'80–89',weight:5},{label:'90+',weight:4},
   ];
 
-  const brgyData = [
-    { name:'Brgy 1', pct:22, color:'var(--coral-600)' },
-    { name:'Brgy 2', pct:9,  color:'var(--navy)' },
-    { name:'Brgy 3', pct:14, color:'var(--gold-dark)' },
-    { name:'Brgy 4', pct:31, color:'var(--coral-600)' },
-    { name:'Brgy 5', pct:6,  color:'var(--navy)' },
-  ];
-
-  const staffData = [
-    { name:'Head Staff',      username:'osca_head',   count:412, initials:'HS' },
-    { name:'Regular Staff 1', username:'osca_staff1', count:356, initials:'RS' },
-    { name:'Regular Staff 2', username:'osca_staff2', count:198, initials:'RS' },
-  ];
-
-  function renderTrend() {
-    const max = Math.max(...trendData.map(d => d.value));
-    const el = document.getElementById('trend-chart');
-    el.innerHTML = trendData.map(d => `
-      <div class="bar-col">
-        <span class="bar-value">${d.value}</span>
-        <div class="bar" style="height:${(d.value/max*120).toFixed(0)}px;"></div>
-        <span class="bar-label">${d.month}</span>
-      </div>
-    `).join('');
+  function readDeaths() {
+    try { const value = JSON.parse(localStorage.getItem(DEATH_STORAGE_KEY) || '[]'); return Array.isArray(value) ? value : []; }
+    catch { return []; }
   }
-
-  function renderBrgy() {
-    const el = document.getElementById('brgy-list');
-    el.innerHTML = brgyData.map(b => `
-      <div class="brgy-row">
-        <span class="brgy-name">${b.name}</span>
-        <div class="brgy-bar-track"><div class="brgy-bar-fill" style="width:${b.pct}%;background:${b.color};"></div></div>
-        <span class="brgy-pct">${b.pct}%</span>
-      </div>
-    `).join('');
+  function esc(value) { return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
+  function initFilters() {
+    const barangaySelect = document.getElementById('analyticsBarangay');
+    DEMO_POPULATION.forEach(item => barangaySelect.add(new Option(item.name,item.name)));
+    const yearSelect = document.getElementById('analyticsYear');
+    const years = [...new Set(readDeaths().map(record => (record.dateOfDeath || '').slice(0,4)).filter(Boolean))].sort().reverse();
+    const currentYear = String(new Date().getFullYear());
+    if (!years.includes(currentYear)) years.unshift(currentYear);
+    yearSelect.innerHTML = '<option value="">All years</option>' + years.map(year => `<option value="${esc(year)}">${esc(year)}</option>`).join('');
+    yearSelect.value = currentYear;
   }
-
-  function renderStaff() {
-    const max = Math.max(...staffData.map(s => s.count));
-    const el = document.getElementById('staff-list');
-    el.innerHTML = staffData.map(s => `
-      <div class="staff-row">
-        <div class="staff-avatar-sm">${s.initials}</div>
-        <div style="flex:1;">
-          <div style="font-size:13px;font-weight:500;color:var(--gray-900);">${s.name}</div>
-          <div style="font-size:11px;color:var(--gray-400);">${s.username}</div>
-        </div>
-        <div style="width:160px;">
-          <div class="progress-bar"><div class="progress-fill fill-navy" style="width:${(s.count/max*100).toFixed(0)}%"></div></div>
-        </div>
-        <span style="width:70px;text-align:right;font-size:12px;font-weight:600;color:var(--navy);">${s.count} records</span>
-      </div>
-    `).join('');
+  function selectedPopulation() {
+    const barangay = document.getElementById('analyticsBarangay').value;
+    const rows = barangay ? DEMO_POPULATION.filter(item => item.name === barangay) : DEMO_POPULATION;
+    return {
+      residents: rows.reduce((sum,item) => sum + item.residents,0),
+      seniors: rows.reduce((sum,item) => sum + item.seniors,0),
+      label: barangay || 'All barangays',
+    };
   }
-
-  renderTrend();
-  renderBrgy();
-  renderStaff();
+  function getAgeGroups(seniorCount) {
+    const groups = AGE_DISTRIBUTION.map((item,index) => ({
+      ...item,
+      value: index === AGE_DISTRIBUTION.length - 1 ? 0 : Math.floor(seniorCount * item.weight / 30),
+    }));
+    groups[groups.length - 1].value = seniorCount - groups.slice(0,-1).reduce((sum,item) => sum + item.value,0);
+    return groups;
+  }
+  function verifiedDeathsForSelection() {
+    const year = document.getElementById('analyticsYear').value;
+    const barangay = document.getElementById('analyticsBarangay').value;
+    return readDeaths().filter(record => record.status === 'Verified' &&
+      (!year || (record.dateOfDeath || '').startsWith(year)) &&
+      (!barangay || record.barangay === barangay));
+  }
+  function renderDeathChart(records) {
+    const year = document.getElementById('analyticsYear').value;
+    document.getElementById('deathChartSubtitle').textContent = year ? `Verified death reports in ${year}` : 'Verified death reports across all years';
+    document.getElementById('deathPeriodLabel').textContent = `${year || 'All years'} · ${document.getElementById('analyticsBarangay').value || 'all barangays'}`;
+    const counts = MONTHS.map((_,index) => records.filter(record => Number((record.dateOfDeath || '').slice(5,7)) === index + 1).length);
+    const max = Math.max(1,...counts);
+    document.getElementById('deathMonthChart').innerHTML = MONTHS.map((month,index) => {
+      const height = counts[index] ? Math.max(4,counts[index] / max * 100) : 0;
+      return `<div class="month-col" title="${month}: ${counts[index]} verified deaths"><span class="month-value">${counts[index] || ''}</span><div class="month-bar-track"><div class="month-bar" style="height:${height}%"></div></div><span class="month-label">${month}</span></div>`;
+    }).join('');
+  }
+  function renderPopulationChart() {
+    const pop = selectedPopulation();
+    const scale = Math.max(pop.residents,1);
+    document.getElementById('residentTotal').textContent = pop.residents.toLocaleString();
+    document.getElementById('seniorTotal').textContent = pop.seniors.toLocaleString();
+    document.getElementById('residentScope').textContent = `${pop.label} · illustrative sample`;
+    document.getElementById('seniorShare').textContent = `${(pop.seniors / scale * 100).toFixed(1)}% of resident population`;
+    document.getElementById('populationSubtitle').textContent = pop.label;
+    document.getElementById('populationChart').innerHTML = [
+      {label:'Total residents',value:pop.residents,color:'var(--navy)'},
+      {label:'Senior citizens',value:pop.seniors,color:'var(--teal-600,var(--navy-light))'},
+    ].map(item => `<div class="population-row"><span class="population-label">${item.label}</span><div class="population-track" title="${item.value.toLocaleString()}"><div class="population-fill" style="width:${Math.max(1,item.value/scale*100)}%;background:${item.color}"></div></div><span class="population-value">${item.value.toLocaleString()}</span></div>`).join('');
+    document.getElementById('ageChartSubtitle').textContent = `${pop.seniors.toLocaleString()} sample seniors · ${pop.label}`;
+    const allocated = getAgeGroups(pop.seniors);
+    const max = Math.max(1,...allocated.map(item => item.value));
+    document.getElementById('ageGroupChart').innerHTML = allocated.map(item => `<div class="age-col"><span class="age-value">${item.value.toLocaleString()}</span><div class="age-track"><div class="age-fill" style="height:${item.value/max*100}%"></div></div><span class="age-label">${item.label}</span></div>`).join('');
+  }
+  function renderAnalytics() {
+    const deaths = verifiedDeathsForSelection();
+    document.getElementById('deathTotal').textContent = deaths.length.toLocaleString();
+    renderDeathChart(deaths);
+    renderPopulationChart();
+  }
+  function exportAnalytics() {
+    const pop = selectedPopulation();
+    const deaths = verifiedDeathsForSelection();
+    const headers = ['Metric','Value','Scope'];
+    const rows = [
+      ['Verified deaths',deaths.length,document.getElementById('deathPeriodLabel').textContent],
+      ['Resident population',pop.residents,pop.label],
+      ['Senior citizen population',pop.seniors,pop.label],
+      ...getAgeGroups(pop.seniors).map(item => [item.label,item.value,pop.label]),
+    ];
+    const csv = [headers,...rows].map(row => row.map(value => `"${String(value).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob);
+    const link=document.createElement('a'); link.href=url; link.download='osca-analytics-demo.csv'; link.click(); URL.revokeObjectURL(url);
+  }
+  window.addEventListener('storage',event=>{if(event.key===DEATH_STORAGE_KEY){initFilters();renderAnalytics();}});
+  initFilters();
+  renderAnalytics();
 </script>
 </body>
 </html>

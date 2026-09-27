@@ -14,6 +14,7 @@ function renderHeadStaffSidebar(activePage) {
       section: 'Overview',
       items: [
         { id: 'hs-dashboard', label: 'Head Staff Dashboard', icon: 'ti-layout-dashboard', href: 'hs-dashboard.html' },
+        { id: 'analytics', label: 'Analytics', icon: 'ti-chart-bar', href: 'analytics.html' },
       ]
     },
     {

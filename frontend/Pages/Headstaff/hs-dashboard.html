@@ -66,6 +66,15 @@
     .notif-item-text strong { color:var(--gray-900); }
     .notif-item-time { font-size:10.5px; color:var(--gray-500); margin-top:3px; }
     .notif-empty { padding:24px 16px; text-align:center; font-size:12.5px; color:var(--gray-500); }
+    .dash-month-col { flex:1;min-width:24px;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px; }
+    .dash-month-track { height:155px;width:min(30px,75%);display:flex;flex-direction:column;justify-content:flex-end;background:var(--gray-50);border-radius:5px 5px 0 0;overflow:hidden; }
+    .dash-month-pending { width:100%;background:var(--coral-600); }
+    .dash-month-verified { width:100%;background:var(--teal-600,var(--navy-light)); }
+    .dash-month-label { font-size:10px;color:var(--gray-500);padding-bottom:4px; }
+    .dash-empty { padding:18px 16px;text-align:center;color:var(--gray-500);font-size:12px; }
+    .dash-activity-row { display:grid;grid-template-columns:95px 1fr auto;gap:8px;align-items:center;padding:10px 16px;border-bottom:.5px solid var(--gray-200);font-size:11.5px; }
+    .dash-activity-row:last-child { border-bottom:0; }
+    @media(max-width:700px){.dash-activity-row{grid-template-columns:1fr}.dash-month-col{min-width:20px}}
   </style>
 </head>
 <body>
@@ -98,92 +107,72 @@
   <div class="content">
     <div>
       <h1 style="font-family:var(--font-display);font-size:20px;font-weight:600;color:var(--gray-900)">Welcome, Head Staff 👋</h1>
-      <p style="font-size:13px;color:var(--gray-600);margin-top:3px">OSCA Carmen — Administrative overview, July 27, 2026</p>
+      <p style="font-size:13px;color:var(--gray-600);margin-top:3px">OSCA Carmen — <span id="dashboardToday"></span></p>
     </div>
 
-    <!-- Key stats — one row, only what needs attention -->
-    <div class="stats-grid stats-3">
-      <div class="stat-card" style="cursor:pointer" onclick="location.href='hs-pending-approval.html'">
-        <div class="stat-label"><i class="ti ti-checklist"></i> Pending approvals</div>
-        <div class="stat-value" style="color: #e74c3c;">5</div>
-        <div class="stat-sub">Awaiting your review</div>
+    <!-- OSCA overview -->
+    <div class="stats-grid stats-4">
+      <div class="stat-card" style="cursor:pointer" onclick="location.href='../Staff/members.html'">
+        <div class="stat-label"><i class="ti ti-users"></i> Registered seniors</div>
+        <div class="stat-value">1,284</div>
+        <div class="stat-sub">Member roster</div>
       </div>
-      <div class="stat-card teal" style="cursor:pointer" onclick="location.href='staff-mgmt.html'">
-        <div class="stat-label"><i class="ti ti-users-group"></i> Active staff</div>
-        <div class="stat-value">3</div>
-        <div class="stat-sub">2 regular, 1 head</div>
+      <div class="stat-card coral" style="cursor:pointer" onclick="location.href='deaths.html?status=review'">
+        <div class="stat-label"><i class="ti ti-inbox"></i> Death reports to review</div>
+        <div class="stat-value" id="deathReportsPending">0</div>
+        <div class="stat-sub">Waiting for Headstaff action</div>
       </div>
-      <div class="stat-card coral" style="cursor:pointer" onclick="location.href='../Staff/members.html'">
-        <div class="stat-label"><i class="ti ti-map-pin"></i> Highest backlog barangay</div>
-        <div class="stat-value" style="font-size:18px;">Brgy. Tubod— 31%</div>
-        <div class="stat-sub">Incomplete requirements</div>
+      <div class="stat-card teal" style="cursor:pointer" onclick="location.href='analytics.html'">
+        <div class="stat-label"><i class="ti ti-heart-check"></i> Verified deaths this year</div>
+        <div class="stat-value" id="verifiedDeathsYear">0</div>
+        <div class="stat-sub" id="dashboardYear"></div>
+      </div>
+      <div class="stat-card amber" style="cursor:pointer" onclick="location.href='deaths.html'">
+        <div class="stat-label"><i class="ti ti-cash"></i> Pension follow-ups</div>
+        <div class="stat-value" id="pensionFollowUps">0</div>
+        <div class="stat-sub">Death reports marked pensioner</div>
       </div>
     </div>
 
-    <!-- Hero chart -->
+    <!-- Monthly death reports -->
     <div class="card">
       <div class="card-header">
         <div>
-          <div class="card-title">Monthly benefit release rate</div>
-          <div class="card-subtitle">Grocery vs pension — January to December 2026</div>
+          <div class="card-title">Monthly death reports</div>
+          <div class="card-subtitle" id="monthlyDeathSubtitle">All reports recorded this year</div>
         </div>
-        <div style="display:flex;gap:14px;font-size:12px;">
-          <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:50%;background:var(--navy);display:inline-block;"></span> Grocery</span>
-          <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:50%;background:var(--gold-dark);display:inline-block;"></span> Pension</span>
+        <div style="display:flex;gap:14px;font-size:12px;flex-wrap:wrap;">
+          <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:var(--coral-600);display:inline-block;"></span> For review</span>
+          <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:var(--teal-600,var(--navy-light));display:inline-block;"></span> Verified</span>
+          <a href="analytics.html" style="color:var(--navy-light);font-weight:500;">More analytics →</a>
         </div>
       </div>
-      <div style="padding:16px;">
-        <svg id="rate-line-chart" viewBox="0 0 900 240" style="width:100%;height:260px;"></svg>
-      </div>
+      <div id="monthlyDeathsChart" style="display:flex;align-items:flex-end;gap:8px;height:220px;padding:20px 18px 12px;overflow-x:auto;"></div>
+      <div style="padding:0 18px 14px;font-size:11px;color:var(--gray-500);">Death reports remain in the system for history. Pension flags are follow-ups for review, not automatic payment stops.</div>
     </div>
 
-    <!-- Two-column: approvals + staff productivity -->
+    <!-- Action queue + audit trail -->
     <div class="two-col">
       <div class="card">
         <div class="card-header">
           <div>
-            <div class="card-title">Pending approvals</div>
-            <div class="card-subtitle">Actions waiting for your sign-off</div>
+            <div class="card-title">Death reports needing action</div>
+            <div class="card-subtitle">For review or returned for correction</div>
           </div>
-          <span style="font-size:11px;color:var(--navy-light);cursor:pointer" onclick="location.href='hs-pending-approval.html'">View all →</span>
+          <span style="font-size:11px;color:var(--navy-light);cursor:pointer" onclick="location.href='deaths.html'">Review all →</span>
         </div>
-        <div>
-          <div class="req-row">
-            <div class="req-icon" style="background:var(--coral-50)"><i class="ti ti-trash" style="color:var(--coral-600)"></i></div>
-            <div style="flex:1;">
-              <p style="font-size:13px;font-weight:500;color:var(--gray-900)">Delete record request</p>
-              <p style="font-size:11px;color:var(--gray-400)">Regular Staff 1 — Duplicate entry for Felipe Torres</p>
-            </div>
-            <span class="badge badge-pend">Pending</span>
-          </div>
-          <div class="req-row">
-            <div class="req-icon" style="background:var(--amber-100)"><i class="ti ti-edit" style="color:var(--gold-dark)"></i></div>
-            <div style="flex:1;">
-              <p style="font-size:13px;font-weight:500;color:var(--gray-900)">Benefit status correction</p>
-              <p style="font-size:11px;color:var(--gray-400)">Regular Staff 2 — Pension marked claimed in error</p>
-            </div>
-            <span class="badge badge-pend">Pending</span>
-          </div>
-          <div class="req-row">
-            <div class="req-icon" style="background:var(--coral-50)"><i class="ti ti-user-off" style="color:var(--coral-600)"></i></div>
-            <div style="flex:1;">
-              <p style="font-size:13px;font-weight:500;color:var(--gray-900)">Staff deactivation request</p>
-              <p style="font-size:11px;color:var(--gray-400)">System — Regular Staff 2 inactive for 30+ days</p>
-            </div>
-            <span class="badge badge-pend">Pending</span>
-          </div>
-        </div>
+        <div id="deathActionList"></div>
       </div>
 
       <div class="card">
         <div class="card-header">
           <div>
-            <div class="card-title">Staff productivity</div>
-            <div class="card-subtitle">Records processed this month</div>
+            <div class="card-title">Recent review activity</div>
+            <div class="card-subtitle">Headstaff decisions for the audit trail</div>
           </div>
-          <span style="font-size:11px;color:var(--navy-light);cursor:pointer" onclick="location.href='staff-mgmt.html'">Manage →</span>
+          <span style="font-size:11px;color:var(--navy-light);cursor:pointer" onclick="location.href='deaths.html'">Open death records →</span>
         </div>
-        <div id="staff-list"></div>
+        <div id="deathReviewActivity"></div>
       </div>
     </div>
   </div>
@@ -192,87 +181,58 @@
 <script>
   renderHeadStaffSidebar('hs-dashboard');
 
-  const staffData = [
-    { name:'Head Staff',      username:'osca_head',   count:412, initials:'HS', status:'Active', lastLogin:'Jul 27, 2026 — 9:02 AM' },
-    { name:'Regular Staff 1', username:'osca_staff1', count:356, initials:'RS', status:'Active', lastLogin:'Jul 26, 2026 — 2:15 PM' },
-    { name:'Regular Staff 2', username:'osca_staff2', count:198, initials:'RS', status:'First login', lastLogin:'Never' },
-  ];
+  const DEATH_STORAGE_KEY = 'ark_death_records';
+  const AUDIT_STORAGE_KEY = 'ark_death_audit';
+  const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const dateNow = new Date();
+  document.getElementById('dashboardToday').textContent = dateNow.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('dashboardYear').textContent = `Calendar year ${dateNow.getFullYear()}`;
 
-  const rateData = [
-    { month:'Jan', grocery:58, pension:50 },
-    { month:'Feb', grocery:61, pension:52 },
-    { month:'Mar', grocery:63, pension:55 },
-    { month:'Apr', grocery:65, pension:54 },
-    { month:'May', grocery:66, pension:58 },
-    { month:'Jun', grocery:68, pension:60 },
-    { month:'Jul', grocery:71, pension:62 },
-    { month:'Aug', grocery:70, pension:63 },
-    { month:'Sep', grocery:72, pension:61 },
-    { month:'Oct', grocery:74, pension:64 },
-    { month:'Nov', grocery:75, pension:66 },
-    { month:'Dec', grocery:77, pension:68 },
-  ];
-
-  function renderRateChart() {
-    const svg = document.getElementById('rate-line-chart');
-    const w = 900, h = 240, padL = 36, padR = 12, padT = 16, padB = 28;
-    const chartW = w - padL - padR, chartH = h - padT - padB;
-    const n = rateData.length;
-    const xStep = chartW / (n - 1);
-    const yMax = 100;
-
-    const xFor = i => padL + i * xStep;
-    const yFor = v => padT + chartH - (v / yMax) * chartH;
-
-    let svgHtml = '';
-
-    [0,25,50,75,100].forEach(v => {
-      const y = yFor(v);
-      svgHtml += `<line x1="${padL}" y1="${y}" x2="${w-padR}" y2="${y}" stroke="var(--gray-200)" stroke-width="1"/>`;
-      svgHtml += `<text x="${padL-8}" y="${y+3}" font-size="10" fill="var(--gray-400)" text-anchor="end">${v}%</text>`;
-    });
-
-    rateData.forEach((d,i) => {
-      svgHtml += `<text x="${xFor(i)}" y="${h-8}" font-size="10" fill="var(--gray-500)" text-anchor="middle">${d.month}</text>`;
-    });
-
-    function linePath(key) {
-      return rateData.map((d,i) => `${i===0?'M':'L'}${xFor(i).toFixed(1)},${yFor(d[key]).toFixed(1)}`).join(' ');
-    }
-
-    svgHtml += `<path d="${linePath('grocery')}" fill="none" stroke="var(--navy)" stroke-width="2.5"/>`;
-    rateData.forEach((d,i) => {
-      svgHtml += `<circle cx="${xFor(i)}" cy="${yFor(d.grocery)}" r="3.5" fill="var(--navy)"/>`;
-    });
-
-    svgHtml += `<path d="${linePath('pension')}" fill="none" stroke="var(--gold-dark)" stroke-width="2.5"/>`;
-    rateData.forEach((d,i) => {
-      svgHtml += `<circle cx="${xFor(i)}" cy="${yFor(d.pension)}" r="3.5" fill="var(--gold-dark)"/>`;
-    });
-
-    svg.innerHTML = svgHtml;
+  function readArray(key) {
+    try { const data=JSON.parse(localStorage.getItem(key)||'[]'); return Array.isArray(data)?data:[]; }
+    catch { return []; }
   }
-
-  function renderStaff() {
-    const max = Math.max(...staffData.map(s => s.count));
-    const el = document.getElementById('staff-list');
-    el.innerHTML = staffData.map(s => `
-      <div class="req-row">
-        <div class="staff-avatar-sm">${s.initials}</div>
-        <div style="flex:1;">
-          <div style="font-size:13px;font-weight:500;color:var(--gray-900);">${s.name}</div>
-          <div style="font-size:11px;color:var(--gray-400);">Last login: ${s.lastLogin}</div>
-        </div>
-        <div style="width:120px;">
-          <div class="progress-bar"><div class="progress-fill fill-navy" style="width:${(s.count/max*100).toFixed(0)}%"></div></div>
-        </div>
-        <span style="width:66px;text-align:right;font-size:12px;font-weight:600;color:var(--navy);">${s.count}</span>
-      </div>
-    `).join('');
+  function safeText(value) {
+    return String(value ?? '').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   }
+  function renderDeathDashboard() {
+    const records=readArray(DEATH_STORAGE_KEY);
+    const year=String(new Date().getFullYear());
+    const actionable=records.filter(record=>record.status!=='Verified');
+    const verifiedThisYear=records.filter(record=>record.status==='Verified'&&(record.dateOfDeath||'').startsWith(year));
+    const pensionFollowUps=records.filter(record=>record.pensionStatus==='Pensioner');
+    document.getElementById('deathReportsPending').textContent=actionable.length;
+    document.getElementById('verifiedDeathsYear').textContent=verifiedThisYear.length;
+    document.getElementById('pensionFollowUps').textContent=pensionFollowUps.length;
 
-  renderRateChart();
-  renderStaff();
+    const chart=document.getElementById('monthlyDeathsChart');
+    const counts=MONTH_NAMES.map((_,index)=>({
+      pending:records.filter(record=>record.status!=='Verified'&&(record.dateOfDeath||'').startsWith(year)&&Number((record.dateOfDeath||'').slice(5,7))===index+1).length,
+      verified:verifiedThisYear.filter(record=>Number((record.dateOfDeath||'').slice(5,7))===index+1).length,
+    }));
+    const max=Math.max(1,...counts.map(item=>item.pending+item.verified));
+    document.getElementById('monthlyDeathSubtitle').textContent=`Death reports for ${year} · ${records.length} total reports across all years`;
+    chart.innerHTML=counts.map((item,index)=>{
+      const pendingHeight=item.pending/max*100, verifiedHeight=item.verified/max*100;
+      return `<div class="dash-month-col" title="${MONTH_NAMES[index]}: ${item.pending} for review, ${item.verified} verified"><span style="font-size:10px;color:var(--gray-600)">${item.pending+item.verified||''}</span><div class="dash-month-track"><div class="dash-month-pending" style="height:${pendingHeight}%"></div><div class="dash-month-verified" style="height:${verifiedHeight}%"></div></div><span class="dash-month-label">${MONTH_NAMES[index].slice(0,3)}</span></div>`;
+    }).join('');
+
+    const actionList=document.getElementById('deathActionList');
+    const recentActionable=actionable.slice().sort((a,b)=>new Date(b.recordedAt||0)-new Date(a.recordedAt||0)).slice(0,5);
+    actionList.innerHTML=recentActionable.length?recentActionable.map(record=>`
+      <div class="req-row" style="cursor:pointer" onclick="location.href='deaths.html'">
+        <div class="req-icon" style="background:${record.status==='Needs correction'?'var(--amber-100)':'var(--coral-50)'}"><i class="ti ti-heart-x" style="color:${record.status==='Needs correction'?'var(--gold-dark)':'var(--coral-600)'}"></i></div>
+        <div style="flex:1;min-width:0"><p style="font-size:12.5px;font-weight:500;color:var(--gray-900)">${safeText(record.name||'Death report')} · ${safeText(record.oscaId||'')}</p><p style="font-size:11px;color:var(--gray-500)">${safeText(record.barangay||'')} · ${safeText(record.status||'For review')}${record.pensionStatus==='Pensioner'?' · Pension follow-up':''}</p></div>
+        <span class="badge ${record.status==='Needs correction'?'badge-urgent':'badge-pend'}">${safeText(record.status||'For review')}</span>
+      </div>`).join(''):'<div class="dash-empty">No death reports need review right now.</div>';
+
+    const activity=readArray(AUDIT_STORAGE_KEY).slice(0,5);
+    const activityEl=document.getElementById('deathReviewActivity');
+    activityEl.innerHTML=activity.length?activity.map(entry=>`
+      <div class="dash-activity-row"><span style="color:var(--gray-500)">${safeText(new Date(entry.at).toLocaleDateString())}</span><span><strong>${safeText(entry.oscaId||'')}</strong> · ${safeText(entry.name||'')}</span><span class="badge ${entry.action==='Verified'?'badge-ok':'badge-urgent'}">${safeText(entry.action)}</span></div>`).join(''):'<div class="dash-empty">No Headstaff death reviews yet. Reviewed reports will appear here.</div>';
+  }
+  renderDeathDashboard();
+  window.addEventListener('storage',event=>{if(event.key===DEATH_STORAGE_KEY||event.key===AUDIT_STORAGE_KEY)renderDeathDashboard();});
 
   /* ---------------- Notifications ----------------
      Content is pulled straight from this dashboard's real data
