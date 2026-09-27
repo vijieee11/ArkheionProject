@@ -11,6 +11,7 @@
     .photo-upload:hover { border-color:var(--navy); background:var(--teal-50); }
     .photo-upload i { font-size:24px; color:var(--gray-400); }
     .photo-upload span { font-size:10px; color:var(--gray-400); text-align:center; }
+    @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
   </style>
 </head>
 <body>
@@ -28,6 +29,23 @@
     <div class="alert alert-teal">
       <i class="ti ti-info-circle"></i>
       OSCA ID and Registration Certificate No. will be automatically generated upon saving. Fields marked <span style="color:var(--coral-600);font-weight:600">*</span> are required.
+    </div>
+
+    <!-- Scan & auto fill-up -->
+    <div class="card" style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:var(--teal-50);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="ti ti-scan" style="font-size:18px;color:var(--navy)"></i>
+        </div>
+        <div>
+          <p style="font-size:13px;font-weight:600;color:var(--gray-900);">Scan a document to auto fill-up this form</p>
+          <p style="font-size:11px;color:var(--gray-500);margin-top:2px;">Upload a scanned OSCA Form No. 1 or birth certificate — the system will extract and fill in the fields below.</p>
+        </div>
+      </div>
+      <button class="btn btn-navy btn-sm" onclick="document.getElementById('scan-input').click()" id="scan-btn">
+        <i class="ti ti-scan"></i> Scan document
+      </button>
+      <input type="file" id="scan-input" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleScanFile(this)">
     </div>
 
     <div class="card">
@@ -283,6 +301,58 @@
 
 <script>
   renderSidebar('members');
+
+  // ---- Scan & auto fill-up -------------------------------------------------
+  // Simulated NLP extraction (same fake pipeline used in upload.html) — swap
+  // this out for a real call to the spaCy/HuggingFace backend once it exists.
+  function handleScanFile(input) {
+    if (!input.files[0]) return;
+    simulateScanAndFill(input.files[0].name);
+  }
+
+  function simulateScanAndFill(filename) {
+    const btn = document.getElementById('scan-btn');
+    const originalLabel = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite;"></i> Scanning...';
+
+    setTimeout(() => {
+      // Fake extracted data — mirrors the same demo result as upload.html's
+      // simulated NLP classification (PSA Birth Certificate for Juan dela Cruz).
+      const extracted = {
+        lastName: 'Dela Cruz',
+        firstName: 'Juan',
+        middleName: 'Santos',
+        dob: '1945-01-05',
+        pob: 'Carmen, Davao del Norte',
+        sex: 'Male',
+        address: 'Purok 3, Brgy. Ising (Pob.)',
+        barangay: 'Ising (Pob.)',
+      };
+
+      document.getElementById('last-name').value   = extracted.lastName;
+      document.getElementById('first-name').value  = extracted.firstName;
+      document.getElementById('middle-name').value = extracted.middleName;
+      document.getElementById('dob').value         = extracted.dob;
+      document.getElementById('pob').value         = extracted.pob;
+      document.getElementById('address').value     = extracted.address;
+
+      const sexSelect = document.getElementById('sex');
+      if (sexSelect) sexSelect.value = extracted.sex;
+
+      const brgySelect = document.getElementById('barangay');
+      if (brgySelect) {
+        const hasOption = Array.from(brgySelect.options).some(o => o.value === extracted.barangay || o.textContent === extracted.barangay);
+        if (hasOption) brgySelect.value = extracted.barangay;
+      }
+
+      computeAge();
+
+      btn.disabled = false;
+      btn.innerHTML = originalLabel;
+      showToast(`Form auto-filled from "${filename}". Please review before saving.`);
+    }, 1600);
+  }
 
   function switchTab(el, tabId) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
