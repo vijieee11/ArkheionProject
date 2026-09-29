@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Member Records</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body{display:flex}.member-toolbar{display:flex;gap:8px;flex-wrap:wrap}.member-toolbar input,.member-toolbar select{min-height:38px;padding:7px 10px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);background:#fff;color:var(--gray-800)}
+    .member-wrap{overflow:auto}.member-table{width:100%;border-collapse:collapse}.member-table th,.member-table td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--gray-200);font-size:12.5px;white-space:nowrap}.member-table th{color:var(--gray-500);font-weight:600}.member-link{color:var(--navy);font-weight:650;text-decoration:none}.member-link:hover{text-decoration:underline}.member-empty{text-align:center;color:var(--gray-500);padding:28px}.member-hint{font-size:12px;color:var(--gray-500);line-height:1.5;margin-top:12px}
+  </style>
+</head>
+<body>
+<script src="sidebar-headstaff.js"></script>
+<main class="main"><div class="topbar"><span class="topbar-title">Member records</span></div><div class="content">
+  <div class="stats-grid stats-3">
+    <div class="stat-card"><div class="stat-label"><i class="ti ti-users"></i> Total records</div><div class="stat-value" id="totalCount">0</div><div class="stat-sub">All barangays</div></div>
+    <div class="stat-card teal"><div class="stat-label"><i class="ti ti-id-badge-2"></i> Members</div><div class="stat-value" id="memberCount">0</div><div class="stat-sub">OSCA members</div></div>
+    <div class="stat-card coral"><div class="stat-label"><i class="ti ti-user-question"></i> Non-members</div><div class="stat-value" id="nonMemberCount">0</div><div class="stat-sub">Registered residents without membership</div></div>
+  </div>
+  <section class="card"><div class="card-header" style="gap:12px;flex-wrap:wrap"><div><div class="card-title">Senior citizen directory</div><div class="card-subtitle">Select a name to view their background, record status, and pension history.</div></div><div class="member-toolbar" style="margin-left:auto"><input id="search" type="search" placeholder="Search name or OSCA ID" oninput="renderMembers()"><select id="barangay" onchange="renderMembers()"><option value="">All barangays</option></select><select id="membership" onchange="renderMembers()"><option value="">All membership statuses</option><option>Member</option><option>Non-member</option></select><select id="filterYear" onchange="renderMembers()"><option value="">All years</option></select><select id="filterMonth" onchange="renderMembers()"><option value="">All months</option><option value="01">January</option><option value="02">February</option><option value="03">March</option><option value="04">April</option><option value="05">May</option><option value="06">June</option><option value="07">July</option><option value="08">August</option><option value="09">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></div></div>
+    <div class="member-wrap"><table class="member-table"><thead><tr><th>OSCA ID</th><th>Name</th><th>Barangay</th><th>Age</th><th>Membership</th><th>Record status</th></tr></thead><tbody id="memberRows"></tbody></table><div class="member-empty" id="empty" hidden>No member records match these filters.</div></div>
+    <div class="member-hint" style="padding:0 16px 15px">This prototype combines sample records with approved registration submissions stored in this browser. Replace the sample data with the backend database when it is ready.</div>
+  </section>
+</div></main>
+<script>
+  renderHeadStaffSidebar('member-records');
+  const DEMO_MEMBERS = [
+    {osca:'2024-001',name:'Juan dela Cruz',barangay:'Ising (Pob.)',age:72,sex:'Male',birthdate:'1954-03-12',civil:'Married',address:'Ising (Pob.), Carmen, Davao del Norte',contact:'Not provided',membership:'Member',registered:'2024-01-15',pension:'Active'},
+    {osca:'2023-087',name:'Maria Santos',barangay:'Tuganay',age:68,sex:'Female',birthdate:'1958-08-22',civil:'Widowed',address:'Tuganay, Carmen, Davao del Norte',contact:'Not provided',membership:'Member',registered:'2023-06-03',pension:'Active'},
+    {osca:'2024-033',name:'Pedro Ramos',barangay:'Alejal',age:75,sex:'Male',birthdate:'1951-11-09',civil:'Married',address:'Alejal, Carmen, Davao del Norte',contact:'Not provided',membership:'Member',registered:'2024-02-10',pension:'For follow-up'},
+    {osca:'2022-114',name:'Lourdes Garcia',barangay:'Asuncion',age:81,sex:'Female',birthdate:'1945-04-18',civil:'Widowed',address:'Asuncion, Carmen, Davao del Norte',contact:'Not provided',membership:'Member',registered:'2022-09-27',pension:'For follow-up'},
+    {osca:'2024-056',name:'Wyndell Joshua Camacho',barangay:'Tuganay',age:63,sex:'Male',birthdate:'1963-01-30',civil:'Single',address:'Tuganay, Carmen, Davao del Norte',contact:'Not provided',membership:'Non-member',registered:'2024-04-11',pension:'Not enrolled'}
+  ];
+  const readArray = key => { try { const v=JSON.parse(localStorage.getItem(key)||'[]'); return Array.isArray(v)?v:[]; } catch { return []; } };
+  const esc = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function allMembers(){
+    const byId=new Map(DEMO_MEMBERS.map(m=>[m.osca,m]));
+    readArray('ark_record_submissions').filter(s=>s.status==='Approved').forEach(s=>{
+      if(!s.oscaId)return;
+      const age=Number(s.age)||null;
+      byId.set(s.oscaId,{osca:s.oscaId,name:s.name||'Unnamed resident',barangay:s.barangay||'—',age,sex:s.sex||'Not provided',birthdate:s.dateOfBirth||'',civil:s.civilStatus||'Not provided',address:s.address||'',contact:s.contact||'Not provided',membership:s.membershipStatus||'Member',registered:s.submittedAt||'',pension:'Not recorded'});
+    });
+    const verifiedDeaths=readArray('ark_death_records').filter(d=>d.status==='Verified');
+    verifiedDeaths.forEach(d=>{const id=d.oscaId||d.osca||d.osca_id;const member=byId.get(id);if(member)member.status='Deceased';});
+    return [...byId.values()];
+  }
+  function renderMembers(){
+    const q=document.getElementById('search').value.trim().toLowerCase(), brgy=document.getElementById('barangay').value, membership=document.getElementById('membership').value, year=document.getElementById('filterYear').value, month=document.getElementById('filterMonth').value;
+    const members=allMembers();
+    const barangays=[...new Set(members.map(m=>m.barangay).filter(Boolean))].sort(); const select=document.getElementById('barangay'); const chosen=select.value;
+    if(select.options.length!==barangays.length+1){select.innerHTML='<option value="">All barangays</option>'+barangays.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('');select.value=chosen;}
+    const yearSelect=document.getElementById('filterYear'), selectedYear=yearSelect.value;
+    const years=[...new Set(members.map(m=>String(m.registered||'').slice(0,4)).filter(y=>/^\d{4}$/.test(y)))].sort().reverse();
+    yearSelect.innerHTML='<option value="">All years</option>'+years.map(y=>`<option value="${y}">${y}</option>`).join('');yearSelect.value=years.includes(selectedYear)?selectedYear:'';
+    const filtered=members.filter(m=>{const registered=String(m.registered||'');return (!q||`${m.name} ${m.osca}`.toLowerCase().includes(q))&&(!brgy||m.barangay===brgy)&&(!membership||m.membership===membership)&&(!year||registered.slice(0,4)===year)&&(!month||registered.slice(5,7)===month);});
+    document.getElementById('totalCount').textContent=members.length;document.getElementById('memberCount').textContent=members.filter(m=>m.membership==='Member').length;document.getElementById('nonMemberCount').textContent=members.filter(m=>m.membership==='Non-member').length;
+    document.getElementById('memberRows').innerHTML=filtered.map(m=>`<tr><td class="td-muted">${esc(m.osca)}</td><td><a class="member-link" href="member-profile.html?id=${encodeURIComponent(m.osca)}">${esc(m.name)} <i class="ti ti-arrow-up-right"></i></a></td><td>${esc(m.barangay)}</td><td>${esc(m.age||'—')}</td><td><span class="badge ${m.membership==='Member'?'badge-ok':'badge-pend'}">${esc(m.membership)}</span></td><td>${m.status==='Deceased'?'<span class="badge badge-miss">Deceased</span>':'<span class="badge badge-ok">Active record</span>'}</td></tr>`).join('');
+    document.getElementById('empty').hidden=filtered.length>0;
+  }
+  renderMembers(); window.addEventListener('storage',e=>{if(['ark_record_submissions','ark_death_records'].includes(e.key))renderMembers();});
+</script>
+</body></html>

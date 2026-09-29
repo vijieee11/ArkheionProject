@@ -229,6 +229,20 @@
       : 'Today';
     r.claimedBy = claimedBy;
 
+    // Frontend demo only: make a claim visible in this member's Headstaff profile.
+    // The real app should write this event through the backend with an audit trail.
+    try {
+      const history = JSON.parse(localStorage.getItem('ark_pension_history') || '[]');
+      history.push({
+        id: 'PEN-' + Date.now(), osca: r.osca, name: r.name, period: 'July 2026', amount: r.amount,
+        status: 'Claimed', date: dateVal || new Date().toISOString().slice(0, 10), claimedBy,
+        remarks: document.getElementById('claim-remarks').value.trim(), source: 'Staff entry'
+      });
+      localStorage.setItem('ark_pension_history', JSON.stringify(history));
+    } catch (error) {
+      console.warn('Could not save demo pension history.', error);
+    }
+
     closeModal('modal-claim');
     renderStats();
     renderTable();

@@ -28,6 +28,7 @@ function renderHeadStaffSidebar(activePage) {
       section: 'Oversight',
       items: [
         { id: 'deaths',        label: 'Death records',     icon: 'ti-heart-x',      href: 'deaths.html' },
+        { id: 'member-records', label: 'Member records',   icon: 'ti-users',        href: 'member-records.html' },
         { id: 'staffmgmt',    label: 'Manage staff',      icon: 'ti-users-group',  href: 'staff-mgmt.html' },
         { id: 'audit',        label: 'Audit log',         icon: 'ti-shield-check', href: 'audit.html' },
       ]
