@@ -49,6 +49,14 @@
     .barangay-table th,.barangay-table td{padding:10px 12px;border-bottom:1px solid var(--gray-200);text-align:right;font-size:11.5px;white-space:nowrap}
     .barangay-table th{font-weight:600;color:var(--gray-500);background:var(--gray-50)}.barangay-table th:first-child,.barangay-table td:first-child{text-align:left;position:sticky;left:0;background:#fff}.barangay-table td:first-child{font-weight:600;color:var(--gray-800)}
     .analytics-subnote{font-size:10.5px;color:var(--gray-500);margin-top:3px}
+    .booklet-month-chart{height:210px;display:flex;align-items:flex-end;gap:9px;padding:12px 10px 0;border-bottom:1px solid var(--gray-200)}
+    .booklet-month-col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px}
+    .booklet-month-bars{height:155px;display:flex;align-items:flex-end;gap:3px;width:min(38px,90%);background:var(--gray-50);border-radius:4px 4px 0 0;overflow:hidden}
+    .booklet-month-bar{width:50%;min-height:0;border-radius:3px 3px 0 0}
+    .booklet-month-label{font-size:9px;color:var(--gray-500);padding-bottom:7px}
+    .booklet-record-table{width:100%;border-collapse:collapse;min-width:640px}
+    .booklet-record-table th,.booklet-record-table td{padding:10px 12px;border-bottom:1px solid var(--gray-200);text-align:left;font-size:11.5px;white-space:nowrap}
+    .booklet-record-table th{font-weight:600;color:var(--gray-500);background:var(--gray-50)}
     @media(max-width:850px){.analytics-grid{grid-template-columns:1fr}.analytics-grid .wide{grid-column:auto}.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:560px){.population-row{grid-template-columns:110px minmax(0,1fr) 60px;gap:7px}.month-chart{gap:4px}.month-label{font-size:9px}}
     @media(max-width:460px){.metric-grid{grid-template-columns:1fr}.metric-line{grid-template-columns:100px minmax(0,1fr) 42px;gap:7px}}
@@ -70,7 +78,7 @@
     </div>
   </div>
   <div class="content">
-    <div class="analytics-note"><i class="ti ti-info-circle"></i><div><strong>Frontend demo data.</strong> Verified deaths use Headstaff-verified reports saved in this browser. Transfer, new member, bedridden, pension, and PhilHealth figures below are illustrative sample values for demonstrating the charts and filters. Population and age figures are estimates. Connect the backend and official OSCA data before using these as actual statistics.</div></div>
+    <div class="analytics-note"><i class="ti ti-info-circle"></i><div><strong>Frontend demo data.</strong> Verified deaths use Headstaff-verified reports saved in this browser. Medicine and grocery counts come from monthly physical-booklet summaries entered by staff in this browser. Transfer, new member, bedridden, pension, and PhilHealth figures below are illustrative sample values. Population and age figures are estimates. Connect the backend and official OSCA data before using them as actual statistics.</div></div>
 
     <div class="stats-grid stats-3" style="margin-top:14px">
       <div class="stat-card coral"><div class="stat-label"><i class="ti ti-heart-broken"></i> Verified deaths</div><div class="stat-value" id="deathTotal">0</div><div class="stat-sub" id="deathPeriodLabel">Selected year · all barangays</div></div>
@@ -86,6 +94,8 @@
       <div class="stat-card teal"><div class="stat-label"><i class="ti ti-cash"></i> Pensioners</div><div class="stat-value" id="pensionerTotal">0</div><div class="stat-sub">Sample count</div></div>
       <div class="stat-card coral"><div class="stat-label"><i class="ti ti-user-x"></i> Non-pensioners</div><div class="stat-value" id="nonPensionerTotal">0</div><div class="stat-sub">Sample count</div></div>
       <div class="stat-card"><div class="stat-label"><i class="ti ti-heart-plus"></i> PhilHealth</div><div class="stat-value" id="philhealthTotal">0</div><div class="stat-sub" id="philhealthRate">Sample coverage</div></div>
+      <div class="stat-card"><div class="stat-label"><i class="ti ti-pill"></i> Medicine booklet entries</div><div class="stat-value" id="medicineBookletTotal">0</div><div class="stat-sub">Physical booklet summary</div></div>
+      <div class="stat-card"><div class="stat-label"><i class="ti ti-shopping-bag"></i> Grocery booklet entries</div><div class="stat-value" id="groceryBookletTotal">0</div><div class="stat-sub">Physical booklet summary</div></div>
     </div>
 
     <div class="analytics-grid" style="margin-top:14px">
@@ -123,6 +133,13 @@
         <div class="barangay-table-wrap"><table class="barangay-table"><thead><tr><th>Barangay</th><th>Deaths</th><th>Transfers</th><th>New members</th><th>Bedridden</th><th>Pensioners</th><th>Non-pensioners</th><th>PhilHealth</th></tr></thead><tbody id="barangaySummaryRows"></tbody></table></div>
         <div class="chart-footnote">Death counts are verified browser reports for the selected period. Other columns are sample figures.</div>
       </div>
+      <div class="card wide">
+        <div class="card-header"><div><div class="card-title">Medicine and grocery entries from physical booklets</div><div class="card-subtitle" id="bookletChartSubtitle">Monthly recorded release totals · filtered by selected year and barangay</div></div></div>
+        <div class="chart-area"><div class="booklet-month-chart" id="bookletMonthChart"></div></div>
+        <div class="chart-legend"><span class="legend-item"><i class="legend-dot" style="background:var(--navy-light)"></i>Medicine entries</span><span class="legend-item"><i class="legend-dot" style="background:var(--teal-600,var(--navy-light))"></i>Grocery entries</span></div>
+        <div class="chart-footnote">These are counts transcribed from booklets, not individual transaction records. Blank history means no monthly summaries have been entered.</div>
+        <div class="barangay-table-wrap"><table class="booklet-record-table"><thead><tr><th>Month</th><th>Barangay</th><th>Medicine entries</th><th>Grocery entries</th><th>Submitted by</th><th>Last updated</th></tr></thead><tbody id="bookletSummaryRows"></tbody></table><div id="bookletSummaryEmpty" class="empty-chart" style="display:none">No physical-booklet summaries match these filters.</div></div>
+      </div>
     </div>
   </div>
 </div>
@@ -131,6 +148,7 @@
   renderHeadStaffSidebar('analytics');
 
   const DEATH_STORAGE_KEY = 'ark_death_records';
+  const BOOKLET_STORAGE_KEY = 'ark_booklet_summaries';
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const DEMO_POPULATION = [
     {name:'Alejal',residents:3950,seniors:392},{name:'Anibongan',residents:3260,seniors:348},
@@ -162,6 +180,10 @@
     try { const value = JSON.parse(localStorage.getItem(DEATH_STORAGE_KEY) || '[]'); return Array.isArray(value) ? value : []; }
     catch { return []; }
   }
+  function readBookletSummaries() {
+    try { const value=JSON.parse(localStorage.getItem(BOOKLET_STORAGE_KEY)||'[]');return Array.isArray(value)?value:[]; }
+    catch { return []; }
+  }
   function esc(value) { return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
   function initFilters() {
     const barangaySelect = document.getElementById('analyticsBarangay');
@@ -170,7 +192,7 @@
     DEMO_POPULATION.forEach(item => barangaySelect.add(new Option(item.name,item.name)));
     barangaySelect.value = selectedBarangay;
     const yearSelect = document.getElementById('analyticsYear');
-    const years = [...new Set([...readDeaths().map(record => (record.dateOfDeath || '').slice(0,4)), '2026'].filter(year=>/^\d{4}$/.test(year)))].sort().reverse();
+    const years = [...new Set([...readDeaths().map(record => (record.dateOfDeath || '').slice(0,4)),...readBookletSummaries().map(record=>(record.month||'').slice(0,4)),'2026'].filter(year=>/^\d{4}$/.test(year)))].sort().reverse();
     const currentYear = String(new Date().getFullYear());
     if (!years.includes(currentYear)) years.unshift(currentYear);
     yearSelect.innerHTML = '<option value="">All years</option>' + years.map(year => `<option value="${esc(year)}">${esc(year)}</option>`).join('');
@@ -199,6 +221,29 @@
     return readDeaths().filter(record => record.status === 'Verified' &&
       (!year || (record.dateOfDeath || '').startsWith(year)) &&
       (!barangay || record.barangay === barangay));
+  }
+  function selectedBookletSummaries() {
+    const year=document.getElementById('analyticsYear').value;
+    const barangay=document.getElementById('analyticsBarangay').value;
+    return readBookletSummaries().filter(record=>(!year||(record.month||'').startsWith(year))&&(!barangay||record.barangay===barangay));
+  }
+  function renderBookletSummary() {
+    const records=selectedBookletSummaries();
+    const medicineByMonth=MONTHS.map((_,index)=>records.filter(record=>Number((record.month||'').slice(5,7))===index+1).reduce((sum,record)=>sum+(Number(record.medicineEntries)||0),0));
+    const groceryByMonth=MONTHS.map((_,index)=>records.filter(record=>Number((record.month||'').slice(5,7))===index+1).reduce((sum,record)=>sum+(Number(record.groceryEntries)||0),0));
+    const max=Math.max(1,...medicineByMonth,...groceryByMonth);
+    document.getElementById('medicineBookletTotal').textContent=medicineByMonth.reduce((a,b)=>a+b,0).toLocaleString();
+    document.getElementById('groceryBookletTotal').textContent=groceryByMonth.reduce((a,b)=>a+b,0).toLocaleString();
+    const year=document.getElementById('analyticsYear').value||'all years';
+    const barangay=document.getElementById('analyticsBarangay').value||'all barangays';
+    document.getElementById('bookletChartSubtitle').textContent=`${year} · ${barangay} · physical-booklet summaries`;
+    document.getElementById('bookletMonthChart').innerHTML=MONTHS.map((month,index)=>{
+      const med=medicineByMonth[index],groc=groceryByMonth[index];
+      return `<div class="booklet-month-col" title="${month}: ${med} medicine, ${groc} grocery"><span class="month-value">${med+groc||''}</span><div class="booklet-month-bars"><div class="booklet-month-bar" style="height:${med?Math.max(3,med/max*100):0}%;background:var(--navy-light)"></div><div class="booklet-month-bar" style="height:${groc?Math.max(3,groc/max*100):0}%;background:var(--teal-600,var(--navy-light))"></div></div><span class="booklet-month-label">${month}</span></div>`;
+    }).join('');
+    const sorted=[...records].sort((a,b)=>b.month.localeCompare(a.month)||a.barangay.localeCompare(b.barangay));
+    document.getElementById('bookletSummaryRows').innerHTML=sorted.map(record=>`<tr><td>${esc(new Date(Number(record.month.slice(0,4)),Number(record.month.slice(5,7))-1,1).toLocaleDateString('en-PH',{month:'long',year:'numeric'}))}</td><td>${esc(record.barangay)}</td><td>${Number(record.medicineEntries)||0}</td><td>${Number(record.groceryEntries)||0}</td><td>${esc(record.submittedBy||'Barangay Staff')}</td><td>${esc(record.updatedAt?new Date(record.updatedAt).toLocaleString('en-PH'):'—')}</td></tr>`).join('');
+    document.getElementById('bookletSummaryEmpty').style.display=records.length?'none':'flex';
   }
   function renderDeathChart(records) {
     const year = document.getElementById('analyticsYear').value;
@@ -264,6 +309,7 @@
     renderPopulationChart();
     renderIndicatorCharts(selectedIndicators(),deaths);
     ['transferScope','newMemberScope'].forEach(id=>document.getElementById(id).textContent=`${period} · illustrative sample`);
+    renderBookletSummary();
   }
   function exportAnalytics() {
     const pop = selectedPopulation();
@@ -280,12 +326,14 @@
       ['Pensioners',metricSum(selectedIndicators(),'pensioners'),'Illustrative sample'],
       ['Non-pensioners',metricSum(selectedIndicators(),'nonPensioners'),'Illustrative sample'],
       ['PhilHealth coverage',metricSum(selectedIndicators(),'philhealth'),'Illustrative sample'],
+      ['Medicine booklet entries',selectedBookletSummaries().reduce((sum,row)=>sum+(Number(row.medicineEntries)||0),0),'Physical-booklet summaries'],
+      ['Grocery booklet entries',selectedBookletSummaries().reduce((sum,row)=>sum+(Number(row.groceryEntries)||0),0),'Physical-booklet summaries'],
     ];
     const csv = [headers,...rows].map(row => row.map(value => `"${String(value).replace(/"/g,'""')}"`).join(',')).join('\n');
     const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob);
     const link=document.createElement('a'); link.href=url; link.download='osca-analytics-demo.csv'; link.click(); URL.revokeObjectURL(url);
   }
-  window.addEventListener('storage',event=>{if(event.key===DEATH_STORAGE_KEY){initFilters();renderAnalytics();}});
+  window.addEventListener('storage',event=>{if([DEATH_STORAGE_KEY,BOOKLET_STORAGE_KEY].includes(event.key)){initFilters();renderAnalytics();}});
   initFilters();
   renderAnalytics();
 </script>

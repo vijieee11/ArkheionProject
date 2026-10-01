@@ -29,9 +29,7 @@ function renderSidebar(activePage) {
       { id: 'members',   label: 'Members',   icon: 'ti-users',            href: 'members.html' },
     ]},
     { section: 'Services', items: [
-      { id: 'grocery',  label: 'Groceries', icon: 'ti-shopping-cart', href: 'grocery.html' },
-      { id: 'medicine', label: 'Medicine',  icon: 'ti-pill',          href: 'medicine.html' },
-      { id: 'pension',  label: 'Pension',   icon: 'ti-cash',          href: 'pension.html' },
+      { id: 'services', label: 'Services', icon: 'ti-heart-handshake', href: 'portal-services.html' },
     ]},
     { section: 'Documents', items: [
       { id: 'upload', label: 'Upload docs',    icon: 'ti-upload',   href: 'upload.html' },

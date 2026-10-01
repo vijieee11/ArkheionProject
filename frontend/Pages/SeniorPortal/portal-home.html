@@ -80,27 +80,27 @@
 </div>
 
 <div class="portal-content">
+  <div class="alert alert-coral" style="font-size:12px;line-height:1.5"><i class="ti ti-info-circle"></i><span>Demo portal: personal and pension examples shown here are not live OSCA records. Confirm current claim dates and eligibility with OSCA Carmen.</span></div>
   <div>
     <p class="section-heading">Your services</p>
-    <p class="section-sub">Track your grocery, pension, and medicine assistance.</p>
+    <p class="section-sub">Check your personal pension details and reminders for booklet-based assistance.</p>
     <div class="svc-grid">
 
       <div class="svc-card">
         <div class="svc-head">
-          <div class="svc-icon" style="background:var(--teal-50)"><i class="ti ti-shopping-cart" style="color:var(--navy)"></i></div>
+          <div class="svc-icon" style="background:var(--blue-50)"><i class="ti ti-book-2" style="color:var(--blue-900)"></i></div>
           <div>
-            <div class="svc-title">Groceries</div>
-            <div class="svc-sub">Monthly grocery assistance</div>
+            <div class="svc-title">Medicine and grocery booklet</div>
+            <div class="svc-sub">Your physical booklet is the release record</div>
           </div>
         </div>
         <div class="svc-body">
-          <div class="svc-row"><span class="svc-label">Status</span><span class="badge badge-pend">Pending</span></div>
-          <div class="svc-row"><span class="svc-label">Next schedule</span><span class="svc-value">July 15, 2026</span></div>
-          <div class="svc-row"><span class="svc-label">Your barangay</span><span class="svc-value">Brgy 2</span></div>
-          <div class="svc-row"><span class="svc-label">Last received</span><span class="svc-value">June 12, 2026</span></div>
+          <div class="svc-row"><span class="svc-label">Release history</span><span class="svc-value">Written in your physical booklet</span></div>
+          <div class="svc-row"><span class="svc-label">What to bring</span><span class="svc-value">Booklet and OSCA ID</span></div>
+          <p style="font-size:12px;color:var(--gray-500);margin-top:8px;">For medicine or grocery schedules and questions, contact OSCA Carmen or your barangay staff. This portal does not show individual booklet releases.</p>
         </div>
-        <button class="svc-btn" style="background:var(--navy);color:var(--gold);" onclick="location.href='portal-services.html'">
-          <i class="ti ti-eye"></i> Track my grocery
+        <button class="svc-btn" style="background:var(--blue-900);color:var(--blue-50);" onclick="location.href='portal-services.html'">
+          <i class="ti ti-info-circle"></i> Booklet information
         </button>
       </div>
 
@@ -120,25 +120,6 @@
         </div>
         <button class="svc-btn" style="background:var(--amber-600);color:var(--amber-100);" onclick="location.href='portal-services.html'">
           <i class="ti ti-eye"></i> View pension details
-        </button>
-      </div>
-
-      <div class="svc-card">
-        <div class="svc-head">
-          <div class="svc-icon" style="background:var(--blue-50)"><i class="ti ti-pill" style="color:var(--blue-900)"></i></div>
-          <div>
-            <div class="svc-title">Medicine</div>
-            <div class="svc-sub">Medicine purchase booklet</div>
-          </div>
-        </div>
-        <div class="svc-body">
-          <div class="svc-row"><span class="svc-label">Status</span><span class="badge badge-ok">Received</span></div>
-          <div class="svc-row"><span class="svc-label">Last received</span><span class="svc-value">June 28, 2026</span></div>
-          <div class="svc-row"><span class="svc-label">Next release</span><span class="svc-value">July 28, 2026</span></div>
-          <div class="svc-row"><span class="svc-label">Booklet no.</span><span class="svc-value">MB-10613</span></div>
-        </div>
-        <button class="svc-btn" style="background:var(--blue-900);color:var(--blue-50);" onclick="location.href='portal-services.html'">
-          <i class="ti ti-book"></i> View medicine booklet
         </button>
       </div>
 
@@ -202,14 +183,14 @@
       </div>
       <div class="chat-messages" id="chatMessages">
         <div class="msg bot">Hello Lolo Juan! I am your Arkheion assistant. How can I help you today? 😊</div>
-        <div class="msg usr">Kanus-a ang akong grocery?</div>
-        <div class="msg bot">Ang sunod nga grocery distribution sa <strong>Brgy 2</strong> is on <strong>July 15, 2026</strong> — 8:00 AM sa OSCA Carmen office. Siguruha nga naa ka nianang adlawa!</div>
+        <div class="msg usr">Asa makita akong medicine ug grocery record?</div>
+        <div class="msg bot">Ang imong release record naa sa <strong>physical booklet</strong>. Palihug dad-a ang booklet ug imong OSCA ID kung moadto sa OSCA. Tawagi ang opisina o pangutan-a ang barangay staff para sa schedule.</div>
         <div class="msg usr">Unsa pa akong kulang?</div>
         <div class="msg bot">Base sa imong rekord, kulang pa ang imong <strong>valid government ID</strong>. Pwede ka magdala og PhilSys card, passport, o driver's license para makompleto ang imong registration.</div>
       </div>
       <div class="quick-replies">
         <div class="qr" onclick="sendMsg('Pension status ko?')">Pension status</div>
-        <div class="qr" onclick="sendMsg('Kanus-a ang medicine?')">Medicine schedule</div>
+        <div class="qr" onclick="sendMsg('Asa akong booklet record?')">Booklet information</div>
         <div class="qr" onclick="sendMsg('Unsa ang oras sa opisina?')">Office hours</div>
         <div class="qr" onclick="sendMsg('Gusto ko makigtalk sa staff.')">Talk to staff</div>
       </div>
@@ -229,8 +210,9 @@
 
   const responses = {
     'pension':       'Ang imong pension para sa Hulyo 2026 is <strong>unclaimed pa</strong>. Claim period: July 1–31, 2026. Punta sa OSCA Carmen office para makuha ang ₱500.00 nga pension. Magdala og valid ID.',
-    'medicine':      'Ang imong sunod nga medicine release is <strong>July 28, 2026</strong>. Ang imong booklet no. is MB-10613. Makuha kini sa OSCA Carmen office.',
-    'grocery':       'Ang sunod grocery distribution sa <strong>Brgy 2</strong> is <strong>July 15, 2026</strong> — 8:00 AM. Naa sa OSCA Carmen office. Siguruha nga naa ka nianang adlawa.',
+    'medicine':      'Ang medicine release record naa sa imong <strong>physical booklet</strong>. Dad-a kini ug imong OSCA ID sa OSCA. Para sa schedule, pangutana sa OSCA Carmen o sa imong barangay staff.',
+    'grocery':       'Ang grocery release record naa sa imong <strong>physical booklet</strong>. Para sa sunod nga schedule, pangutana sa OSCA Carmen o sa imong barangay staff.',
+    'booklet':       'Ang medicine ug grocery release entries isulat sa <strong>physical booklet</strong>. Dili kini ipakita isip individual transaction history sa portal. Dad-a ang booklet ug imong OSCA ID sa OSCA.',
     'opisina':       'Ang OSCA Carmen office bukas <strong>Monday–Friday, 8:00 AM–5:00 PM</strong>. Naa sa Carmen Municipal Hall, Davao del Norte. Closed sa weekends ug public holidays.',
     'oras':          'Ang OSCA Carmen office bukas <strong>Monday–Friday, 8:00 AM–5:00 PM</strong>. Closed sa weekends ug public holidays.',
     'requirements':  'Para sa registration, kinahanglan nimo: ✅ Birth certificate (PSA), ❌ Valid government ID (kulang pa), ✅ 2x2 ID photo, ✅ Full body photo (A4), ✅ LCE endorsement letter.',
