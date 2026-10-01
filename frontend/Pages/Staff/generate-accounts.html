@@ -208,7 +208,8 @@
 <script>
   renderSidebar('genaccounts');
 
-  // Sample existing members — replace with real data from database once backend exists
+  // Demo roster; approved registrations are added below. Backend integration will
+  // replace these browser-local records when the real account API is available.
   let members = [
     { osca:'2024-001', name:'Juan dela Cruz',    brgy:'Ising (Pob.)',      hasAccount:true,  pw:null },
     { osca:'2023-087', name:'Maria Santos',      brgy:'Anibongan',    hasAccount:true,  pw:null },
@@ -220,6 +221,20 @@
     { osca:'2020-045', name:'Ambrosio Reyes',    brgy:'Cebulano', hasAccount:false, pw:null },
     { osca:'2024-056', name:'Wyndell Joshua Camacho', brgy:'Tuganay', hasAccount:false, pw:null },
   ];
+
+  const PORTAL_ACCOUNT_KEY = 'ark_portal_accounts';
+  function readLocalArray(key) {
+    try { const value=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(value)?value:[]; }
+    catch { return []; }
+  }
+  function loadMembers() {
+    const accounts=readLocalArray(PORTAL_ACCOUNT_KEY);
+    const approved=readLocalArray('ark_record_submissions').filter(item=>item.status==='Approved'&&item.oscaId);
+    approved.forEach(item=>{
+      if(!members.some(member=>member.osca===item.oscaId)) members.push({osca:item.oscaId,name:item.name||'Senior citizen',brgy:item.barangay||'—',hasAccount:false,pw:null});
+    });
+    members.forEach(member=>{if(accounts.some(account=>account.osca===member.osca))member.hasAccount=true;});
+  }
 
   // Renders the table filtered by the selected barangay. Checkboxes keep
   // referencing the ORIGINAL index in `members` (data-i) even while the
@@ -310,12 +325,17 @@
       return;
     }
     const generated = [];
+    const accounts=readLocalArray(PORTAL_ACCOUNT_KEY);
     checked.forEach(cb => {
       const i = parseInt(cb.dataset.i);
       members[i].hasAccount = true;
       members[i].pw = genPassword();
       generated.push(members[i]);
+      const account={osca:members[i].osca,name:members[i].name,brgy:members[i].brgy,role:'senior',password:members[i].pw,mustChange:true,createdAt:new Date().toISOString()};
+      const prior=accounts.findIndex(item=>item.osca===account.osca);
+      if(prior>=0)accounts[prior]=account;else accounts.push(account);
     });
+    localStorage.setItem(PORTAL_ACCOUNT_KEY,JSON.stringify(accounts));
     renderTable();
 
     const modalBody = document.getElementById('modal-cred-tbody');
@@ -344,6 +364,7 @@
     showToast('Credential list exported.');
   }
 
+  loadMembers();
   renderTable();
 </script>
 </body>

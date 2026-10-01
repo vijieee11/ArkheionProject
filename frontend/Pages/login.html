@@ -150,9 +150,12 @@
         'osca_staff2':          { role: 'regular_staff', mustChange: false },
       };
       const seniorAccounts = {
-        '2024-001': { role: 'senior', name: 'Juan dela Cruz',  mustChange: true  },
-        '2023-087': { role: 'senior', name: 'Maria Santos',    mustChange: false },
+        '2024-001': { role: 'senior', name: 'Juan dela Cruz', brgy:'Ising (Pob.)', mustChange: true  },
+        '2023-087': { role: 'senior', name: 'Maria Santos', brgy:'Anibongan', mustChange: false },
       };
+      let generatedSeniorAccounts=[];
+      try { const saved=JSON.parse(localStorage.getItem('ark_portal_accounts')||'[]');generatedSeniorAccounts=Array.isArray(saved)?saved:[]; } catch {}
+      const generatedSenior=generatedSeniorAccounts.find(account=>account.osca===user);
 
       if (currentType === 'staff' && staffAccounts[user]) {
         const acc = staffAccounts[user];
@@ -169,11 +172,19 @@
           window.location.href = 'Staff/dashboard.html';      // Regular staff → Staff/dashboard.html
         }
 
-      } else if (currentType === 'senior' && seniorAccounts[user]) {
-        const acc = seniorAccounts[user];
+      } else if (currentType === 'senior' && (seniorAccounts[user] || generatedSenior)) {
+        const acc = generatedSenior || seniorAccounts[user];
+        if (generatedSenior && pass !== generatedSenior.password) {
+          document.getElementById('error-msg').textContent = 'Invalid OSCA ID or temporary password. Please check the credentials from OSCA staff.';
+          err.style.display = 'flex';
+          resetLoginButton();
+          return;
+        }
         localStorage.setItem('ark_username', acc.name);
         localStorage.setItem('ark_role',     acc.role);
         localStorage.setItem('ark_token',    'demo-token-' + Date.now());
+        localStorage.setItem('ark_osca_id',  user);
+        localStorage.setItem('ark_senior_profile',JSON.stringify({...acc,osca:user}));
         // Senior portal pages live inside the SeniorPortal/ subfolder relative to this login page.
         window.location.href = acc.mustChange ? 'SeniorPortal/senior-change-password.html' : 'SeniorPortal/portal-home.html';
 

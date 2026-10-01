@@ -22,6 +22,12 @@
     .form-input:disabled { background:var(--gray-50, #f7f7f8); color:var(--gray-600); cursor:not-allowed; }
     .form-hint { font-size:11px; color:var(--gray-600); margin-top:4px; }
     .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .barangay-picker{position:relative;width:100%;z-index:5}.barangay-picker.open{z-index:30}
+    .barangay-select-button{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:38px;padding:9px 12px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);background:#fff;color:var(--gray-900);font-size:13px;font-family:inherit;text-align:left;cursor:pointer}
+    .barangay-select-button:focus{outline:none;border-color:var(--navy)}
+    .barangay-menu{display:none;position:absolute;top:calc(100% + 3px);left:0;right:0;z-index:1000;padding:4px 0;background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius-sm);box-shadow:0 8px 20px rgba(15,23,42,.16)}
+    .barangay-picker.open .barangay-menu{display:block}
+    .barangay-options{max-height:220px;overflow-y:auto;overscroll-behavior:contain}.barangay-option{display:block;width:100%;padding:8px 12px;border:0;background:#fff;text-align:left;font:inherit;font-size:13px;color:var(--gray-900);cursor:pointer}.barangay-option:hover,.barangay-option:focus{background:var(--teal-50);outline:none}
 
     .profile-head { display:flex; align-items:center; gap:14px; padding:16px; border-bottom:.5px solid var(--gray-200); }
     .profile-avatar {
@@ -115,14 +121,12 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Assigned barangay</label>
-                <select class="form-select" id="barangayInput">
-                  <option value="">All barangays</option>
-                  <option>Brgy 1</option>
-                  <option>Brgy 2</option>
-                  <option>Brgy 3</option>
-                  <option>Brgy 4</option>
-                  <option>Brgy 5</option>
-                </select>
+                <div class="barangay-picker" id="barangayPicker">
+                  <button type="button" class="barangay-select-button" id="barangaySelectButton" onclick="toggleBarangayOptions()" aria-haspopup="listbox" aria-expanded="false"><span id="barangaySelection">Select assigned barangay</span><i class="ti ti-chevron-down"></i></button>
+                  <div class="barangay-menu"><div class="barangay-options" id="barangayOptions" role="listbox" aria-label="Barangay choices"></div></div>
+                </div>
+                <input type="hidden" id="barangayInput">
+                <div class="form-hint" id="barangayAssignmentHint">Select the barangay this staff account is assigned to.</div>
               </div>
             </div>
           </div>
@@ -227,6 +231,20 @@
 <script>
 renderSidebar('settings');
 
+const STAFF_BARANGAYS=['Alejal','Anibongan','Asuncion','Cebulano','Guadalupe','Ising (Poblacion)','La Paz','Mabaus','Mabuhay','Magsaysay','Mangalcal','Minda','New Camiling','Salvacion','San Isidro','Santo Niño','Taba','Tibulao','Tubod','Tuganay'];
+function buildBarangayPicker(){
+  const list=document.getElementById('barangayOptions');
+  list.innerHTML=STAFF_BARANGAYS.map(name=>`<button type="button" class="barangay-option" role="option" onclick="selectAssignedBarangay('${name.replace(/'/g,"\\'")}')">${name}</button>`).join('');
+}
+function toggleBarangayOptions(){const picker=document.getElementById('barangayPicker'),button=document.getElementById('barangaySelectButton');picker.classList.toggle('open');button.setAttribute('aria-expanded',picker.classList.contains('open')?'true':'false');}
+function selectAssignedBarangay(name){
+  document.getElementById('barangayInput').value=name;
+  document.getElementById('barangaySelection').textContent=name;
+  document.getElementById('barangayPicker').classList.remove('open');
+  document.getElementById('barangaySelectButton').setAttribute('aria-expanded','false');
+}
+document.addEventListener('click',event=>{const picker=document.getElementById('barangayPicker');if(picker&&!picker.contains(event.target)){picker.classList.remove('open');document.getElementById('barangaySelectButton').setAttribute('aria-expanded','false');}});
+
 function loadSettings() {
   const rawUsername = localStorage.getItem('ark_username') || 'Staff';
   const role     = localStorage.getItem('ark_role') || 'regular_staff';
@@ -243,7 +261,12 @@ function loadSettings() {
   document.getElementById('pageGreeting').textContent = 'Hello, ' + displayName + ' 👋';
 
   document.getElementById('contactInput').value = localStorage.getItem('ark_contact') || '';
-  document.getElementById('barangayInput').value = localStorage.getItem('ark_barangay') || '';
+  const savedBarangay=localStorage.getItem('ark_barangay')||'';
+  const barangayInput=document.getElementById('barangayInput');
+  const validBarangay=STAFF_BARANGAYS.includes(savedBarangay);
+  buildBarangayPicker();
+  if(validBarangay)selectAssignedBarangay(savedBarangay);
+  else if(savedBarangay)document.getElementById('barangayAssignmentHint').textContent='Your previous demo assignment is outdated. Choose your barangay from the current list and save your profile.';
 
   document.getElementById('notifReg').checked     = localStorage.getItem('ark_notif_reg') !== 'off';
   document.getElementById('notifGrocery').checked = localStorage.getItem('ark_notif_grocery') !== 'off';
@@ -257,9 +280,12 @@ function loadSettings() {
 function saveProfile() {
   const username = document.getElementById('usernameInput').value.trim();
   if (!username) { showToast('Display name cannot be empty', 'error'); return; }
+  const role=localStorage.getItem('ark_role')||'regular_staff';
+  const assignedBarangay=document.getElementById('barangayInput').value;
+  if(role!=='head_staff'&&!assignedBarangay){showToast('Select your assigned barangay first','error');return;}
   localStorage.setItem('ark_username', username);
   localStorage.setItem('ark_contact', document.getElementById('contactInput').value.trim());
-  localStorage.setItem('ark_barangay', document.getElementById('barangayInput').value);
+  localStorage.setItem('ark_barangay', assignedBarangay);
   showToast('Profile updated');
   setTimeout(() => location.reload(), 600);
 }

@@ -62,16 +62,16 @@
     <a href="portal-contact.html">Contact</a>
   </div>
   <div class="portal-user">
-    <div class="portal-avatar">JC</div>
-    <span class="portal-uname">Juan dela Cruz</span>
+    <div class="portal-avatar" id="portal-avatar-initials">JC</div>
+    <span class="portal-uname" id="portal-display-name">Juan dela Cruz</span>
     <button class="btn btn-ghost btn-sm" style="margin-left:8px;" onclick="location.href='../login.html'"><i class="ti ti-logout"></i></button>
   </div>
 </nav>
 
 <div class="portal-hero">
   <div>
-    <h2>Welcome back, Lolo Juan 👋</h2>
-    <p>OSCA ID: 2024-001 &nbsp;·&nbsp; Brgy 2, Carmen &nbsp;·&nbsp; Member since 2024</p>
+    <h2>Welcome back, <span id="portal-greeting-name">Juan dela Cruz</span> 👋</h2>
+    <p>OSCA ID: <span id="portal-osca-id">2024-001</span> &nbsp;·&nbsp; <span id="portal-barangay">Barangay not set</span> &nbsp;·&nbsp; Member portal</p>
   </div>
   <div class="portal-status">
     <p>Registration status</p>
@@ -204,6 +204,18 @@
 </div>
 
 <script>
+  function loadPortalIdentity() {
+    try {
+      const profile=JSON.parse(localStorage.getItem('ark_senior_profile')||'{}');
+      const name=profile.name||localStorage.getItem('ark_username')||'Senior citizen';
+      const initials=name.split(/\s+/).filter(Boolean).slice(0,2).map(part=>part[0]).join('').toUpperCase()||'SC';
+      document.getElementById('portal-display-name').textContent=name;
+      document.getElementById('portal-greeting-name').textContent=name;
+      document.getElementById('portal-avatar-initials').textContent=initials;
+      document.getElementById('portal-osca-id').textContent=profile.osca||localStorage.getItem('ark_osca_id')||'—';
+      document.getElementById('portal-barangay').textContent=profile.brgy||profile.barangay||'Barangay not set';
+    } catch {}
+  }
   function toggleMobileNav() {
     document.getElementById('portalNavLinks').classList.toggle('open');
   }
@@ -220,6 +232,8 @@
     'staff':         'Sige, i-connect tika sa staff namo. Palihug tawagan ang OSCA Carmen office: <strong>(082) xxx-xxxx</strong>, o bisita sa opisina Monday–Friday, 8AM–5PM.',
     'default':       'Pasensya, dili ko kasabtan ang imong pangutana. Pwede ka mag-click sa mga quick reply buttons sa ibabaw, o tawagan ang OSCA Carmen office: (082) xxx-xxxx para sa dugang tabang.'
   };
+
+  loadPortalIdentity();
 
   function sendMsg(text) {
     const input = document.getElementById('chatInput');
