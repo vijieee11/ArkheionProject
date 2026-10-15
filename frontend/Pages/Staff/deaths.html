@@ -124,11 +124,11 @@
           <select id="deathBarangay" onchange="renderDeaths()">
             <option value="">All barangays</option>
             <option>Alejal</option><option>Anibongan</option><option>Asuncion</option>
-            <option>Cebulano</option><option>Guadalupe</option><option>Ising (Poblacion)</option>
+            <option>Cebulano</option><option>Guadalupe</option><option>Ising</option>
             <option>La Paz</option><option>Mabaus</option><option>Mabuhay</option>
             <option>Magsaysay</option><option>Mangalcal</option><option>Minda</option>
             <option>New Camiling</option><option>Salvacion</option><option>San Isidro</option>
-            <option>Santo Niño</option><option>Taba</option><option>Tibulao</option>
+            <option>Sto. Niño</option><option>Taba</option><option>Tibulao</option>
             <option>Tubod</option><option>Tuganay</option>
           </select>
           <select id="deathMonth" onchange="renderDeaths()">
@@ -200,11 +200,11 @@
           <select id="deathBarangayInput" required>
             <option value="">Select barangay</option>
             <option>Alejal</option><option>Anibongan</option><option>Asuncion</option>
-            <option>Cebulano</option><option>Guadalupe</option><option>Ising (Pob.)</option><option>Ising (Poblacion)</option>
+            <option>Cebulano</option><option>Guadalupe</option><option>Ising</option>
             <option>La Paz</option><option>Mabaus</option><option>Mabuhay</option>
             <option>Magsaysay</option><option>Mangalcal</option><option>Minda</option>
             <option>New Camiling</option><option>Salvacion</option><option>San Isidro</option>
-            <option>Santo Niño</option><option>Taba</option><option>Tibulao</option>
+            <option>Sto. Niño</option><option>Taba</option><option>Tibulao</option>
             <option>Tubod</option><option>Tuganay</option>
           </select>
         </div>
@@ -247,9 +247,9 @@
 
   const DEATH_STORAGE_KEY = 'ark_death_records';
   const DEMO_MEMBER_PROFILES = [
-    { oscaId: '2024-001', name: 'Juan dela Cruz', barangay: 'Ising (Pob.)', pensionStatus: 'Pensioner' },
+    { oscaId: '2024-001', name: 'Juan dela Cruz', barangay: 'Ising', pensionStatus: 'Pensioner' },
     { oscaId: '2023-087', name: 'Maria Santos', barangay: 'Anibongan', pensionStatus: 'Pensioner' },
-    { oscaId: '2024-033', name: 'Pedro Ramos', barangay: 'Ising (Pob.)', pensionStatus: 'Non-pensioner' },
+    { oscaId: '2024-033', name: 'Pedro Ramos', barangay: 'Ising', pensionStatus: 'Non-pensioner' },
   ];
   let editingDeathId = null;
   let selectedMember = null;

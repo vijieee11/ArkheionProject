@@ -30,7 +30,7 @@
         <option>Asuncion</option>
         <option>Cebulano</option>
         <option>Guadalupe</option>
-        <option>Ising (Poblacion)</option>
+        <option>Ising</option>
         <option>La Paz</option>
         <option>Mabaus</option>
         <option>Mabuhay</option>
@@ -40,7 +40,7 @@
         <option>New Camiling</option>
         <option>Salvacion</option>
         <option>San Isidro</option>
-        <option>Santo Niño</option>
+        <option>Sto. Niño</option>
         <option>Taba</option>
         <option>Tibulao</option>
         <option>Tubod</option>
@@ -118,10 +118,10 @@
   // Sample members — in production, fetch/sort/filter these via the backend instead.
   // NEW: each member now has `life`: 'active' | 'deceased' (default 'active').
   const members = [
-    { osca: '2024-001', name: 'Juan dela Cruz',  age: 81, sex: 'M', brgy: 'Ising (Pob.)',          civil: 'Widowed', milestone: '80+', reg: 'complete', dateAdded: '2024-01-05', life: 'active' },
+    { osca: '2024-001', name: 'Juan dela Cruz',  age: 81, sex: 'M', brgy: 'Ising',          civil: 'Widowed', milestone: '80+', reg: 'complete', dateAdded: '2024-01-05', life: 'active' },
     { osca: '2023-087', name: 'Maria Santos',    age: 72, sex: 'F', brgy: 'Anibongan',         civil: 'Married', milestone: null,  reg: 'complete', dateAdded: '2023-03-10', life: 'active' },
     { osca: '2025-012', name: 'Rosario Mendoza', age: 68, sex: 'F', brgy: 'Tubod',             civil: 'Widowed', milestone: null,  reg: 'missing',  dateAdded: '2025-02-01', life: 'active' },
-    { osca: '2024-033', name: 'Pedro Ramos',     age: 85, sex: 'M', brgy: 'Ising (Pob.)',  civil: 'Widowed', milestone: '80+', reg: 'urgent',   dateAdded: '2024-04-20', life: 'active' },
+    { osca: '2024-033', name: 'Pedro Ramos',     age: 85, sex: 'M', brgy: 'Ising',  civil: 'Widowed', milestone: '80+', reg: 'urgent',   dateAdded: '2024-04-20', life: 'active' },
     { osca: '2022-114', name: 'Lourdes Garcia',  age: 76, sex: 'F', brgy: 'Alejal',            civil: 'Married', milestone: null,  reg: 'complete', dateAdded: '2022-11-14', life: 'active' },
     { osca: '2023-055', name: 'Felipe Torres',   age: 70, sex: 'M', brgy: 'Tuganay',           civil: 'Married', milestone: null,  reg: 'pending',  dateAdded: '2023-05-15', life: 'active' },
     { osca: '2023-052', name: 'Avi Eshma', age: 62, sex: 'F', brgy: 'Tubod', civil: 'Married', milestone: null, reg: 'missing', dateAdded: '2023-05-17', life: 'active' },
@@ -131,7 +131,7 @@
     { osca: '2022-078', name: 'Bartolome Reyes', age: 65, sex: 'M', brgy: 'San Isidro', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2022-02-18', life: 'active' },
     { osca: '2023-101', name: 'Fe Villanueva', age: 74, sex: 'F', brgy: 'Magsaysay', civil: 'Widowed', milestone: null, reg: 'urgent', dateAdded: '2023-07-09', life: 'active' },
     { osca: '2024-045', name: 'Domingo Salazar', age: 69, sex: 'M', brgy: 'Mabuhay', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2024-03-22', life: 'active' },
-    { osca: '2024-060', name: 'Remedios Aquino', age: 88, sex: 'F', brgy: "Santo Niño", civil: 'Widowed', milestone: '80+', reg: 'pending', dateAdded: '2024-06-11', life: 'active' },
+    { osca: '2024-060', name: 'Remedios Aquino', age: 88, sex: 'F', brgy: "Sto. Niño", civil: 'Widowed', milestone: '80+', reg: 'pending', dateAdded: '2024-06-11', life: 'active' },
     { osca: '2022-091', name: 'Herminio Bautista', age: 61, sex: 'M', brgy: 'La Paz', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2022-09-30', life: 'active' },
     { osca: '2023-115', name: 'Perlita Navarro', age: 77, sex: 'F', brgy: 'Tubod', civil: 'Separated', milestone: null, reg: 'missing', dateAdded: '2023-01-25', life: 'active' },
     { osca: '2025-003', name: 'Anselmo Cruz', age: 92, sex: 'M', brgy: 'Asuncion', civil: 'Widowed', milestone: '90+', reg: 'urgent', dateAdded: '2025-01-08', life: 'active' },
@@ -147,7 +147,7 @@
     { osca: '2024-102', name: 'Ernesto Dizon', age: 63, sex: 'M', brgy: 'Salvacion', civil: 'Married', milestone: null, reg: 'missing', dateAdded: '2024-08-30', life: 'active' },
     { osca: '2022-017', name: 'Presentacion Lopez', age: 78, sex: 'F', brgy: 'Tubod', civil: 'Widowed', milestone: null, reg: 'complete', dateAdded: '2022-01-12', life: 'active' },
     { osca: '2023-140', name: 'Roberto Aguilar', age: 91, sex: 'M', brgy: 'San Isidro', civil: 'Widowed', milestone: '90+', reg: 'urgent', dateAdded: '2023-09-21', life: 'active' },
-    { osca: '2024-013', name: 'Concepcion Mercado', age: 66, sex: 'F', brgy: 'Ising (Pob.)', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2024-01-19', life: 'active' },
+    { osca: '2024-013', name: 'Concepcion Mercado', age: 66, sex: 'F', brgy: 'Ising', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2024-01-19', life: 'active' },
   ];
 
   const regMeta = {

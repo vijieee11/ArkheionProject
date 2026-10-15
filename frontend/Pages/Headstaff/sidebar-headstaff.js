@@ -116,6 +116,7 @@ function logoutHS(e) {
 
 function confirmLogoutHS() {
   localStorage.clear();
+  sessionStorage.clear();
   window.location.href = '../login.html';
 }
 

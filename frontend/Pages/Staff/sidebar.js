@@ -30,8 +30,7 @@ function renderSidebar(activePage) {
       { id: 'deaths',    label: 'Death records', icon: 'ti-heart-x',       href: 'deaths.html' },
     ]},
     { section: 'Services', items: [
-      { id: 'grocery',  label: 'Groceries', icon: 'ti-shopping-cart', href: 'grocery.html' },
-      { id: 'medicine', label: 'Medicine',  icon: 'ti-pill',          href: 'medicine.html' },
+      { id: 'booklet-summary', label: 'Booklet summary', icon: 'ti-notes', href: 'booklet-summary.html' },
       { id: 'pension',  label: 'Pension',   icon: 'ti-cash',          href: 'pension.html' },
     ]},
     { section: 'Documents', items: [
@@ -120,6 +119,7 @@ function logout(e) {
 
 function confirmLogout() {
   localStorage.clear();
+  sessionStorage.clear();
   window.location.href = '../login.html';
 }
 

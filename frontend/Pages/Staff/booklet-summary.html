@@ -20,7 +20,7 @@ body{display:flex}.booklet-note{padding:12px 14px;border-radius:8px;background:#
 <script>
 renderSidebar('booklet-summary');
 const STORAGE_KEY='ark_booklet_summaries';
-const BARANGAYS=['Alejal','Anibongan','Asuncion','Cebulano','Guadalupe','Ising (Pob.)','La Paz','Mabaus','Mabuhay','Magsaysay','Mangalcal','Minda','New Camiling','Salvacion','San Isidro','Santo Niño','Taba','Tibulao','Tubod','Tuganay'];
+const BARANGAYS=['Alejal','Anibongan','Asuncion','Cebulano','Guadalupe','Ising','La Paz','Mabaus','Mabuhay','Magsaysay','Mangalcal','Minda','New Camiling','Salvacion','San Isidro','Sto. Niño','Taba','Tibulao','Tubod','Tuganay'];
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function readSummaries(){try{const data=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');return Array.isArray(data)?data:[]}catch{return[]}}
 function writeSummaries(rows){localStorage.setItem(STORAGE_KEY,JSON.stringify(rows))}

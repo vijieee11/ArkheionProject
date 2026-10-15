@@ -82,6 +82,7 @@ function logout(e) {
   e && e.preventDefault();
   if (confirm('Are you sure you want to logout?')) {
     localStorage.clear();
+    sessionStorage.clear();
     window.location.href = '../login.html';
   }
 }

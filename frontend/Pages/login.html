@@ -99,6 +99,7 @@
 </div>
 <script>
   let currentType = 'staff';
+  const API_BASE_URL = window.ARKHEION_API_URL || 'http://127.0.0.1:8000';
 
   function selectAcc(type) {
     currentType = type;
@@ -107,9 +108,8 @@
     const label = document.getElementById('uname-label');
     const input = document.getElementById('uname-input');
     label.textContent = type === 'senior' ? 'OSCA ID number' : 'Username';
-    input.placeholder = type === 'senior' ? 'e.g. 2024-001' : 'Enter your username';
-    // Don't carry a value typed/pre-filled for one account type over to the other
-    // (e.g. the "osca_head" demo default shouldn't show up under Senior/Family).
+    input.placeholder = type === 'senior' ? 'Enter your OSCA ID' : 'Enter your username';
+    // Don't carry a username or OSCA ID from one account type to the other.
     input.value = '';
     document.getElementById('pw-input').value = '';
     document.getElementById('login-error').style.display = 'none';
@@ -124,7 +124,7 @@
     btn.disabled = false;
   }
 
-  function handleLogin() {
+  async function handleLogin() {
     const user = document.getElementById('uname-input').value.trim();
     const pass = document.getElementById('pw-input').value;
     const btn  = document.getElementById('login-btn');
@@ -140,60 +140,84 @@
     btn.disabled = true;
     err.style.display = 'none';
 
-    // Simulate login — replace with actual API call
-    setTimeout(() => {
-      // Demo credentials — Staff covers both Regular and Head Staff, routed by role
-      const staffAccounts = {
-        'osca_head':            { role: 'head_staff',    mustChange: false },
-        's@umindanao.edu.ph':   { role: 'head_staff',    mustChange: false },
-        'osca_staff1':          { role: 'regular_staff', mustChange: true  },
-        'osca_staff2':          { role: 'regular_staff', mustChange: false },
-      };
-      const seniorAccounts = {
-        '2024-001': { role: 'senior', name: 'Juan dela Cruz', brgy:'Ising (Pob.)', mustChange: true  },
-        '2023-087': { role: 'senior', name: 'Maria Santos', brgy:'Anibongan', mustChange: false },
-      };
-      let generatedSeniorAccounts=[];
-      try { const saved=JSON.parse(localStorage.getItem('ark_portal_accounts')||'[]');generatedSeniorAccounts=Array.isArray(saved)?saved:[]; } catch {}
-      const generatedSenior=generatedSeniorAccounts.find(account=>account.osca===user);
-
-      if (currentType === 'staff' && staffAccounts[user]) {
-        const acc = staffAccounts[user];
-        localStorage.setItem('ark_username', user);
-        localStorage.setItem('ark_role',     acc.role);
-        localStorage.setItem('ark_token',    'demo-token-' + Date.now());
-
-        // Staff pages live inside the Staff/ subfolder, Head Staff pages inside Headstaff/, both relative to this login page.
-        if (acc.mustChange) {
-          window.location.href = 'Staff/change-password.html';
-        } else if (acc.role === 'head_staff') {
-          window.location.href = 'Headstaff/hs-dashboard.html';   // Head Staff → dedicated Headstaff folder
-        } else {
-          window.location.href = 'Staff/dashboard.html';      // Regular staff → Staff/dashboard.html
-        }
-
-      } else if (currentType === 'senior' && (seniorAccounts[user] || generatedSenior)) {
-        const acc = generatedSenior || seniorAccounts[user];
-        if (generatedSenior && pass !== generatedSenior.password) {
-          document.getElementById('error-msg').textContent = 'Invalid OSCA ID or temporary password. Please check the credentials from OSCA staff.';
-          err.style.display = 'flex';
-          resetLoginButton();
-          return;
-        }
-        localStorage.setItem('ark_username', acc.name);
-        localStorage.setItem('ark_role',     acc.role);
-        localStorage.setItem('ark_token',    'demo-token-' + Date.now());
-        localStorage.setItem('ark_osca_id',  user);
-        localStorage.setItem('ark_senior_profile',JSON.stringify({...acc,osca:user}));
-        // Senior portal pages live inside the SeniorPortal/ subfolder relative to this login page.
-        window.location.href = acc.mustChange ? 'SeniorPortal/senior-change-password.html' : 'SeniorPortal/portal-home.html';
-
-      } else {
-        document.getElementById('error-msg').textContent = 'Invalid username or password. Please try again.';
-        err.style.display = 'flex';
-        resetLoginButton();
+    try {
+      const tokenResponse = await fetch(`${API_BASE_URL}/api/token/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user, password: pass }),
+      });
+      const tokens = await tokenResponse.json().catch(() => ({}));
+      if (!tokenResponse.ok || !tokens.access) {
+        throw new Error('Invalid username/OSCA ID or password. Please try again.');
       }
-    }, 800);
+
+      const profileResponse = await fetch(`${API_BASE_URL}/api/me/`, {
+        headers: { Authorization: `Bearer ${tokens.access}` },
+      });
+      const profile = await profileResponse.json().catch(() => ({}));
+      if (!profileResponse.ok) {
+        throw new Error('Could not load your account profile. Please try again.');
+      }
+
+      const staffRoles = ['head_staff', 'regular_staff'];
+      const seniorRoles = ['senior', 'family'];
+      if (currentType === 'staff' && !staffRoles.includes(profile.role)) {
+        throw new Error('This account is not set up for the staff portal.');
+      }
+      if (currentType === 'senior' && !seniorRoles.includes(profile.role)) {
+        throw new Error('This account is not set up for the senior portal.');
+      }
+      if (currentType === 'staff' && profile.role === 'regular_staff' && !profile.barangay) {
+        throw new Error('Your staff account has no assigned barangay. Contact the OSCA administrator.');
+      }
+      if (currentType === 'senior' && !profile.senior_citizen) {
+        throw new Error('This portal account is not linked to a senior citizen record yet. Contact OSCA.');
+      }
+
+      // Keep bearer tokens only for this browser tab; never use a fake demo token.
+      sessionStorage.setItem('ark_token', tokens.access);
+      sessionStorage.setItem('ark_refresh_token', tokens.refresh || '');
+      localStorage.removeItem('ark_token');
+      localStorage.setItem('ark_username', profile.username || user);
+      localStorage.setItem('ark_role', profile.role);
+      if (profile.barangay) {
+        localStorage.setItem('ark_barangay', profile.barangay.name);
+        localStorage.setItem('ark_barangay_id', String(profile.barangay.id));
+      } else {
+        localStorage.removeItem('ark_barangay');
+        localStorage.removeItem('ark_barangay_id');
+      }
+
+      if (currentType === 'staff') {
+        if (profile.must_change_password) {
+          window.location.href = 'Staff/change-password.html';
+        } else if (profile.role === 'head_staff') {
+          window.location.href = 'Headstaff/hs-dashboard.html';
+        } else {
+          window.location.href = 'Staff/dashboard.html';
+        }
+        return;
+      }
+
+      const senior = profile.senior_citizen;
+      const seniorName = [senior.first_name, senior.middle_name, senior.last_name].filter(Boolean).join(' ');
+      localStorage.setItem('ark_username', seniorName || profile.username || user);
+      localStorage.setItem('ark_osca_id', senior.osca_id || user);
+      localStorage.setItem('ark_senior_profile', JSON.stringify({
+        ...senior,
+        name: seniorName || profile.username || user,
+        osca: senior.osca_id || user,
+      }));
+      window.location.href = profile.must_change_password
+        ? 'SeniorPortal/senior-change-password.html'
+        : 'SeniorPortal/portal-home.html';
+    } catch (error) {
+      document.getElementById('error-msg').textContent = error instanceof TypeError
+        ? 'Cannot connect to the Arkheion server. Make sure the backend is running.'
+        : (error.message || 'Sign-in failed. Please try again.');
+      err.style.display = 'flex';
+      resetLoginButton();
+    }
   }
 
   window.addEventListener('pageshow', function (event) {
