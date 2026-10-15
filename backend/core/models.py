@@ -91,7 +91,15 @@ class SeniorCitizen(models.Model):
     place_of_birth       = models.CharField(max_length=200)
     civil_status         = models.CharField(max_length=20, choices=CIVIL_STATUS_CHOICES)
     address              = models.TextField()
-    barangay             = models.CharField(max_length=100)
+
+    barangay = models.ForeignKey(
+    Barangay,
+    on_delete=models.PROTECT,
+    related_name="senior_citizens",
+    null=True,
+    blank=True,
+)
+
     latitude             = models.FloatField(null=True, blank=True)
     longitude            = models.FloatField(null=True, blank=True)
 
