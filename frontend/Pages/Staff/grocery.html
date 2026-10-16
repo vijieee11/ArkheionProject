@@ -48,6 +48,7 @@
 </head>
 <body>
 <script src="sidebar.js"></script>
+<script src="../api.js"></script>
 <div class="main">
   <div class="topbar">
     <span class="topbar-title">Grocery distribution</span>
@@ -89,28 +90,8 @@
           <div class="card-subtitle">Click "Mark received" to record a claim</div>
         </div>
         <div class="card-actions">
-          <select id="filter-brgy" class="filter-select" onchange="renderTable()">
+          <select id="filter-brgy" class="filter-select" data-arkheion-barangay="filter" onchange="renderTable()">
             <option>All barangays</option>
-            <option>Alejal</option>
-            <option>Anibongan</option>
-            <option>Asuncion</option>
-            <option>Cebulano</option>
-            <option>Guadalupe</option>
-            <option>Ising</option>
-            <option>La Paz</option>
-            <option>Mabaus</option>
-            <option>Mabuhay</option>
-            <option>Magsaysay</option>
-            <option>Mangalcal</option>
-            <option>Minda</option>
-            <option>New Camiling</option>
-            <option>Salvacion</option>
-            <option>San Isidro</option>
-            <option>Sto. Niño</option>
-            <option>Taba</option>
-            <option>Tibulao</option>
-            <option>Tubod</option>
-            <option>Tuganay</option>
           </select>
           <select id="filter-status" class="filter-select" onchange="renderTable()">
             <option>All status</option>
@@ -176,28 +157,8 @@
     <div class="modal-body">
       <div class="form-group">
         <label>Barangay</label>
-        <select id="schedule-brgy">
-          <option>All barangays</option>
-          <option>Alejal</option>
-          <option>Anibongan</option>
-          <option>Asuncion</option>
-          <option>Cebulano</option>
-          <option>Guadalupe</option>
-          <option>Ising</option>
-          <option>La Paz</option>
-          <option>Mabaus</option>
-          <option>Mabuhay</option>
-          <option>Magsaysay</option>
-          <option>Mangalcal</option>
-          <option>Minda</option>
-          <option>New Camiling</option>
-          <option>Salvacion</option>
-          <option>San Isidro</option>
-          <option>Sto. Niño</option>
-          <option>Taba</option>
-          <option>Tibulao</option>
-          <option>Tubod</option>
-          <option>Tuganay</option>
+        <select id="schedule-brgy" data-arkheion-barangay="choice">
+          <option value="">Select barangay</option>
         </select>
       </div>
       <div class="form-2col">
@@ -225,6 +186,7 @@
 <div class="toast" id="toast"></div>
 <script>
   renderSidebar('grocery');
+  ArkheionAPI.populateBarangaySelects().catch(error => showToast(error.message || 'Could not load barangays.', 'error'));
 
   // Distribution records — in production, fetch/patch these via the backend instead.
   const records = [

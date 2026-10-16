@@ -15,6 +15,7 @@
 </head>
 <body>
 <script src="sidebar.js"></script>
+<script src="../api.js"></script>
 <div class="main">
   <div class="topbar">
     <span class="topbar-title">Members</span>
@@ -23,38 +24,18 @@
       <input type="text" id="member-search" placeholder="Search by name, OSCA ID, barangay..." oninput="onFiltersChanged()">
     </div>
     <div class="topbar-actions">
-      <select id="filter-brgy" class="filter-select" onchange="onFiltersChanged()">
+      <select id="filter-brgy" class="filter-select" data-arkheion-barangay="filter" onchange="onFiltersChanged()">
         <option>All barangays</option>
-        <option>Alejal</option>
-        <option>Anibongan</option>
-        <option>Asuncion</option>
-        <option>Cebulano</option>
-        <option>Guadalupe</option>
-        <option>Ising</option>
-        <option>La Paz</option>
-        <option>Mabaus</option>
-        <option>Mabuhay</option>
-        <option>Magsaysay</option>
-        <option>Mangalcal</option>
-        <option>Minda</option>
-        <option>New Camiling</option>
-        <option>Salvacion</option>
-        <option>San Isidro</option>
-        <option>Sto. Niño</option>
-        <option>Taba</option>
-        <option>Tibulao</option>
-        <option>Tubod</option>
-        <option>Tuganay</option>
       </select>
       <select id="filter-status" class="filter-select" onchange="onFiltersChanged()">
         <option>All status</option>
-        <option>Complete</option><option>Incomplete</option><option>Urgent</option>
+        <option>Complete</option><option>Incomplete</option><option>Pending</option>
       </select>
       <!-- NEW: life status filter -->
       <select id="filter-life" class="filter-select" onchange="onFiltersChanged()">
         <option>All members</option>
         <option>Active</option>
-        <option>Deceased</option>
+        <option>Inactive</option>
       </select>
       <button class="btn btn-ghost btn-sm" onclick="exportMembers()"><i class="ti ti-download"></i> Export</button>
       <button class="btn btn-navy btn-sm" onclick="location.href='register.html'"><i class="ti ti-plus"></i> Register</button>
@@ -65,17 +46,17 @@
     <div class="stats-grid stats-3">
       <div class="stat-card">
         <div class="stat-label"><i class="ti ti-users"></i> Total members</div>
-        <div class="stat-value">1,284</div>
+        <div class="stat-value" id="total-members">—</div>
         <div class="stat-sub">All barangays</div>
       </div>
       <div class="stat-card teal">
         <div class="stat-label"><i class="ti ti-circle-check"></i> Complete</div>
-        <div class="stat-value">1,109</div>
+        <div class="stat-value" id="complete-members">—</div>
         <div class="stat-sub">86% of total</div>
       </div>
       <div class="stat-card coral">
         <div class="stat-label"><i class="ti ti-alert-circle"></i> Incomplete</div>
-        <div class="stat-value">175</div>
+        <div class="stat-value" id="incomplete-members">—</div>
         <div class="stat-sub">9 urgent cases</div>
       </div>
     </div>
@@ -103,10 +84,10 @@
             <th>Reg. Status</th><th>Life Status</th><th>Actions</th>
           </tr>
         </thead>
-        <tbody id="members-rows"></tbody>
+        <tbody id="members-rows"><tr><td colspan="10" style="text-align:center;padding:24px">Loading member records…</td></tr></tbody>
       </table>
       <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:.5px solid var(--gray-200);">
-        <span style="font-size:12px;color:var(--gray-500)" id="members-count">Showing 6 of 1,284 members</span>
+        <span style="font-size:12px;color:var(--gray-500)" id="members-count">Loading members…</span>
         <div style="display:flex;gap:4px;" id="pagination-controls"></div>
       </div>
     </div>
@@ -115,93 +96,54 @@
 <script>
   renderSidebar('members');
 
-  // Sample members — in production, fetch/sort/filter these via the backend instead.
-  // NEW: each member now has `life`: 'active' | 'deceased' (default 'active').
-  const members = [
-    { osca: '2024-001', name: 'Juan dela Cruz',  age: 81, sex: 'M', brgy: 'Ising',          civil: 'Widowed', milestone: '80+', reg: 'complete', dateAdded: '2024-01-05', life: 'active' },
-    { osca: '2023-087', name: 'Maria Santos',    age: 72, sex: 'F', brgy: 'Anibongan',         civil: 'Married', milestone: null,  reg: 'complete', dateAdded: '2023-03-10', life: 'active' },
-    { osca: '2025-012', name: 'Rosario Mendoza', age: 68, sex: 'F', brgy: 'Tubod',             civil: 'Widowed', milestone: null,  reg: 'missing',  dateAdded: '2025-02-01', life: 'active' },
-    { osca: '2024-033', name: 'Pedro Ramos',     age: 85, sex: 'M', brgy: 'Ising',  civil: 'Widowed', milestone: '80+', reg: 'urgent',   dateAdded: '2024-04-20', life: 'active' },
-    { osca: '2022-114', name: 'Lourdes Garcia',  age: 76, sex: 'F', brgy: 'Alejal',            civil: 'Married', milestone: null,  reg: 'complete', dateAdded: '2022-11-14', life: 'active' },
-    { osca: '2023-055', name: 'Felipe Torres',   age: 70, sex: 'M', brgy: 'Tuganay',           civil: 'Married', milestone: null,  reg: 'pending',  dateAdded: '2023-05-15', life: 'active' },
-    { osca: '2023-052', name: 'Avi Eshma', age: 62, sex: 'F', brgy: 'Tubod', civil: 'Married', milestone: null, reg: 'missing', dateAdded: '2023-05-17', life: 'active' },
-    { osca: '2025-111', name: 'Taylor Batumbakal', age: 66, sex: 'F', brgy: 'Tubod', civil: 'Widowed', milestone: null, reg: 'missing', dateAdded: '2024-05-19', life: 'active' },
-    { osca: '2023-052', name: 'Julieto Dimaguiba', age: 72, sex: 'M', brgy: 'Tubod', civil: 'Married', milestone: null, reg: 'missing', dateAdded: '2023-05-29', life: 'active' },
-    { osca: '2021-034', name: 'Corazon Villaruel', age: 90, sex: 'F', brgy: 'Salvacion', civil: 'Widowed', milestone: '90+', reg: 'complete', dateAdded: '2021-06-02', life: 'active' },
-    { osca: '2022-078', name: 'Bartolome Reyes', age: 65, sex: 'M', brgy: 'San Isidro', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2022-02-18', life: 'active' },
-    { osca: '2023-101', name: 'Fe Villanueva', age: 74, sex: 'F', brgy: 'Magsaysay', civil: 'Widowed', milestone: null, reg: 'urgent', dateAdded: '2023-07-09', life: 'active' },
-    { osca: '2024-045', name: 'Domingo Salazar', age: 69, sex: 'M', brgy: 'Mabuhay', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2024-03-22', life: 'active' },
-    { osca: '2024-060', name: 'Remedios Aquino', age: 88, sex: 'F', brgy: "Sto. Niño", civil: 'Widowed', milestone: '80+', reg: 'pending', dateAdded: '2024-06-11', life: 'active' },
-    { osca: '2022-091', name: 'Herminio Bautista', age: 61, sex: 'M', brgy: 'La Paz', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2022-09-30', life: 'active' },
-    { osca: '2023-115', name: 'Perlita Navarro', age: 77, sex: 'F', brgy: 'Tubod', civil: 'Separated', milestone: null, reg: 'missing', dateAdded: '2023-01-25', life: 'active' },
-    { osca: '2025-003', name: 'Anselmo Cruz', age: 92, sex: 'M', brgy: 'Asuncion', civil: 'Widowed', milestone: '90+', reg: 'urgent', dateAdded: '2025-01-08', life: 'active' },
-    { osca: '2021-058', name: 'Trinidad Molina', age: 60, sex: 'F', brgy: 'Mabaus', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2021-10-14', life: 'active' },
-    { osca: '2022-140', name: 'Eugenio Pascual', age: 79, sex: 'M', brgy: 'Mangalcal', civil: 'Widowed', milestone: null, reg: 'complete', dateAdded: '2022-12-05', life: 'deceased' },
-    { osca: '2023-076', name: 'Consolacion Ramirez', age: 83, sex: 'F', brgy: 'Minda', civil: 'Widowed', milestone: '80+', reg: 'pending', dateAdded: '2023-08-19', life: 'active' },
-    { osca: '2024-021', name: 'Leoncio Fernandez', age: 64, sex: 'M', brgy: 'Taba', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2024-02-14', life: 'active' },
-    { osca: '2024-089', name: 'Adoracion Castillo', age: 71, sex: 'F', brgy: 'Tubod', civil: 'Widowed', milestone: null, reg: 'missing', dateAdded: '2024-07-27', life: 'active' },
-    { osca: '2025-050', name: 'Filomeno Ocampo', age: 95, sex: 'M', brgy: 'Cebulano', civil: 'Widowed', milestone: '90+', reg: 'urgent', dateAdded: '2025-03-16', life: 'active' },
-    { osca: '2022-063', name: 'Bibiana Torres', age: 67, sex: 'F', brgy: 'New Camiling', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2022-05-08', life: 'active' },
-    { osca: '2023-029', name: 'Sotero Villanueva', age: 73, sex: 'M', brgy: 'Alejal', civil: 'Widowed', milestone: null, reg: 'complete', dateAdded: '2023-04-03', life: 'active' },
-    { osca: '2021-081', name: 'Milagros Santos', age: 86, sex: 'F', brgy: 'Anibongan', civil: 'Widowed', milestone: '80+', reg: 'pending', dateAdded: '2021-11-27', life: 'active' },
-    { osca: '2024-102', name: 'Ernesto Dizon', age: 63, sex: 'M', brgy: 'Salvacion', civil: 'Married', milestone: null, reg: 'missing', dateAdded: '2024-08-30', life: 'active' },
-    { osca: '2022-017', name: 'Presentacion Lopez', age: 78, sex: 'F', brgy: 'Tubod', civil: 'Widowed', milestone: null, reg: 'complete', dateAdded: '2022-01-12', life: 'active' },
-    { osca: '2023-140', name: 'Roberto Aguilar', age: 91, sex: 'M', brgy: 'San Isidro', civil: 'Widowed', milestone: '90+', reg: 'urgent', dateAdded: '2023-09-21', life: 'active' },
-    { osca: '2024-013', name: 'Concepcion Mercado', age: 66, sex: 'F', brgy: 'Ising', civil: 'Married', milestone: null, reg: 'complete', dateAdded: '2024-01-19', life: 'active' },
-  ];
-
-  const regMeta = {
-    complete: { badge: 'badge-ok',     label: 'Complete' },
-    missing:  { badge: 'badge-miss',   label: 'Missing ID' },
-    urgent:   { badge: 'badge-urgent', label: 'Urgent' },
-    pending:  { badge: 'badge-pend',   label: 'Pending' },
-  };
-
-  // NEW: badge meta for life status — red so it's easy to spot at a glance.
-  // `.badge-deceased` / `.row-deceased` styles are now inline in the <head>
-  // of this file, so no need to touch styles.css.
-  const lifeMeta = {
-    active:   { badge: 'badge-ok',       label: 'Active' },
-    deceased: { badge: 'badge-deceased', label: 'Deceased' },
-  };
-
-  // "Complete"/"Incomplete"/"Urgent" in the filter maps onto our finer-grained
-  // reg statuses: anything that isn't "complete" counts as Incomplete.
-  function matchesStatusFilter(m, filterValue) {
-    if (filterValue === 'All status') return true;
-    if (filterValue === 'Complete') return m.reg === 'complete';
-    if (filterValue === 'Urgent') return m.reg === 'urgent';
-    if (filterValue === 'Incomplete') return m.reg !== 'complete';
-    return true;
-  }
-
-  // NEW: life status filter
-  function matchesLifeFilter(m, filterValue) {
-    const lifeStatus = effectiveLifeStatus(m);
-    if (filterValue === 'All members') return true;
-    if (filterValue === 'Active') return lifeStatus === 'active';
-    if (filterValue === 'Deceased') return lifeStatus === 'deceased';
-    return true;
-  }
-
-  function effectiveLifeStatus(member) {
-    try {
-      const deaths = JSON.parse(localStorage.getItem('ark_death_records') || '[]');
-      const verifiedDeath = Array.isArray(deaths) && deaths.some(record =>
-        record.status === 'Verified' && String(record.oscaId).toLowerCase() === String(member.osca).toLowerCase()
-      );
-      return verifiedDeath ? 'deceased' : member.life;
-    } catch {
-      return member.life;
-    }
-  }
-
-  // --- Pagination state --------------------------------------------------
   const PAGE_SIZE = 10;
   let currentPage = 1;
+  let members = [];
 
-  // Any change to search/barangay/status/life invalidates the current page —
-  // jump back to page 1 so the user isn't stranded on an empty page.
+  const regMeta = {
+    complete:   { badge: 'badge-ok', label: 'Complete' },
+    incomplete: { badge: 'badge-miss', label: 'Incomplete' },
+    pending:    { badge: 'badge-pend', label: 'Pending' },
+  };
+  const lifeMeta = {
+    active:   { badge: 'badge-ok', label: 'Active' },
+    inactive: { badge: 'badge-deceased', label: 'Inactive' },
+  };
+
+  function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[char]);
+  }
+
+  function formatTitle(value) {
+    if (!value) return '—';
+    return String(value).replace(/\b\w/g, char => char.toUpperCase());
+  }
+
+  function normalizeMember(record) {
+    const name = [record.first_name, record.middle_name, record.last_name].filter(Boolean).join(' ');
+    return {
+      id: record.id,
+      osca: record.osca_id || '',
+      name: name || 'Unnamed senior',
+      age: Number.isFinite(Number(record.age)) ? Number(record.age) : null,
+      sex: record.sex === 'M' ? 'Male' : record.sex === 'F' ? 'Female' : '—',
+      brgy: record.barangay_name || 'Unassigned',
+      civil: formatTitle(record.civil_status),
+      milestone: record.milestone_age ? `${record.milestone_age}+` : '',
+      reg: regMeta[record.registration_status] ? record.registration_status : 'pending',
+      life: record.is_active ? 'active' : 'inactive',
+      dateAdded: record.created_at || record.date_of_registration || '',
+    };
+  }
+
+  function matchesStatusFilter(member, value) {
+    if (value === 'All status') return true;
+    if (value === 'Incomplete') return member.reg === 'incomplete';
+    return member.reg === value.toLowerCase();
+  }
+
   function onFiltersChanged() {
     currentPage = 1;
     renderTable();
@@ -215,103 +157,115 @@
 
   function renderPagination(totalPages) {
     const el = document.getElementById('pagination-controls');
-
-    if (totalPages <= 1) {
-      el.innerHTML = '';
-      return;
-    }
-
+    if (totalPages <= 1) { el.innerHTML = ''; return; }
     let html = `<button class="btn btn-ghost btn-sm" ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1}, ${totalPages})"><i class="ti ti-chevron-left"></i></button>`;
-
-    for (let p = 1; p <= totalPages; p++) {
-      const isActive = p === currentPage;
-      html += `<button class="btn ${isActive ? 'btn-navy' : 'btn-ghost'} btn-sm" onclick="goToPage(${p}, ${totalPages})">${p}</button>`;
+    for (let page = 1; page <= totalPages; page++) {
+      html += `<button class="btn ${currentPage === page ? 'btn-navy' : 'btn-ghost'} btn-sm" onclick="goToPage(${page}, ${totalPages})">${page}</button>`;
     }
-
     html += `<button class="btn btn-ghost btn-sm" ${currentPage === totalPages ? 'disabled' : ''} onclick="goToPage(${currentPage + 1}, ${totalPages})"><i class="ti ti-chevron-right"></i></button>`;
-
     el.innerHTML = html;
   }
 
   function renderTable() {
-    const q = document.getElementById('member-search').value.trim().toLowerCase();
-    const brgy = document.getElementById('filter-brgy').value;
+    const query = document.getElementById('member-search').value.trim().toLowerCase();
+    const barangay = document.getElementById('filter-brgy').value;
     const status = document.getElementById('filter-status').value;
-    const life = document.getElementById('filter-life').value; // NEW
+    const life = document.getElementById('filter-life').value;
     const sortBy = document.getElementById('sort-select').value;
 
-    let rows = members.filter(m => {
-      const matchesQuery = !q ||
-        m.name.toLowerCase().includes(q) ||
-        m.osca.toLowerCase().includes(q) ||
-        m.brgy.toLowerCase().includes(q);
-      const matchesBrgy = brgy === 'All barangays' || m.brgy === brgy;
-      return matchesQuery && matchesBrgy && matchesStatusFilter(m, status) && matchesLifeFilter(m, life);
+    let rows = members.filter(member => {
+      const matchesQuery = !query || [member.name, member.osca, member.brgy].some(value => value.toLowerCase().includes(query));
+      const matchesBarangay = barangay === 'All barangays' || member.brgy === barangay;
+      const matchesLife = life === 'All members' || member.life === life.toLowerCase();
+      return matchesQuery && matchesBarangay && matchesStatusFilter(member, status) && matchesLife;
     });
 
     rows = rows.slice().sort((a, b) => {
       if (sortBy === 'name-asc') return a.name.localeCompare(b.name);
-      if (sortBy === 'age-desc') return b.age - a.age;
-      if (sortBy === 'age-asc') return a.age - b.age;
-      if (sortBy === 'recent') return new Date(b.dateAdded) - new Date(a.dateAdded);
+      if (sortBy === 'age-desc') return (b.age ?? -1) - (a.age ?? -1);
+      if (sortBy === 'age-asc') return (a.age ?? Number.MAX_SAFE_INTEGER) - (b.age ?? Number.MAX_SAFE_INTEGER);
+      if (sortBy === 'recent') return new Date(b.dateAdded || 0) - new Date(a.dateAdded || 0);
       return 0;
     });
 
     const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
-    if (currentPage > totalPages) currentPage = totalPages;
-    if (currentPage < 1) currentPage = 1;
+    currentPage = Math.min(Math.max(currentPage, 1), totalPages);
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    const pageRows = rows.slice(startIndex, startIndex + PAGE_SIZE);
+    const rangeStart = rows.length ? startIndex + 1 : 0;
+    const rangeEnd = Math.min(startIndex + PAGE_SIZE, rows.length);
+    document.getElementById('members-count').textContent = `Showing ${rangeStart}–${rangeEnd} of ${rows.length} members`;
 
-    const startIdx = (currentPage - 1) * PAGE_SIZE;
-    const pageRows = rows.slice(startIdx, startIdx + PAGE_SIZE);
+    const tbody = document.getElementById('members-rows');
+    if (!pageRows.length) {
+      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:24px">${members.length ? 'No members match these filters.' : 'No senior-citizen records found.'}</td></tr>`;
+      renderPagination(totalPages);
+      return;
+    }
 
-    const rangeStart = rows.length === 0 ? 0 : startIdx + 1;
-    const rangeEnd = Math.min(startIdx + PAGE_SIZE, rows.length);
-    document.getElementById('members-count').textContent =
-      `Showing ${rangeStart}–${rangeEnd} of ${rows.length} members`;
-
-    document.getElementById('members-rows').innerHTML = pageRows.map(m => {
-      const meta = regMeta[m.reg];
-      const lmeta = lifeMeta[effectiveLifeStatus(m)] || lifeMeta.active; // Includes Headstaff-verified death reports.
-      const milestoneCell = m.milestone ? `<span class="badge badge-urgent">${m.milestone}</span>` : '—';
-      return `
-        <tr>
-          <td class="td-muted">${m.osca}</td>
-          <td class="td-bold">${m.name}</td>
-          <td class="td-muted">${m.age}</td><td class="td-muted">${m.sex}</td>
-          <td class="td-muted">${m.brgy}</td><td class="td-muted">${m.civil}</td>
-          <td>${milestoneCell}</td>
-          <td><span class="badge ${meta.badge}">${meta.label}</span></td>
-          <td><span class="badge ${lmeta.badge}">${lmeta.label}</span></td>
-          <td><button class="btn btn-ghost btn-sm btn-icon" onclick="location.href='member-detail.html?id=${encodeURIComponent(m.osca)}'" title="View"><i class="ti ti-eye"></i></button></td>
-        </tr>`;
+    tbody.innerHTML = pageRows.map(member => {
+      const registration = regMeta[member.reg];
+      const lifeStatus = lifeMeta[member.life];
+      return `<tr>
+        <td class="td-muted">${escapeHTML(member.osca)}</td>
+        <td class="td-bold">${escapeHTML(member.name)}</td>
+        <td class="td-muted">${member.age ?? '—'}</td>
+        <td class="td-muted">${escapeHTML(member.sex)}</td>
+        <td class="td-muted">${escapeHTML(member.brgy)}</td>
+        <td class="td-muted">${escapeHTML(member.civil)}</td>
+        <td>${member.milestone ? `<span class="badge badge-urgent">${escapeHTML(member.milestone)}</span>` : '—'}</td>
+        <td><span class="badge ${registration.badge}">${registration.label}</span></td>
+        <td><span class="badge ${lifeStatus.badge}">${lifeStatus.label}</span></td>
+        <td><button class="btn btn-ghost btn-sm btn-icon" onclick="location.href='member-detail.html?id=${encodeURIComponent(member.osca)}'" title="View"><i class="ti ti-eye"></i></button></td>
+      </tr>`;
     }).join('');
-
     renderPagination(totalPages);
+  }
+
+  function updateSummary() {
+    document.getElementById('total-members').textContent = members.length.toLocaleString();
+    const complete = members.filter(member => member.reg === 'complete').length;
+    const incomplete = members.length - complete;
+    document.getElementById('complete-members').textContent = complete.toLocaleString();
+    document.getElementById('incomplete-members').textContent = incomplete.toLocaleString();
+    document.querySelector('.stat-card:nth-child(2) .stat-sub').textContent = members.length ? `${Math.round(complete * 100 / members.length)}% of total` : 'No records yet';
+    document.querySelector('.stat-card:nth-child(3) .stat-sub').textContent = 'Incomplete or pending records';
   }
 
   function exportMembers() {
     const headers = ['OSCA ID', 'Name', 'Age', 'Sex', 'Barangay', 'Civil Status', 'Milestone', 'Reg. Status', 'Life Status'];
-    const csvRows = members.map(m => [
-      m.osca, m.name, m.age, m.sex, m.brgy, m.civil, m.milestone || '', regMeta[m.reg].label, lifeMeta[effectiveLifeStatus(m)]?.label || 'Active'
-    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
-    const csv = [headers.join(','), ...csvRows].join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const csvRows = members.map(member => [
+      member.osca, member.name, member.age ?? '', member.sex, member.brgy, member.civil,
+      member.milestone, regMeta[member.reg].label, lifeMeta[member.life].label,
+    ].map(value => `"${String(value).replace(/"/g, '""')}"`).join(','));
+    const blob = new Blob([[headers.join(','), ...csvRows].join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'members-export.csv';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'members-export.csv';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
     URL.revokeObjectURL(url);
   }
 
-  window.addEventListener('storage', event => {
-    if (event.key === 'ark_death_records') renderTable();
-  });
+  async function loadMembers() {
+    const rows = document.getElementById('members-rows');
+    try {
+      const response = await ArkheionAPI.get('/api/seniors/');
+      const records = Array.isArray(response) ? response : (response.results || []);
+      members = records.map(normalizeMember);
+      updateSummary();
+      renderTable();
+    } catch (error) {
+      rows.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:24px;color:#b91c1c">${escapeHTML(error.message || 'Could not load member records.')}</td></tr>`;
+      document.getElementById('members-count').textContent = 'Member records could not be loaded';
+      showToast(error.message || 'Could not load member records.', 'error');
+    }
+  }
 
-  renderTable();
+  ArkheionAPI.populateBarangaySelects().catch(error => showToast(error.message || 'Could not load barangays.', 'error'));
+  loadMembers();
 </script>
 </body>
 </html>

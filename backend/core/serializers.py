@@ -24,14 +24,19 @@ class SeniorCitizenSerializer(serializers.ModelSerializer):
             "middle_name",
             "last_name",
             "date_of_birth",
+            "date_of_registration",
             "age",
             "sex",
+            "civil_status",
             "address",
             "barangay",
             "barangay_name",
+            "milestone_age",
             "registration_status",
             "is_active",
+            "created_at",
         ]
+        read_only_fields = ["date_of_registration", "created_at"]
 
     def validate(self, attrs):
         request = self.context.get("request")

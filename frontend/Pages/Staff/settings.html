@@ -105,8 +105,8 @@
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Display name</label>
-                <input type="text" class="form-input" id="usernameInput" placeholder="e.g. juan_delacruz">
-                <div class="form-hint">Shown on the sidebar and in activity logs.</div>
+                <input type="text" class="form-input" id="usernameInput" readonly>
+                <div class="form-hint">Account name comes from the OSCA account.</div>
               </div>
               <div class="form-group">
                 <label class="form-label">Role</label>
@@ -122,16 +122,14 @@
               <div class="form-group">
                 <label class="form-label">Assigned barangay</label>
                 <div class="barangay-picker" id="barangayPicker">
-                  <button type="button" class="barangay-select-button" id="barangaySelectButton" onclick="toggleBarangayOptions()" aria-haspopup="listbox" aria-expanded="false"><span id="barangaySelection">Select assigned barangay</span><i class="ti ti-chevron-down"></i></button>
-                  <div class="barangay-menu"><div class="barangay-options" id="barangayOptions" role="listbox" aria-label="Barangay choices"></div></div>
+                  <button type="button" class="barangay-select-button" id="barangaySelectButton" disabled><span id="barangaySelection">Loading assignment…</span><i class="ti ti-map-pin"></i></button>
                 </div>
-                <input type="hidden" id="barangayInput">
-                <div class="form-hint" id="barangayAssignmentHint">Select the barangay this staff account is assigned to.</div>
+                <div class="form-hint" id="barangayAssignmentHint">Assignment is managed by the OSCA administrator.</div>
               </div>
             </div>
           </div>
           <div class="card-footer">
-            <button class="btn btn-navy" onclick="saveProfile()"><i class="ti ti-device-floppy"></i> Save profile</button>
+            <button class="btn btn-navy" onclick="saveProfile()"><i class="ti ti-device-floppy"></i> Save contact number</button>
           </div>
         </div>
 
@@ -228,26 +226,19 @@
   </div>
 </div>
 
+<script src="../api.js"></script>
 <script>
 renderSidebar('settings');
 
-const STAFF_BARANGAYS=['Alejal','Anibongan','Asuncion','Cebulano','Guadalupe','Ising','La Paz','Mabaus','Mabuhay','Magsaysay','Mangalcal','Minda','New Camiling','Salvacion','San Isidro','Sto. Niño','Taba','Tibulao','Tubod','Tuganay'];
-function buildBarangayPicker(){
-  const list=document.getElementById('barangayOptions');
-  list.innerHTML=STAFF_BARANGAYS.map(name=>`<button type="button" class="barangay-option" role="option" onclick="selectAssignedBarangay('${name.replace(/'/g,"\\'")}')">${name}</button>`).join('');
-}
-function toggleBarangayOptions(){const picker=document.getElementById('barangayPicker'),button=document.getElementById('barangaySelectButton');picker.classList.toggle('open');button.setAttribute('aria-expanded',picker.classList.contains('open')?'true':'false');}
-function selectAssignedBarangay(name){
-  document.getElementById('barangayInput').value=name;
-  document.getElementById('barangaySelection').textContent=name;
-  document.getElementById('barangayPicker').classList.remove('open');
-  document.getElementById('barangaySelectButton').setAttribute('aria-expanded','false');
-}
-document.addEventListener('click',event=>{const picker=document.getElementById('barangayPicker');if(picker&&!picker.contains(event.target)){picker.classList.remove('open');document.getElementById('barangaySelectButton').setAttribute('aria-expanded','false');}});
-
-function loadSettings() {
-  const rawUsername = localStorage.getItem('ark_username') || 'Staff';
-  const role     = localStorage.getItem('ark_role') || 'regular_staff';
+async function loadSettings() {
+  const account = await ArkheionAPI.getCurrentUser();
+  if (!['head_staff', 'regular_staff'].includes(account.role)) {
+    throw new Error('This settings page is for OSCA staff accounts.');
+  }
+  const rawUsername = account.username || 'Staff';
+  const role = account.role;
+  localStorage.setItem('ark_username', rawUsername);
+  localStorage.setItem('ark_role', role);
   const roleLabel = role === 'head_staff' ? 'Head Staff' : 'Regular Staff';
   const displayName = formatStaffName(rawUsername, role);
   const initials = role === 'head_staff' ? 'HS' : 'S';
@@ -261,12 +252,18 @@ function loadSettings() {
   document.getElementById('pageGreeting').textContent = 'Hello, ' + displayName + ' 👋';
 
   document.getElementById('contactInput').value = localStorage.getItem('ark_contact') || '';
-  const savedBarangay=localStorage.getItem('ark_barangay')||'';
-  const barangayInput=document.getElementById('barangayInput');
-  const validBarangay=STAFF_BARANGAYS.includes(savedBarangay);
-  buildBarangayPicker();
-  if(validBarangay)selectAssignedBarangay(savedBarangay);
-  else if(savedBarangay)document.getElementById('barangayAssignmentHint').textContent='Your previous demo assignment is outdated. Choose your barangay from the current list and save your profile.';
+  const assignedName = account.barangay?.name || (role === 'head_staff' ? 'All barangays' : 'Not assigned');
+  document.getElementById('barangaySelection').textContent = assignedName;
+  document.getElementById('barangayAssignmentHint').textContent = role === 'head_staff'
+    ? 'Head Staff accounts can access all barangays.'
+    : 'Assigned by OSCA. Contact the OSCA administrator if this is incorrect.';
+  if (account.barangay) {
+    localStorage.setItem('ark_barangay', account.barangay.name);
+    localStorage.setItem('ark_barangay_id', String(account.barangay.id));
+  } else {
+    localStorage.removeItem('ark_barangay');
+    localStorage.removeItem('ark_barangay_id');
+  }
 
   document.getElementById('notifReg').checked     = localStorage.getItem('ark_notif_reg') !== 'off';
   document.getElementById('notifGrocery').checked = localStorage.getItem('ark_notif_grocery') !== 'off';
@@ -278,16 +275,8 @@ function loadSettings() {
 }
 
 function saveProfile() {
-  const username = document.getElementById('usernameInput').value.trim();
-  if (!username) { showToast('Display name cannot be empty', 'error'); return; }
-  const role=localStorage.getItem('ark_role')||'regular_staff';
-  const assignedBarangay=document.getElementById('barangayInput').value;
-  if(role!=='head_staff'&&!assignedBarangay){showToast('Select your assigned barangay first','error');return;}
-  localStorage.setItem('ark_username', username);
   localStorage.setItem('ark_contact', document.getElementById('contactInput').value.trim());
-  localStorage.setItem('ark_barangay', assignedBarangay);
-  showToast('Profile updated');
-  setTimeout(() => location.reload(), 600);
+  showToast('Contact number saved on this device. Account and barangay assignment are managed by OSCA.');
 }
 
 function saveNotifications() {
@@ -304,7 +293,7 @@ function saveSystemPrefs() {
   showToast('System preferences saved');
 }
 
-loadSettings();
+loadSettings().catch(error => showToast(error.message || 'Could not load your OSCA account.', 'error'));
 </script>
 </body>
 </html>

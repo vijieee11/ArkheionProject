@@ -123,13 +123,6 @@
           <input id="deathSearch" type="search" placeholder="Search name or OSCA ID" oninput="renderDeaths()">
           <select id="deathBarangay" onchange="renderDeaths()">
             <option value="">All barangays</option>
-            <option>Alejal</option><option>Anibongan</option><option>Asuncion</option>
-            <option>Cebulano</option><option>Guadalupe</option><option>Ising</option>
-            <option>La Paz</option><option>Mabaus</option><option>Mabuhay</option>
-            <option>Magsaysay</option><option>Mangalcal</option><option>Minda</option>
-            <option>New Camiling</option><option>Salvacion</option><option>San Isidro</option>
-            <option>Sto. Niño</option><option>Taba</option><option>Tibulao</option>
-            <option>Tubod</option><option>Tuganay</option>
           </select>
           <select id="deathMonth" onchange="renderDeaths()">
             <option value="">All months</option>
@@ -198,14 +191,7 @@
         <div class="death-field">
           <label for="deathBarangayInput">Barangay <span style="color:#b91c1c">*</span></label>
           <select id="deathBarangayInput" required>
-            <option value="">Select barangay</option>
-            <option>Alejal</option><option>Anibongan</option><option>Asuncion</option>
-            <option>Cebulano</option><option>Guadalupe</option><option>Ising</option>
-            <option>La Paz</option><option>Mabaus</option><option>Mabuhay</option>
-            <option>Magsaysay</option><option>Mangalcal</option><option>Minda</option>
-            <option>New Camiling</option><option>Salvacion</option><option>San Isidro</option>
-            <option>Sto. Niño</option><option>Taba</option><option>Tibulao</option>
-            <option>Tubod</option><option>Tuganay</option>
+            <option value="">Loading barangays…</option>
           </select>
         </div>
         <div class="death-field">
@@ -242,6 +228,7 @@
 
 <div class="death-toast" id="deathToast" role="status"></div>
 
+<script src="../api.js"></script>
 <script>
   renderSidebar('deaths');
 
@@ -256,6 +243,36 @@
   const todayISO = new Date().toISOString().slice(0, 10);
   document.getElementById('dateOfDeath').max = todayISO;
   document.getElementById('currentYearLabel').textContent = new Date().getFullYear();
+
+  async function loadStaffBarangays() {
+    const filter = document.getElementById('deathBarangay');
+    const form = document.getElementById('deathBarangayInput');
+    filter.disabled = true;
+    form.disabled = true;
+    try {
+      const context = await ArkheionAPI.getStaffContext();
+      filter.innerHTML = '<option value="">All barangays</option>';
+      form.innerHTML = '<option value="">Select barangay</option>';
+      context.availableBarangays.forEach(item => {
+        filter.add(new Option(item.name, item.name));
+        form.add(new Option(item.name, item.name));
+      });
+      if (context.user.role === 'regular_staff') {
+        const assigned = context.user.barangay.name;
+        filter.value = assigned;
+        form.value = assigned;
+        filter.disabled = true;
+        form.disabled = true;
+      } else {
+        filter.disabled = false;
+        form.disabled = false;
+      }
+    } catch (error) {
+      filter.innerHTML = '<option value="">Barangays unavailable</option>';
+      form.innerHTML = '<option value="">Barangays unavailable</option>';
+      showDeathToast(error.message || 'Could not load your OSCA account and barangays.');
+    }
+  }
 
   function readDeathRecords() {
     try {
@@ -498,6 +515,7 @@
   });
 
   renderDeaths();
+  loadStaffBarangays().then(renderDeaths);
 </script>
 </body>
 </html>

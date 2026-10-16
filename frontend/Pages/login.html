@@ -97,9 +97,9 @@
     </p>
   </div>
 </div>
+<script src="api.js"></script>
 <script>
   let currentType = 'staff';
-  const API_BASE_URL = window.ARKHEION_API_URL || 'http://127.0.0.1:8000';
 
   function selectAcc(type) {
     currentType = type;
@@ -141,23 +141,18 @@
     err.style.display = 'none';
 
     try {
-      const tokenResponse = await fetch(`${API_BASE_URL}/api/token/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: user, password: pass }),
-      });
-      const tokens = await tokenResponse.json().catch(() => ({}));
-      if (!tokenResponse.ok || !tokens.access) {
+      const tokens = await ArkheionAPI.post('/api/token/', {
+        username: user,
+        password: pass,
+      }, { auth: false });
+      if (!tokens || !tokens.access) {
         throw new Error('Invalid username/OSCA ID or password. Please try again.');
       }
 
-      const profileResponse = await fetch(`${API_BASE_URL}/api/me/`, {
-        headers: { Authorization: `Bearer ${tokens.access}` },
+      const profile = await ArkheionAPI.get('/api/me/', {
+        auth: false,
+        token: tokens.access,
       });
-      const profile = await profileResponse.json().catch(() => ({}));
-      if (!profileResponse.ok) {
-        throw new Error('Could not load your account profile. Please try again.');
-      }
 
       const staffRoles = ['head_staff', 'regular_staff'];
       const seniorRoles = ['senior', 'family'];
@@ -214,7 +209,9 @@
     } catch (error) {
       document.getElementById('error-msg').textContent = error instanceof TypeError
         ? 'Cannot connect to the Arkheion server. Make sure the backend is running.'
-        : (error.message || 'Sign-in failed. Please try again.');
+        : (error.status === 401
+          ? 'Invalid username/OSCA ID or password. Please try again.'
+          : (error.message || 'Sign-in failed. Please try again.'));
       err.style.display = 'flex';
       resetLoginButton();
     }

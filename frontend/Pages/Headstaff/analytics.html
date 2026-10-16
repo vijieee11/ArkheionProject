@@ -144,6 +144,7 @@
   </div>
 </div>
 
+<script src="../api.js"></script>
 <script>
   renderHeadStaffSidebar('analytics');
 
@@ -185,11 +186,17 @@
     catch { return []; }
   }
   function esc(value) { return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
-  function initFilters() {
+  async function initFilters() {
     const barangaySelect = document.getElementById('analyticsBarangay');
     const selectedBarangay = barangaySelect.value;
     barangaySelect.innerHTML = '<option value="">All barangays</option>';
-    DEMO_POPULATION.forEach(item => barangaySelect.add(new Option(item.name,item.name)));
+    try {
+      const context = await ArkheionAPI.getStaffContext();
+      context.availableBarangays.forEach(item => barangaySelect.add(new Option(item.name,item.name)));
+    } catch (error) {
+      barangaySelect.disabled = true;
+      barangaySelect.title = error.message || 'Could not load barangays from the server.';
+    }
     barangaySelect.value = selectedBarangay;
     const yearSelect = document.getElementById('analyticsYear');
     const years = [...new Set([...readDeaths().map(record => (record.dateOfDeath || '').slice(0,4)),...readBookletSummaries().map(record=>(record.month||'').slice(0,4)),'2026'].filter(year=>/^\d{4}$/.test(year)))].sort().reverse();
@@ -333,9 +340,8 @@
     const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob);
     const link=document.createElement('a'); link.href=url; link.download='osca-analytics-demo.csv'; link.click(); URL.revokeObjectURL(url);
   }
-  window.addEventListener('storage',event=>{if([DEATH_STORAGE_KEY,BOOKLET_STORAGE_KEY].includes(event.key)){initFilters();renderAnalytics();}});
-  initFilters();
-  renderAnalytics();
+  window.addEventListener('storage',event=>{if([DEATH_STORAGE_KEY,BOOKLET_STORAGE_KEY].includes(event.key)){initFilters().then(renderAnalytics);}});
+  initFilters().then(renderAnalytics);
 </script>
 </body>
 </html>

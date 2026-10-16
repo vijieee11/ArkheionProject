@@ -39,6 +39,7 @@
 </head>
 <body>
 <script src="sidebar.js"></script>
+<script src="../api.js"></script>
 <div class="main">
   <div class="topbar">
     <span class="topbar-title">Search records</span>
@@ -60,28 +61,8 @@
           <option>NCSC Annex A</option>
           <option>Medicine booklet</option>
         </select>
-        <select id="filter-brgy" class="filter-select" onchange="doSearch()">
+        <select id="filter-brgy" class="filter-select" data-arkheion-barangay="filter" onchange="doSearch()">
           <option>All barangays</option>
-          <option>Alejal</option>
-          <option>Anibongan</option>
-          <option>Asuncion</option>
-          <option>Cebulano</option>
-          <option>Guadalupe</option>
-          <option>Ising</option>
-          <option>La Paz</option>
-          <option>Mabaus</option>
-          <option>Mabuhay</option>
-          <option>Magsaysay</option>
-          <option>Mangalcal</option>
-          <option>Minda</option>
-          <option>New Camiling</option>
-          <option>Salvacion</option>
-          <option>San Isidro</option>
-          <option>Sto. Niño</option>
-          <option>Taba</option>
-          <option>Tibulao</option>
-          <option>Tubod</option>
-          <option>Tuganay</option>
         </select>
         <select id="filter-year" class="filter-select" onchange="doSearch()">
           <option>All years</option>
@@ -117,6 +98,7 @@
 <div class="toast" id="toast"></div>
 <script>
   renderSidebar('search');
+  ArkheionAPI.populateBarangaySelects().catch(error => showToast(error.message || 'Could not load barangays.', 'error'));
 
   const sampleResults = [
     { osca: '2024-001', name: 'Juan dela Cruz', type: 'OSCA Form No. 1',        cls: 'Registration form',    brgy: 'Ising', year: '2024', status: 'ok',   statusLabel: 'Verified' },

@@ -84,6 +84,7 @@
 </head>
 <body>
 <script src="sidebar.js"></script>
+<script src="../api.js"></script>
 <div class="main">
   <div class="topbar">
     <span class="topbar-title">Generate portal accounts</span>
@@ -124,28 +125,8 @@
           <div class="card-subtitle">Check the members you want to generate credentials for</div>
         </div>
         <div class="card-actions">
-          <select id="filter-brgy" class="filter-select" onchange="renderTable()">
+          <select id="filter-brgy" class="filter-select" data-arkheion-barangay="filter" onchange="renderTable()">
             <option>All barangays</option>
-            <option>Alejal</option>
-            <option>Anibongan</option>
-            <option>Asuncion</option>
-            <option>Cebulano</option>
-            <option>Guadalupe</option>
-            <option>Ising</option>
-            <option>La Paz</option>
-            <option>Mabaus</option>
-            <option>Mabuhay</option>
-            <option>Magsaysay</option>
-            <option>Mangalcal</option>
-            <option>Minda</option>
-            <option>New Camiling</option>
-            <option>Salvacion</option>
-            <option>San Isidro</option>
-            <option>Sto. Niño</option>
-            <option>Taba</option>
-            <option>Tibulao</option>
-            <option>Tubod</option>
-            <option>Tuganay</option>
           </select>
         </div>
       </div>
@@ -207,6 +188,7 @@
 <div class="toast" id="toast"></div>
 <script>
   renderSidebar('genaccounts');
+  ArkheionAPI.populateBarangaySelects().catch(error => showToast(error.message || 'Could not load barangays.', 'error'));
 
   // Demo roster; approved registrations are added below. Backend integration will
   // replace these browser-local records when the real account API is available.

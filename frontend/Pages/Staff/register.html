@@ -136,14 +136,7 @@
           <div class="form-group">
             <label>Barangay <span class="required">*</span></label>
             <select id="barangay">
-              <option value="">Select barangay</option>
-              <option>Alejal</option><option>Anibongan</option><option>Asuncion</option>
-              <option>Cebulano</option><option>Guadalupe</option><option>Ising</option>
-              <option>La Paz</option><option>Mabaus</option><option>Mabuhay</option>
-              <option>Magsaysay</option><option>Mangalcal</option><option>Minda</option>
-              <option>New Camiling</option><option>Salvacion</option><option>San Isidro</option>
-              <option>Sto. Niño</option><option>Taba</option><option>Tibulao</option>
-              <option>Tubod</option><option>Tuganay</option>
+              <option value="">Loading barangays…</option>
             </select>
           </div>
         </div>
@@ -311,8 +304,30 @@
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<script src="../api.js"></script>
 <script>
   renderSidebar('members');
+
+  async function loadStaffBarangay() {
+    const select = document.getElementById('barangay');
+    select.innerHTML = '<option value="">Loading barangays…</option>';
+    select.disabled = true;
+    try {
+      const context = await ArkheionAPI.getStaffContext();
+      select.innerHTML = '<option value="">Select barangay</option>';
+      context.availableBarangays.forEach(item => select.add(new Option(item.name, item.name)));
+      if (context.user.role === 'regular_staff') {
+        select.value = context.user.barangay.name;
+        select.disabled = true;
+      } else {
+        select.disabled = false;
+      }
+    } catch (error) {
+      select.innerHTML = '<option value="">Barangays could not be loaded</option>';
+      showToast(error.message || 'Could not load your OSCA account and barangays.', 'error');
+    }
+  }
+  loadStaffBarangay();
 
   // ---- Scan & auto fill-up -------------------------------------------------
   // Simulated NLP extraction (same fake pipeline used in upload.html) — swap
