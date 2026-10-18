@@ -228,10 +228,64 @@ class MedicineBooklet(models.Model):
     date_issued    = models.DateField()
     place_issued   = models.CharField(max_length=200)
     is_active      = models.BooleanField(default=True)
+    STATUS_CHOICES = [
+        ('issued', 'Issued'),
+        ('full', 'Full'),
+        ('lost', 'Lost'),
+    ]
+    LOSS_STATUS_CHOICES = [
+        ('none', 'No loss report'),
+        ('pending', 'Pending review'),
+        ('confirmed', 'Confirmed'),
+        ('rejected', 'Rejected'),
+    ]
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default='issued')
+    full_at = models.DateTimeField(null=True, blank=True)
+    loss_status = models.CharField(max_length=12, choices=LOSS_STATUS_CHOICES, default='none')
+    loss_reported_at = models.DateTimeField(null=True, blank=True)
+    loss_note = models.TextField(blank=True)
+    loss_reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reviewed_booklet_losses',
+    )
+    loss_reviewed_at = models.DateTimeField(null=True, blank=True)
+    digital_replacement_issued_at = models.DateTimeField(null=True, blank=True)
     created_at     = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'medicine_booklets'
+
+
+class MedicineBookletEntry(models.Model):
+    CATEGORY_CHOICES = [
+        ('medicine', 'Medicine'),
+        ('grocery', 'Grocery'),
+    ]
+    REVIEW_CHOICES = [
+        ('pending', 'Pending review'),
+        ('verified', 'Verified'),
+        ('rejected', 'Rejected'),
+    ]
+
+    booklet = models.ForeignKey(MedicineBooklet, on_delete=models.CASCADE, related_name='backup_entries')
+    category = models.CharField(max_length=12, choices=CATEGORY_CHOICES)
+    purchase_date = models.DateField()
+    description = models.CharField(max_length=240)
+    quantity = models.CharField(max_length=80, blank=True)
+    proof_image = models.ImageField(upload_to='booklet_backup/%Y/%m/')
+    review_status = models.CharField(max_length=12, choices=REVIEW_CHOICES, default='pending')
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='booklet_uploads')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    reviewed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_booklet_entries')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    review_note = models.CharField(max_length=300, blank=True)
+
+    class Meta:
+        db_table = 'medicine_booklet_entries'
+        ordering = ['-purchase_date', '-id']
 
 
 class MedicinePrescription(models.Model):

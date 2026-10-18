@@ -31,6 +31,7 @@ function renderSidebar(activePage) {
     ]},
     { section: 'Services', items: [
       { id: 'booklet-summary', label: 'Booklet summary', icon: 'ti-notes', href: 'booklet-summary.html' },
+      { id: 'booklet-review', label: 'Digital booklet review', icon: 'ti-book-2', href: 'booklet-review.html' },
       { id: 'pension',  label: 'Pension',   icon: 'ti-cash',          href: 'pension.html' },
     ]},
     { section: 'Documents', items: [

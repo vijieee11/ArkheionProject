@@ -134,7 +134,7 @@
         <thead>
           <tr>
             <th style="width:36px;"><input type="checkbox" id="check-all" onclick="toggleAll(this)"></th>
-            <th>OSCA ID</th><th>Name</th><th>Barangay</th><th>Account status</th><th>Generated password</th>
+            <th>OSCA ID</th><th>Name</th><th>Barangay</th><th>Account status</th><th>Temporary password</th>
           </tr>
         </thead>
         <tbody id="member-tbody"></tbody>
@@ -188,34 +188,31 @@
 <div class="toast" id="toast"></div>
 <script>
   renderSidebar('genaccounts');
-  ArkheionAPI.populateBarangaySelects().catch(error => showToast(error.message || 'Could not load barangays.', 'error'));
+  let members = [];
+  let latestCredentials = [];
+  const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 
-  // Demo roster; approved registrations are added below. Backend integration will
-  // replace these browser-local records when the real account API is available.
-  let members = [
-    { osca:'2024-001', name:'Juan dela Cruz',    brgy:'Ising',      hasAccount:true,  pw:null },
-    { osca:'2023-087', name:'Maria Santos',      brgy:'Anibongan',    hasAccount:true,  pw:null },
-    { osca:'2024-033', name:'Pedro Ramos',       brgy:'Ising', hasAccount:false, pw:null },
-    { osca:'2022-114', name:'Lourdes Garcia',    brgy:'Alejal',       hasAccount:false, pw:null },
-    { osca:'2025-012', name:'Rosario Mendoza',   brgy:'Tubod',        hasAccount:false, pw:null },
-    { osca:'2023-055', name:'Felipe Torres',     brgy:'Tuganay',      hasAccount:false, pw:null },
-    { osca:'2021-078', name:'Cristina Villareal',brgy:'Alejal',       hasAccount:false, pw:null },
-    { osca:'2020-045', name:'Ambrosio Reyes',    brgy:'Cebulano', hasAccount:false, pw:null },
-    { osca:'2024-056', name:'Wyndell Joshua Camacho', brgy:'Tuganay', hasAccount:false, pw:null },
-  ];
-
-  const PORTAL_ACCOUNT_KEY = 'ark_portal_accounts';
-  function readLocalArray(key) {
-    try { const value=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(value)?value:[]; }
-    catch { return []; }
-  }
-  function loadMembers() {
-    const accounts=readLocalArray(PORTAL_ACCOUNT_KEY);
-    const approved=readLocalArray('ark_record_submissions').filter(item=>item.status==='Approved'&&item.oscaId);
-    approved.forEach(item=>{
-      if(!members.some(member=>member.osca===item.oscaId)) members.push({osca:item.oscaId,name:item.name||'Senior citizen',brgy:item.barangay||'—',hasAccount:false,pw:null});
-    });
-    members.forEach(member=>{if(accounts.some(account=>account.osca===member.osca))member.hasAccount=true;});
+  async function loadMembers() {
+    const tbody = document.getElementById('member-tbody');
+    tbody.innerHTML = '<tr><td colspan="6">Loading senior records…</td></tr>';
+    try {
+      await ArkheionAPI.populateBarangaySelects();
+      const response = await ArkheionAPI.get('/api/seniors/');
+      const rows = Array.isArray(response) ? response : (response.results || []);
+      members = rows.map(senior => ({
+        id: senior.id,
+        osca: senior.osca_id,
+        name: [senior.first_name, senior.middle_name, senior.last_name].filter(Boolean).join(' '),
+        brgy: senior.barangay_name || '—',
+        hasAccount: Boolean(senior.has_portal_account),
+        pw: null,
+      }));
+      renderTable();
+      if (!members.length) showToast('No senior records found. Register senior records first.', 'error');
+    } catch (error) {
+      tbody.innerHTML = `<tr><td colspan="6">${escapeHtml(error.message || 'Could not load senior records.')}</td></tr>`;
+      showToast(error.message || 'Could not load senior records.', 'error');
+    }
   }
 
   // Renders the table filtered by the selected barangay. Checkboxes keep
@@ -231,9 +228,9 @@
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${m.hasAccount ? '' : `<input type="checkbox" class="row-check" data-i="${i}">`}</td>
-        <td class="td-muted">${m.osca}</td>
-        <td class="td-bold">${m.name}</td>
-        <td class="td-muted">${m.brgy}</td>
+        <td class="td-muted">${escapeHtml(m.osca)}</td>
+        <td class="td-bold">${escapeHtml(m.name)}</td>
+        <td class="td-muted">${escapeHtml(m.brgy)}</td>
         <td>${m.hasAccount
               ? '<span class="badge badge-ok">Has account</span>'
               : '<span class="badge badge-miss">No account</span>'}</td>
@@ -291,14 +288,14 @@
 
     document.getElementById('confirmDialogCount').textContent = rows.length;
     document.getElementById('confirmDialogList').innerHTML = rows.map(m =>
-      `<li><b>${m.name}</b> — ${m.osca} — ${m.brgy}</li>`
+      `<li><b>${escapeHtml(m.name)}</b> — ${escapeHtml(m.osca)} — ${escapeHtml(m.brgy)}</li>`
     ).join('');
 
     showConfirmDialog();
   }
 
   // Step 2: user clicked "Yes" inside the confirm dialog — this actually generates the credentials.
-  function onConfirmYes() {
+  async function onConfirmYes() {
     hideConfirmDialog();
 
     const checked = document.querySelectorAll('.row-check:checked');
@@ -306,37 +303,46 @@
       showToast('Please select at least one member first.', 'error');
       return;
     }
-    const generated = [];
-    const accounts=readLocalArray(PORTAL_ACCOUNT_KEY);
-    checked.forEach(cb => {
-      const i = parseInt(cb.dataset.i);
-      members[i].hasAccount = true;
-      members[i].pw = genPassword();
-      generated.push(members[i]);
-      const account={osca:members[i].osca,name:members[i].name,brgy:members[i].brgy,role:'senior',password:members[i].pw,mustChange:true,createdAt:new Date().toISOString()};
-      const prior=accounts.findIndex(item=>item.osca===account.osca);
-      if(prior>=0)accounts[prior]=account;else accounts.push(account);
-    });
-    localStorage.setItem(PORTAL_ACCOUNT_KEY,JSON.stringify(accounts));
-    renderTable();
+    const ids = Array.from(checked).map(cb => members[Number(cb.dataset.i)].id);
+    const confirmButton = document.getElementById('confirmYesBtn');
+    confirmButton.disabled = true;
+    confirmButton.textContent = 'Creating…';
+    let generated;
+    try {
+      const result = await ArkheionAPI.post('/api/senior-accounts/generate/', { senior_ids: ids });
+      generated = result.created || [];
+      latestCredentials = generated;
+      generated.forEach(account => {
+        const member = members.find(item => item.id === account.senior_id);
+        if (member) { member.hasAccount = true; member.pw = account.temporary_password; }
+      });
+      renderTable();
+    } catch (error) {
+      showToast(error.message || 'Could not create portal accounts.', 'error');
+      confirmButton.disabled = false;
+      confirmButton.textContent = 'Yes';
+      return;
+    }
+    confirmButton.disabled = false;
+    confirmButton.textContent = 'Yes';
 
     const modalBody = document.getElementById('modal-cred-tbody');
     modalBody.innerHTML = generated.map(m => `
       <tr>
-        <td class="td-muted">${m.osca}</td>
-        <td class="td-bold">${m.name}</td>
-        <td style="font-family:monospace;color:var(--navy);font-weight:600;">${m.pw}</td>
+        <td class="td-muted">${escapeHtml(m.username)}</td>
+        <td class="td-bold">${escapeHtml(m.name)} · ${escapeHtml(m.osca_id)}</td>
+        <td style="font-family:monospace;color:var(--navy);font-weight:600;">${escapeHtml(m.temporary_password)}</td>
       </tr>
     `).join('');
     document.getElementById('export-btn').style.display = 'inline-flex';
     openModal('modal-credentials');
-    showToast(`Portal accounts generated for ${generated.length} member(s).`);
+    showToast(`Portal accounts created for ${generated.length} senior(s). Give them their temporary passwords once; they must change them at first login.`);
   }
 
   function exportCredentials() {
-    const withPw = members.filter(m => m.pw);
+    const withPw = latestCredentials;
     let csv = 'OSCA ID,Name,Barangay,Temporary Password\n';
-    withPw.forEach(m => { csv += `${m.osca},${m.name},${m.brgy},${m.pw}\n`; });
+    withPw.forEach(m => { csv += `"${m.osca_id}","${m.name}","${m.barangay}","${m.temporary_password}"\n`; });
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -347,7 +353,6 @@
   }
 
   loadMembers();
-  renderTable();
 </script>
 </body>
 </html>
