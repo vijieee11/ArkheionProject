@@ -1,0 +1,824 @@
+[
+{
+  "model": "core.barangay",
+  "pk": 1,
+  "fields": {
+    "name": "Alejal",
+    "code": "1102303001",
+    "municipality": "Carmen, Davao del Norte",
+    "is_active": true
+  }
+},
+{
+  "model": "core.barangay",
+  "pk": 2,
+  "fields": {
+    "name": "Anibongan",
+    "code": "1102303002",
+    "municipality": "Carmen, Davao del Norte",
+    "is_active": true
+  }
+},
+{
+  "model": "core.barangay",
+  "pk": 3,
+  "fields": {
+    "name": "Asuncion",
+    "code": "1102303003",
+    "municipality": "Carmen, Davao del Norte",
+    "is_active": true
+  }
+},
+{
+  "model": "core.barangay",
+  "pk": 4,
+  "fields": {
+    "name": "Cebulano",
+    "code": "1102303005",
+    "municipality": "Carmen, Davao del Norte",
+    "is_active": true
+  }
+},
+{
+  "model": "core.barangay",
+  "pk": 5,
+  "fields": {
+    "name": "Guadalupe",
+    "code": "1102303006",
+    "municipality": "Carmen, Davao del Norte",
+    "is_active": true
+  }
+},
+{
+  "model": "core.barangay",
+  "pk": 6,
+  "fields": {
+    "name": "Ising",
+    "code": "1102303007",
+    "municipality": "Carmen, Davao del Norte",
+    "is_active": true
+  }
+},
+{
+  "model": "core.barangay",
+  "pk": 7,
+  "fields": {
+    "name": "La Paz",
+    "code": "1102303008",
+    "municipality": "Carmen, Davao del Norte",
+    "is_active": true
+  }
+},
+{
+  "model": "core.barangay",
+  "pk": 8,
+  "fields": {
+    "name": "Mabaus",
+    "code": "1102303010",
+    "municipality": "Carmen, Davao del Norte",
+    "is_active": true
+  }
+},
+{
+  "model": "core.barangay",
+  "pk": 9,
+  "fields": {
+    "name": "Mabuhay",
+    "code": "1102303011",
+    "municipality": "Carmen, Davao del Norte",
+    "is_active": true
+  }
+},
+{
+  "model": "core.barangay",
+  "pk": 10,
+  "fields": {
+    "name": "Magsaysay",
+    "code": "1102303012",
+    "municipality": "Carmen, Davao del Norte",
+    "is_active": true
+  }
+},
+{
+  "model": "core.barangay",
+  "pk": 11,
+  "fields": {
+    "name": "Mangalcal",
+    "code": "1102303014",
+    "municipality": "Carmen, Davao del Norte",
+    "is_active": true
+  }
+},
+{
+  "model": "core.barangay",
+  "pk": 12,
+  "fields": {
+    "name": "Minda",
+    "code": "1102303015",
+    "municipality": "Carmen, Davao del Norte",
+    "is_active": true
+  }
+},
+{
+  "model": "core.barangay",
+  "pk": 13,
+  "fields": {
+    "name": "New Camiling",
+    "code": "1102303016",
+    "municipality": "Carmen, Davao del Norte",
+    "is_active": true
+  }
+},
+{
+  "model": "core.barangay",
+  "pk": 14,
+  "fields": {
+    "name": "San Isidro",
+    "code": "1102303018",
+    "municipality": "Carmen, Davao del Norte",
+    "is_active": true
+  }
+},
+{
+  "model": "core.barangay",
+  "pk": 15,
+  "fields": {
+    "name": "Sto. Niño",
+    "code": "1102303019",
+    "municipality": "Carmen, Davao del Norte",
+    "is_active": true
+  }
+},
+{
+  "model": "core.barangay",
+  "pk": 16,
+  "fields": {
+    "name": "Tibulao",
+    "code": "1102303020",
+    "municipality": "Carmen, Davao del Norte",
+    "is_active": true
+  }
+},
+{
+  "model": "core.barangay",
+  "pk": 17,
+  "fields": {
+    "name": "Tubod",
+    "code": "1102303021",
+    "municipality": "Carmen, Davao del Norte",
+    "is_active": true
+  }
+},
+{
+  "model": "core.barangay",
+  "pk": 18,
+  "fields": {
+    "name": "Tuganay",
+    "code": "1102303022",
+    "municipality": "Carmen, Davao del Norte",
+    "is_active": true
+  }
+},
+{
+  "model": "core.barangay",
+  "pk": 19,
+  "fields": {
+    "name": "Salvacion",
+    "code": "1102303023",
+    "municipality": "Carmen, Davao del Norte",
+    "is_active": true
+  }
+},
+{
+  "model": "core.barangay",
+  "pk": 20,
+  "fields": {
+    "name": "Taba",
+    "code": "1102303024",
+    "municipality": "Carmen, Davao del Norte",
+    "is_active": true
+  }
+},
+{
+  "model": "core.user",
+  "pk": 1,
+  "fields": {
+    "password": "pbkdf2_sha256$1500000$djpSapFeAyznTs0IpSHlfZ$/BmGGY2Xi/fNNxf11v1uk2eSf1a1dAwSZUdN4BZGnNw=",
+    "last_login": "2026-09-27T06:27:38.169Z",
+    "is_superuser": true,
+    "username": "adminOSCA",
+    "first_name": "",
+    "last_name": "",
+    "email": "adminOSCA@gmail.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-09-27T05:42:45.895Z",
+    "role": "regular_staff",
+    "must_change_password": true,
+    "contact_number": "",
+    "senior_citizen": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "core.user",
+  "pk": 2,
+  "fields": {
+    "password": "pbkdf2_sha256$1500000$pIHIgdFvYHKrDdIf4Ch1HP$P47P0M0ejecSksgrIOKBY2g9EJnYoU+yfr84Pr6HyfY=",
+    "last_login": "2026-09-27T06:17:19.087Z",
+    "is_superuser": false,
+    "username": "staff1",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-27T06:05:15.581Z",
+    "role": "regular_staff",
+    "must_change_password": false,
+    "contact_number": "",
+    "senior_citizen": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "core.user",
+  "pk": 3,
+  "fields": {
+    "password": "pbkdf2_sha256$1500000$ef7R9P3vmV0LjavMJqvbDW$OsIgRWEDaeBw430Bfrpidduevx+NvpbFzrxXRnQWAyk=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "staff2",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-27T06:05:52.244Z",
+    "role": "regular_staff",
+    "must_change_password": true,
+    "contact_number": "",
+    "senior_citizen": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "core.user",
+  "pk": 4,
+  "fields": {
+    "password": "pbkdf2_sha256$1500000$11PbXKI4bXEYd7tAqhAPBZ$BJdo9t1LW7p7VPcGol86ajAcBJZvQ0fHmtblamNEg14=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "staff3",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-27T06:06:19.952Z",
+    "role": "regular_staff",
+    "must_change_password": true,
+    "contact_number": "",
+    "senior_citizen": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "core.user",
+  "pk": 5,
+  "fields": {
+    "password": "pbkdf2_sha256$1500000$LLNdCgnlMFBXfJjsXNhpCZ$rgU0QUJEJ+9mrLuNHkG8weLGw0chBANWZ7+1Jix96KY=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "staff4",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-27T06:06:53.518Z",
+    "role": "regular_staff",
+    "must_change_password": true,
+    "contact_number": "",
+    "senior_citizen": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "core.user",
+  "pk": 6,
+  "fields": {
+    "password": "pbkdf2_sha256$1500000$EzhfZvoqsAcGXj67Xj6pws$hBtaVI+KYvQms+8vXMnna/j/4FrHRWiLlJk6enCsfPE=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "staff5",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-27T06:07:11.937Z",
+    "role": "regular_staff",
+    "must_change_password": true,
+    "contact_number": "",
+    "senior_citizen": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "core.user",
+  "pk": 7,
+  "fields": {
+    "password": "pbkdf2_sha256$1500000$0sw5bNktrd21W3MwbsMQY5$OBPL9lV9J2gzesmO06Y0legTe0ragsJXET1mU7jhgYw=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "staff6",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-27T06:07:27.077Z",
+    "role": "regular_staff",
+    "must_change_password": true,
+    "contact_number": "",
+    "senior_citizen": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "core.user",
+  "pk": 8,
+  "fields": {
+    "password": "pbkdf2_sha256$1500000$GGEr7hEYoyxGzyeoDJBXv4$1aFRd8OFYQvZvH69gVFf5Df7mWNG5pqJinZRCvn3JKw=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "staff7",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-27T06:07:42.911Z",
+    "role": "regular_staff",
+    "must_change_password": true,
+    "contact_number": "",
+    "senior_citizen": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "core.user",
+  "pk": 9,
+  "fields": {
+    "password": "pbkdf2_sha256$1500000$eZUOmrTceJwT2LMP1m8Gha$0q3CTeJJzdDEtQCwFUrpuqwCYDeuMJz71CtHv9Tm7Ms=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "staff8",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-27T06:07:59.153Z",
+    "role": "regular_staff",
+    "must_change_password": true,
+    "contact_number": "",
+    "senior_citizen": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "core.user",
+  "pk": 10,
+  "fields": {
+    "password": "pbkdf2_sha256$1500000$VR75PY7L6iKhOHOBOkTTPo$mcmA7gEbOsnVHB2zUbC2FFFvqacqirzuEZ8REZajX90=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "staff9",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-27T06:08:17.651Z",
+    "role": "regular_staff",
+    "must_change_password": true,
+    "contact_number": "",
+    "senior_citizen": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "core.user",
+  "pk": 11,
+  "fields": {
+    "password": "pbkdf2_sha256$1500000$Bm69bX7QB1DxM52p848MyP$NRMhAerDMLrH3jZP4Pl3Rre+qgWz3gCxKrGLmFYMXiM=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "staff10",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-27T06:09:01.539Z",
+    "role": "regular_staff",
+    "must_change_password": true,
+    "contact_number": "",
+    "senior_citizen": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "core.user",
+  "pk": 12,
+  "fields": {
+    "password": "pbkdf2_sha256$1500000$SBy3CgjEbSFQCafl7LRBsU$I9SyBIFu/1qvSgKYIJ4ck4FyB9JBKilBe4SAWrdZ27o=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "staff11",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-27T06:09:17.868Z",
+    "role": "regular_staff",
+    "must_change_password": true,
+    "contact_number": "",
+    "senior_citizen": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "core.user",
+  "pk": 13,
+  "fields": {
+    "password": "pbkdf2_sha256$1500000$XFha55jLWDjo6pIto2CcHD$T+1ocZWF8M22tg7Sm7PbxwesGMG13npl9YHDAOmy2Jw=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "staff12",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-27T06:09:33.371Z",
+    "role": "regular_staff",
+    "must_change_password": true,
+    "contact_number": "",
+    "senior_citizen": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "core.user",
+  "pk": 14,
+  "fields": {
+    "password": "pbkdf2_sha256$1500000$AHXzFgrafkHAnYyBKVD275$8/OW2kQeeoMtGpJJW5ve7bt/ebjsP0XxAz92+ezdkaY=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "staff13",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-27T06:09:46.609Z",
+    "role": "regular_staff",
+    "must_change_password": true,
+    "contact_number": "",
+    "senior_citizen": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "core.user",
+  "pk": 15,
+  "fields": {
+    "password": "pbkdf2_sha256$1500000$TYMfbBIqeXocb41H3STQQT$y2Kgp9dEXAy+9DcAXG5+i8lNNmz2wFq2vTLWuJlcwRk=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "staff14",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-27T06:10:03.075Z",
+    "role": "regular_staff",
+    "must_change_password": true,
+    "contact_number": "",
+    "senior_citizen": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "core.user",
+  "pk": 16,
+  "fields": {
+    "password": "pbkdf2_sha256$1500000$fz2qE3yAnJvEADByYBd7oM$wZULLne6F+VaeWdU4yO5liGK132TX0TL9dc5dCChyWo=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "staff15",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-27T06:10:20.664Z",
+    "role": "regular_staff",
+    "must_change_password": true,
+    "contact_number": "",
+    "senior_citizen": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "core.user",
+  "pk": 17,
+  "fields": {
+    "password": "pbkdf2_sha256$1500000$TmOTKpFdMjks7gO7vBZbfF$keysmOtel1oFV8ts8K6Yit7X+sgKU8KNXNA//aB7BKI=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "staff16",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-27T06:10:38.236Z",
+    "role": "regular_staff",
+    "must_change_password": true,
+    "contact_number": "",
+    "senior_citizen": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "core.user",
+  "pk": 18,
+  "fields": {
+    "password": "pbkdf2_sha256$1500000$4XfJvHuCqVpJPFoK5gdSIq$Pp5tmL9ng9uQM4Yn3be19w357YTUl0F7+AivI3oD2rY=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "staff17",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-27T06:10:50.611Z",
+    "role": "regular_staff",
+    "must_change_password": true,
+    "contact_number": "",
+    "senior_citizen": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "core.user",
+  "pk": 19,
+  "fields": {
+    "password": "pbkdf2_sha256$1500000$PCjFLajjBtvBiiAPT61f6Q$SUKFbnW0IyDtS74a9F7xiIwJPt+WrzRlJ8eu48F8zlg=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "staff18",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-27T06:11:12.680Z",
+    "role": "regular_staff",
+    "must_change_password": true,
+    "contact_number": "",
+    "senior_citizen": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "core.user",
+  "pk": 20,
+  "fields": {
+    "password": "pbkdf2_sha256$1500000$YZn3FPc6A3AeLHoKSxNfcJ$8SS/l/gPmFH4yUaoA/aEJfgsLyetv23p16j4BUkKjxM=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "staff19",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-27T06:11:25.243Z",
+    "role": "regular_staff",
+    "must_change_password": true,
+    "contact_number": "",
+    "senior_citizen": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "core.user",
+  "pk": 21,
+  "fields": {
+    "password": "pbkdf2_sha256$1500000$HmJJFLWk9ZF8NGVI5q2fpc$gTiYf+UOCtvhz2ZRUsw07zmpTyxV9d8JPWlntkSQMqo=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "staff20",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-27T06:11:42.470Z",
+    "role": "regular_staff",
+    "must_change_password": true,
+    "contact_number": "",
+    "senior_citizen": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "core.staffprofile",
+  "pk": 2,
+  "fields": {
+    "user": 2,
+    "barangay": 1
+  }
+},
+{
+  "model": "core.staffprofile",
+  "pk": 3,
+  "fields": {
+    "user": 3,
+    "barangay": 2
+  }
+},
+{
+  "model": "core.staffprofile",
+  "pk": 4,
+  "fields": {
+    "user": 4,
+    "barangay": 3
+  }
+},
+{
+  "model": "core.staffprofile",
+  "pk": 5,
+  "fields": {
+    "user": 5,
+    "barangay": 4
+  }
+},
+{
+  "model": "core.staffprofile",
+  "pk": 6,
+  "fields": {
+    "user": 6,
+    "barangay": 5
+  }
+},
+{
+  "model": "core.staffprofile",
+  "pk": 7,
+  "fields": {
+    "user": 7,
+    "barangay": 6
+  }
+},
+{
+  "model": "core.staffprofile",
+  "pk": 8,
+  "fields": {
+    "user": 8,
+    "barangay": 7
+  }
+},
+{
+  "model": "core.staffprofile",
+  "pk": 9,
+  "fields": {
+    "user": 9,
+    "barangay": 8
+  }
+},
+{
+  "model": "core.staffprofile",
+  "pk": 10,
+  "fields": {
+    "user": 10,
+    "barangay": 9
+  }
+},
+{
+  "model": "core.staffprofile",
+  "pk": 11,
+  "fields": {
+    "user": 11,
+    "barangay": 10
+  }
+},
+{
+  "model": "core.staffprofile",
+  "pk": 12,
+  "fields": {
+    "user": 12,
+    "barangay": 11
+  }
+},
+{
+  "model": "core.staffprofile",
+  "pk": 13,
+  "fields": {
+    "user": 13,
+    "barangay": 12
+  }
+},
+{
+  "model": "core.staffprofile",
+  "pk": 14,
+  "fields": {
+    "user": 14,
+    "barangay": 13
+  }
+},
+{
+  "model": "core.staffprofile",
+  "pk": 15,
+  "fields": {
+    "user": 15,
+    "barangay": 19
+  }
+},
+{
+  "model": "core.staffprofile",
+  "pk": 16,
+  "fields": {
+    "user": 16,
+    "barangay": 14
+  }
+},
+{
+  "model": "core.staffprofile",
+  "pk": 17,
+  "fields": {
+    "user": 17,
+    "barangay": 15
+  }
+},
+{
+  "model": "core.staffprofile",
+  "pk": 18,
+  "fields": {
+    "user": 18,
+    "barangay": 20
+  }
+},
+{
+  "model": "core.staffprofile",
+  "pk": 19,
+  "fields": {
+    "user": 19,
+    "barangay": 16
+  }
+},
+{
+  "model": "core.staffprofile",
+  "pk": 20,
+  "fields": {
+    "user": 20,
+    "barangay": 17
+  }
+},
+{
+  "model": "core.staffprofile",
+  "pk": 21,
+  "fields": {
+    "user": 21,
+    "barangay": 18
+  }
+}
+]
