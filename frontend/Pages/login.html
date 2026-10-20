@@ -34,6 +34,7 @@
     .login-btn:disabled { cursor:not-allowed; opacity:.7; }
     .login-hint { font-size:12px; color:var(--gray-400); text-align:center; line-height:1.8; }
     .login-hint a { color:var(--navy-light); text-decoration:underline; cursor:pointer; }
+    .staff-signup-link { display:block; text-align:center; font-size:13px; font-weight:600; color:var(--navy-light); }
     .login-error { background:var(--coral-50); border:.5px solid #F5C4B3; color:var(--coral-900); border-radius:var(--radius-sm); padding:9px 12px; font-size:12px; display:flex; align-items:center; gap:8px; display:none; }
 
     /* ===== Mobile-responsive overrides ===== */
@@ -95,6 +96,7 @@
       Senior citizen? Use your <a>OSCA ID number</a> as your username.<br>
       Forgot your password? <a>Contact the OSCA office.</a>
     </p>
+    <a class="staff-signup-link" id="staff-signup-link" href="staff-signup.html">New staff? Request an account</a>
   </div>
 </div>
 <script src="api.js"></script>
@@ -113,6 +115,7 @@
     input.value = '';
     document.getElementById('pw-input').value = '';
     document.getElementById('login-error').style.display = 'none';
+    document.getElementById('staff-signup-link').style.display = type === 'staff' ? 'block' : 'none';
   }
 
   // Puts the Sign in button back to its normal, clickable state.

@@ -1,0 +1,61 @@
+text,label,source_id
+OSCA registration form | applicant: [SIMULATED] | requested benefit: senior citizen registration | signature of applicant and date received,OSCA Form No. 1,SIM-OSC-001
+Office of Senior Citizens Affairs | personal information sheet | OSCA ID application | barangay certification attached,OSCA Form No. 1,SIM-OSC-002
+Senior citizen registration | date of birth: [DATE] | civil status: [STATUS] | address: [BARANGAY] | applicant signature,OSCA Form No. 1,SIM-OSC-003
+Application for registration as a senior citizen | attach proof of age and residence | received by OSCA staff,OSCA Form No. 1,SIM-OSC-004
+OSCA Form 1 | new member record | citizenship and birth details | certification by barangay official,OSCA Form No. 1,SIM-OSC-005
+Senior citizen data sheet | registration number: [REDACTED] | date filed: [DATE] | applicant declaration,OSCA Form No. 1,SIM-OSC-006
+Registration application | Office of the Senior Citizens Affairs | proof of residency | applicant details and signature,OSCA Form No. 1,SIM-OSC-007
+OSCA membership registration | household and contact information | barangay endorsement | date submitted [DATE],OSCA Form No. 1,SIM-OSC-008
+Senior citizen application form | name [SIMULATED] | birth date [DATE] | age eligibility | received stamp,OSCA Form No. 1,SIM-OSC-009
+Applicant record for senior citizen services | registration details | supporting documents checklist | OSCA receiving section,OSCA Form No. 1,SIM-OSC-010
+OSCA Form No. 1 | certification that the applicant resides in the municipality | date and authorized signature,OSCA Form No. 1,SIM-OSC-011
+Senior citizen registration record | application status: [STATUS] | applicant declaration | municipal OSCA office,OSCA Form No. 1,SIM-OSC-012
+Certificate of Live Birth | name of child [SIMULATED] | date of birth [DATE] | place of birth [PLACE] | mother and father details,Birth certificate,SIM-BIR-001
+Republic of the Philippines | Local Civil Registry | registered birth | registry number [REDACTED] | date registered [DATE],Birth certificate,SIM-BIR-002
+"PSA civil registry document | birth record | sex [VALUE] | date and place of birth [DATE, PLACE] | certified copy",Birth certificate,SIM-BIR-003
+"Certificate of birth | information on newborn, parents, attendant at birth, and registration date",Birth certificate,SIM-BIR-004
+Local civil registrar certifies this live birth record | child [SIMULATED] | date born [DATE] | registration details,Birth certificate,SIM-BIR-005
+Birth registration entry | name at birth [SIMULATED] | municipality of birth [PLACE] | parent information redacted,Birth certificate,SIM-BIR-006
+Certified true copy | certificate of live birth | date of registration [DATE] | civil registrar seal,Birth certificate,SIM-BIR-007
+Vital statistics record | birth event | place of occurrence [PLACE] | mother and father particulars withheld,Birth certificate,SIM-BIR-008
+PSA-issued birth certificate | registry number [REDACTED] | date of birth [DATE] | certified by the civil registrar,Birth certificate,SIM-BIR-009
+Record of live birth filed with the municipal civil registry | child details and parent particulars [SIMULATED],Birth certificate,SIM-BIR-010
+Civil registry certificate | date born [DATE] | birthplace [PLACE] | date recorded [DATE] | registrar certification,Birth certificate,SIM-BIR-011
+Birth record extract | full name [SIMULATED] | sex [VALUE] | parents [REDACTED] | official registry copy,Birth certificate,SIM-BIR-012
+Republic of the Philippines | national identification card | PhilSys Number [REDACTED] | date of birth [DATE],Government ID,SIM-GOV-001
+Social Security System | UMID card | member number [REDACTED] | signature panel | Republic of the Philippines,Government ID,SIM-GOV-002
+PhilHealth identification card | member identification number [REDACTED] | date of birth [DATE],Government ID,SIM-GOV-003
+Driver license | Land Transportation Office | license number [REDACTED] | restriction codes | expiration [DATE],Government ID,SIM-GOV-004
+Passport | Department of Foreign Affairs | passport number [REDACTED] | nationality Filipino | date of expiry [DATE],Government ID,SIM-GOV-005
+Postal identity card | name [SIMULATED] | address [BARANGAY] | card number [REDACTED] | issued [DATE],Government ID,SIM-GOV-006
+Voter identification record | Commission on Elections | precinct [REDACTED] | registered voter [SIMULATED],Government ID,SIM-GOV-007
+Unified multipurpose identification | SSS GSIS PhilHealth Pag-IBIG | CRN [REDACTED] | cardholder signature,Government ID,SIM-GOV-008
+Philippine national ID | demographic information | card number [REDACTED] | PhilSys registry,Government ID,SIM-GOV-009
+PWD identification card | issuing local government | ID no. [REDACTED] | validity date [DATE],Government ID,SIM-GOV-010
+Government-issued identity card | photo and signature | ID number [REDACTED] | issuing agency [AGENCY],Government ID,SIM-GOV-011
+Senior citizen identification card | OSCA ID no. [REDACTED] | date issued [DATE] | municipality [PLACE],Government ID,SIM-GOV-012
+Office of the Municipal Mayor | endorsement of the applicant for senior citizen assistance | respectfully submitted for review,LCE endorsement letter,SIM-LCE-001
+To the OSCA Head | letter endorsing [SIMULATED] for inclusion in the municipal senior citizen program,LCE endorsement letter,SIM-LCE-002
+Municipal government endorsement | certification of residence and referral to the Office of Senior Citizens Affairs,LCE endorsement letter,SIM-LCE-003
+Mayors office | subject: endorsement for senior citizen registration | approved and recommended for processing,LCE endorsement letter,SIM-LCE-004
+Endorsement letter | applicant has been verified as a resident of [BARANGAY] | issued [DATE] | municipal seal,LCE endorsement letter,SIM-LCE-005
+Local Chief Executive | recommendation for the attached senior citizen application | kindly process the request,LCE endorsement letter,SIM-LCE-006
+Letter of referral from the municipality | applicant details enclosed | addressed to OSCA Carmen,LCE endorsement letter,SIM-LCE-007
+Municipal mayor endorses the named applicant for consideration under the senior citizen assistance program,LCE endorsement letter,SIM-LCE-008
+Official correspondence | senior citizen program | endorsement and certification by the local chief executive,LCE endorsement letter,SIM-LCE-009
+To whom it may concern | this office endorses [SIMULATED] for OSCA services | signed by the municipal mayor,LCE endorsement letter,SIM-LCE-010
+Office of the Mayor | certification and endorsement | barangay residence confirmed | date [DATE],LCE endorsement letter,SIM-LCE-011
+Local government endorsement | application forwarded to the Office of Senior Citizens Affairs for appropriate action,LCE endorsement letter,SIM-LCE-012
+Community outreach attendance sheet | program date [DATE] | participant count | barangay activity report,Other,SIM-OTH-001
+Medical consultation summary | follow-up visit recommended | clinical notes withheld | facility record,Other,SIM-OTH-002
+Proof of residence utility billing statement | billing period [MONTH] | service address [BARANGAY],Other,SIM-OTH-003
+Pension claim acknowledgment | payout period [MONTH YEAR] | received by [SIMULATED] | signature captured,Other,SIM-OTH-004
+Barangay certificate of residency | resident since [YEAR] | issued upon request | barangay seal,Other,SIM-OTH-005
+Medicine purchase receipt | pharmacy name [STORE] | transaction date [DATE] | itemized amount [AMOUNT],Other,SIM-OTH-006
+Social welfare assessment note | household needs review | referral action [ACTION] | case date [DATE],Other,SIM-OTH-007
+Program invitation | senior citizens gathering | venue [PLACE] | schedule [DATE] | municipal office,Other,SIM-OTH-008
+Incident report | reported concern [SIMULATED] | date received [DATE] | referred to appropriate office,Other,SIM-OTH-009
+Acknowledgment receipt for submitted supporting papers | received by staff | transaction reference [REDACTED],Other,SIM-OTH-010
+Grocery assistance distribution summary | distribution date [DATE] | barangay [BARANGAY] | quantity recorded,Other,SIM-OTH-011
+Transfer of residence notification | former address [BARANGAY A] | new address [BARANGAY B] | effective date [DATE],Other,SIM-OTH-012

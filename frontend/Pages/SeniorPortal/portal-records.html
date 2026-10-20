@@ -40,14 +40,13 @@
   <div class="portal-navlinks" id="portalNavLinks">
     <a href="portal-home.html">Home</a>
     <a class="active" href="portal-records.html">My records</a>
-    <a href="portal-booklet.html">Digital booklet</a>
     <a href="portal-services.html">Services</a>
     <a href="portal-faq.html">FAQ</a>
     <a href="portal-contact.html">Contact</a>
   </div>
   <div class="portal-user">
-    <div class="portal-avatar">JC</div>
-    <span class="portal-uname">Juan dela Cruz</span>
+    <div class="portal-avatar">SC</div>
+    <span class="portal-uname">Senior citizen</span>
     <button class="btn btn-ghost btn-sm" style="margin-left:8px;" onclick="location.href='../login.html'"><i class="ti ti-logout"></i></button>
   </div>
 </nav>
@@ -59,16 +58,16 @@
       <span class="badge badge-ok">OSCA Form No. 1</span>
     </div>
     <div class="detail-grid">
-      <div class="detail-field"><span class="detail-label">OSCA ID</span><span class="detail-value">2024-001</span></div>
-      <div class="detail-field"><span class="detail-label">Registration certificate no.</span><span class="detail-value">RC-2024-001</span></div>
-      <div class="detail-field"><span class="detail-label">Registration date</span><span class="detail-value">March 10, 2024</span></div>
-      <div class="detail-field"><span class="detail-label">Full name</span><span class="detail-value">Juan Santos dela Cruz</span></div>
-      <div class="detail-field"><span class="detail-label">Date of birth</span><span class="detail-value">January 5, 1945</span></div>
-      <div class="detail-field"><span class="detail-label">Age</span><span class="detail-value">81 years old</span></div>
-      <div class="detail-field"><span class="detail-label">Sex</span><span class="detail-value">Male</span></div>
-      <div class="detail-field"><span class="detail-label">Civil status</span><span class="detail-value">Widowed</span></div>
+      <div class="detail-field"><span class="detail-label">OSCA ID</span><span class="detail-value" data-senior-field="osca_id">—</span></div>
+      <div class="detail-field"><span class="detail-label">Registration certificate no.</span><span class="detail-value" data-senior-field="registration_cert_no">—</span></div>
+      <div class="detail-field"><span class="detail-label">Registration date</span><span class="detail-value" data-senior-field="date_of_registration">—</span></div>
+      <div class="detail-field"><span class="detail-label">Full name</span><span class="detail-value" data-senior-name>Senior citizen</span></div>
+      <div class="detail-field"><span class="detail-label">Date of birth</span><span class="detail-value" data-senior-field="date_of_birth">—</span></div>
+      <div class="detail-field"><span class="detail-label">Age</span><span class="detail-value" data-senior-field="age">—</span></div>
+      <div class="detail-field"><span class="detail-label">Sex</span><span class="detail-value" data-senior-field="sex">—</span></div>
+      <div class="detail-field"><span class="detail-label">Civil status</span><span class="detail-value" data-senior-field="civil_status">—</span></div>
       <div class="detail-field"><span class="detail-label">Place of birth</span><span class="detail-value">Carmen, Davao del Norte</span></div>
-      <div class="detail-field" style="grid-column:span 2;"><span class="detail-label">Address</span><span class="detail-value">123 Brgy 2, Carmen, Davao del Norte</span></div>
+      <div class="detail-field" style="grid-column:span 2;"><span class="detail-label">Address</span><span class="detail-value" data-senior-field="address">—</span></div>
       <div class="detail-field"><span class="detail-label">Milestone age</span><span class="badge badge-urgent">80+ (NCSC eligible)</span></div>
     </div>
   </div>
@@ -83,21 +82,21 @@
       </thead>
       <tbody>
         <tr>
-          <td><i class="ti ti-file-type-pdf" style="color:var(--coral-600);margin-right:6px"></i>birth_cert_juan.pdf</td>
+          <td><i class="ti ti-file-type-pdf" style="color:var(--coral-600);margin-right:6px"></i>birth_certificate.pdf</td>
           <td class="td-muted">PSA Birth Certificate</td>
           <td class="td-muted">Mar 10, 2024</td>
           <td><span class="badge badge-ok">Birth certificate</span></td>
           <td><span class="badge badge-ok">Verified</span></td>
         </tr>
         <tr>
-          <td><i class="ti ti-photo" style="color:var(--blue-900);margin-right:6px"></i>photo_2x2_juan.jpg</td>
+          <td><i class="ti ti-photo" style="color:var(--blue-900);margin-right:6px"></i>photo_2x2.jpg</td>
           <td class="td-muted">2x2 ID Photo</td>
           <td class="td-muted">Mar 10, 2024</td>
           <td><span class="badge badge-ok">ID photo</span></td>
           <td><span class="badge badge-ok">Verified</span></td>
         </tr>
         <tr>
-          <td><i class="ti ti-photo" style="color:var(--blue-900);margin-right:6px"></i>fullbody_juan.jpg</td>
+          <td><i class="ti ti-photo" style="color:var(--blue-900);margin-right:6px"></i>fullbody_photo.jpg</td>
           <td class="td-muted">Full body photo (A4)</td>
           <td class="td-muted">Mar 10, 2024</td>
           <td><span class="badge badge-ok">Full body photo</span></td>
@@ -125,7 +124,6 @@
     <div class="card-header">
       <div class="card-title"><i class="ti ti-history" style="margin-right:6px;color:var(--navy-light)"></i>Pension history</div>
     </div>
-    <div style="padding:0 16px 12px;color:var(--gray-500);font-size:12px;line-height:1.5">Medicine and grocery booklet photos and verification status are available on the <a href="portal-booklet.html" style="color:var(--navy-light);font-weight:600">Digital booklet page</a>.</div>
     <table>
       <thead>
         <tr><th>Service</th><th>Period</th><th>Status</th><th>Date</th><th>Claimed by</th></tr>
@@ -155,5 +153,7 @@
     document.getElementById('portalNavLinks').classList.toggle('open');
   }
 </script>
+<script src="../api.js"></script>
+<script src="portal-identity.js"></script>
 </body>
 </html>

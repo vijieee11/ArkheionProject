@@ -52,14 +52,14 @@
   <div class="topbar">
     <span class="topbar-title">Manage Staff</span>
     <div class="topbar-actions" style="margin-left:auto;">
-      <button class="btn btn-navy btn-sm" onclick="openAddModal()"><i class="ti ti-plus"></i> Add new staff</button>
+      <button class="btn btn-navy btn-sm" onclick="location.href='staff_request.html'"><i class="ti ti-user-check"></i> Review account requests</button>
     </div>
   </div>
 
   <div class="content">
     <div class="alert alert-amber">
       <i class="ti ti-lock"></i>
-      This page is only visible to the <strong>Head Staff</strong> account. Regular staff cannot access or see this section. Accounts are <strong>deactivated</strong>, never deleted — this keeps their history intact in the audit log.
+      New staff create their own account request from the sign-in page. OSCA Admin verifies the applicant and barangay in <strong>Staff Requests</strong> before activating access. This staff directory currently contains sample display data.
     </div>
 
     <!-- Stats -->
@@ -151,54 +151,6 @@
       <div style="display:flex;justify-content:space-between;padding:10px 16px;font-size:11px;color:var(--gray-500);border-top:.5px solid var(--gray-200);">
         <span id="staff-count-label">Showing 5 of 5 staff accounts</span>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal: Add staff -->
-<div class="modal-overlay" id="modal-add-staff" onclick="if(event.target===this)closeModal('modal-add-staff')">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title">Add new staff account</span>
-      <button class="modal-close" onclick="closeModal('modal-add-staff')"><i class="ti ti-x"></i></button>
-    </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label>Full name <span class="required">*</span></label>
-        <input type="text" id="add-name" placeholder="e.g. Maria Fernandez">
-        <div class="field-error-msg" id="err-add-name">Full name is required.</div>
-      </div>
-      <div class="form-group">
-        <label>Username / email <span class="required">*</span></label>
-        <input type="text" id="add-username" placeholder="e.g. osca_staff4">
-        <div class="field-error-msg" id="err-add-username">Username / email is required and must be unique.</div>
-      </div>
-      <div class="form-group">
-        <label>Temporary password <span class="required">*</span></label>
-        <input type="password" id="add-password" placeholder="Set initial password">
-        <div class="field-error-msg" id="err-add-password">Temporary password is required.</div>
-      </div>
-      <div class="form-2col">
-        <div class="form-group"><label>Role <span class="required">*</span></label>
-          <select id="add-role">
-            <option>Regular Staff</option>
-            <option>Head Staff</option>
-            <option>Viewer</option>
-            <option>Admin</option>
-          </select>
-        </div>
-        <div class="form-group"><label>Account status</label>
-          <select id="add-status">
-            <option>Active</option>
-            <option>Inactive</option>
-          </select>
-        </div>
-      </div>
-      <div class="alert alert-teal"><i class="ti ti-info-circle"></i>The staff member will be required to change this password on their first login.</div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-add-staff')">Cancel</button>
-      <button class="btn btn-navy" onclick="submitAddStaff()"><i class="ti ti-plus"></i> Create account</button>
     </div>
   </div>
 </div>
@@ -353,53 +305,6 @@
     document.getElementById(inputId).classList.add('field-error');
     document.getElementById(errId).classList.add('show');
   }
-  function todayLabel() {
-    return new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
-  }
-
-  // ---------- Add staff ----------
-  function openAddModal() {
-    document.getElementById('add-name').value = '';
-    document.getElementById('add-username').value = '';
-    document.getElementById('add-password').value = '';
-    document.getElementById('add-role').value = 'Regular Staff';
-    document.getElementById('add-status').value = 'Active';
-    ['add-name','add-username','add-password'].forEach(id => clearFieldError(id, 'err-'+id));
-    openModal('modal-add-staff');
-  }
-
-  function submitAddStaff() {
-    const name = document.getElementById('add-name').value.trim();
-    const username = document.getElementById('add-username').value.trim();
-    const password = document.getElementById('add-password').value;
-    const role = document.getElementById('add-role').value;
-    const status = document.getElementById('add-status').value;
-
-    let valid = true;
-    clearFieldError('add-name','err-add-name');
-    clearFieldError('add-username','err-add-username');
-    clearFieldError('add-password','err-add-password');
-
-    if (!name) { setFieldError('add-name','err-add-name'); valid = false; }
-    if (!username) { setFieldError('add-username','err-add-username'); valid = false; }
-    else if (staff.some(s => s.username.toLowerCase() === username.toLowerCase())) {
-      setFieldError('add-username','err-add-username'); valid = false;
-    }
-    if (!password) { setFieldError('add-password','err-add-password'); valid = false; }
-    if (!valid) return;
-
-    staff.push({
-      name, username, role, status,
-      created: todayLabel(),
-      lastLogin: 'Never'
-    });
-
-    closeModal('modal-add-staff');
-    showToast('Staff account created successfully!');
-    applyFilters();
-    updateStatCounts();
-  }
-
   // ---------- Edit staff ----------
   let pendingEditUsername = null;
 

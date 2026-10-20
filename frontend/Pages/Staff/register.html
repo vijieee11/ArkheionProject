@@ -28,24 +28,12 @@
   <div class="content">
     <div class="alert alert-teal">
       <i class="ti ti-info-circle"></i>
-      OSCA ID and Registration Certificate No. will be automatically generated upon saving. Fields marked <span style="color:var(--coral-600);font-weight:600">*</span> are required.
+    Save creates the senior record in the OSCA database. The backend assigns the OSCA ID and registration certificate number. Fields marked <span style="color:var(--coral-600);font-weight:600">*</span> are required.
     </div>
 
-    <!-- Scan & auto fill-up -->
-    <div class="card" style="padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:var(--teal-50);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <i class="ti ti-scan" style="font-size:18px;color:var(--navy)"></i>
-        </div>
-        <div>
-          <p style="font-size:13px;font-weight:600;color:var(--gray-900);">Scan a document to auto fill-up this form</p>
-          <p style="font-size:11px;color:var(--gray-500);margin-top:2px;">Upload a scanned OSCA Form No. 1 or birth certificate — the system will extract and fill in the fields below.</p>
-        </div>
-      </div>
-      <button class="btn btn-navy btn-sm" onclick="document.getElementById('scan-input').click()" id="scan-btn">
-        <i class="ti ti-scan"></i> Scan document
-      </button>
-      <input type="file" id="scan-input" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="handleScanFile(this)">
+    <div class="alert alert-teal">
+      <i class="ti ti-info-circle"></i>
+      Enter information from verified OSCA documents. Automatic document scanning and file storage are not connected yet.
     </div>
 
     <div class="card">
@@ -59,10 +47,9 @@
       <!-- TAB 1: Personal info -->
       <div id="tab-personal" class="card-body" style="display:flex;flex-direction:column;gap:16px;">
         <div style="display:flex;gap:16px;align-items:flex-start;">
-          <div class="photo-upload" onclick="document.getElementById('photo-input').click()">
+          <div class="photo-upload" style="cursor:default">
             <i class="ti ti-camera"></i>
-            <span>Upload ID photo</span>
-            <input type="file" id="photo-input" accept="image/*" style="display:none" onchange="previewPhoto(this)">
+            <span>Photo upload<br>not connected</span>
           </div>
           <div style="flex:1;display:flex;flex-direction:column;gap:12px;">
             <div class="form-section-title"><i class="ti ti-user"></i> Personal information</div>
@@ -100,18 +87,18 @@
             <label>Sex <span class="required">*</span></label>
             <select id="sex">
               <option value="">Select</option>
-              <option>Male</option>
-              <option>Female</option>
+              <option value="M">Male</option>
+              <option value="F">Female</option>
             </select>
           </div>
           <div class="form-group">
             <label>Civil status <span class="required">*</span></label>
             <select id="civil-status">
               <option value="">Select</option>
-              <option>Single</option>
-              <option>Married</option>
-              <option>Widowed</option>
-              <option>Others</option>
+              <option value="single">Single</option>
+              <option value="married">Married</option>
+              <option value="widowed">Widowed</option>
+              <option value="others">Others</option>
             </select>
           </div>
         </div>
@@ -145,7 +132,8 @@
         <div class="form-3col">
           <div class="form-group">
             <label>Educational attainment</label>
-            <select>
+            <select id="education">
+              <option value="">Select</option>
               <option>No formal education</option>
               <option>Elementary</option>
               <option>High school</option>
@@ -155,11 +143,11 @@
           </div>
           <div class="form-group">
             <label>Occupation</label>
-            <input type="text" placeholder="e.g. Retired, Farmer">
+            <input type="text" id="occupation" placeholder="e.g. Retired, Farmer">
           </div>
           <div class="form-group">
             <label>Other skills</label>
-            <input type="text" placeholder="e.g. Weaving, Farming">
+            <input type="text" id="other-skills" placeholder="e.g. Weaving, Farming">
           </div>
         </div>
       </div>
@@ -168,11 +156,11 @@
       <div id="tab-family" class="card-body" style="display:none;flex-direction:column;gap:12px;">
         <div class="form-section-title"><i class="ti ti-users"></i> Family composition</div>
         <div id="family-list" style="display:flex;flex-direction:column;gap:8px;">
-          <div class="form-4col" style="align-items:center;">
-            <div class="form-group"><label>Name</label><input type="text" placeholder="Full name"></div>
-            <div class="form-group"><label>Relation</label><select><option>Son</option><option>Daughter</option><option>Spouse</option><option>Sibling</option></select></div>
-            <div class="form-group"><label>Age</label><input type="number" placeholder="Age"></div>
-            <div class="form-group"><label>Occupation</label><input type="text" placeholder="Occupation"></div>
+          <div class="form-4col family-row" style="align-items:center;">
+            <div class="form-group"><label>Name</label><input class="family-name" type="text" placeholder="Full name"></div>
+            <div class="form-group"><label>Relation</label><select class="family-relation"><option>Son</option><option>Daughter</option><option>Spouse</option><option>Sibling</option><option>Other</option></select></div>
+            <div class="form-group"><label>Age</label><input class="family-age" type="number" min="0" placeholder="Age"></div>
+            <div class="form-group"><label>Occupation</label><input class="family-occupation" type="text" placeholder="Occupation"></div>
           </div>
         </div>
         <button class="btn btn-teal btn-sm" style="width:fit-content;" onclick="addFamilyRow()">
@@ -187,110 +175,37 @@
           <div class="form-group">
             <label>Association membership status</label>
             <select id="membership-status">
-              <option value="Non-member">Non-member</option>
-              <option value="Member">Member</option>
+              <option value="false">Non-member</option>
+              <option value="true">Member</option>
             </select>
           </div>
           <div class="form-group">
             <label>Association name</label>
-            <input type="text" placeholder="e.g. Brgy 2 Senior Citizens Association">
+            <input type="text" id="association-name" placeholder="e.g. Brgy 2 Senior Citizens Association">
           </div>
           <div class="form-group">
             <label>Position in association</label>
-            <input type="text" placeholder="e.g. Member, Secretary">
+            <input type="text" id="association-position" placeholder="e.g. Secretary">
+          </div>
+          <div class="form-group">
+            <label>Date of membership</label>
+            <input type="date" id="membership-date">
+          </div>
+          <div class="form-group">
+            <label>Association address</label>
+            <input type="text" id="association-address" placeholder="Optional">
           </div>
         </div>
       </div>
 
       <!-- TAB 4: Documents -->
       <div id="tab-documents" class="card-body" style="display:none;flex-direction:column;gap:14px;">
-        <div class="form-section-title"><i class="ti ti-key"></i> Portal account credentials</div>
+        <div class="form-section-title"><i class="ti ti-key"></i> Portal account</div>
         <div class="alert alert-teal">
           <i class="ti ti-info-circle"></i>
-          A temporary password will be generated automatically when this member is saved. The senior citizen (or their representative) must change it on first login to the portal.
+          Save the senior record first. To create portal credentials, open <strong>Generate accounts</strong> and select this member after saving. Credentials are created by the backend and are shown once.
         </div>
-        <div class="form-2col">
-          <div class="form-group">
-            <label>OSCA ID (portal username)</label>
-            <input type="text" id="gen-osca-id" placeholder="Auto-generated upon saving" readonly>
-          </div>
-          <div class="form-group">
-            <label>Temporary password</label>
-            <div style="display:flex;gap:6px;">
-              <input type="text" id="gen-temp-pw" placeholder="Auto-generated upon saving" readonly style="flex:1;">
-              <button type="button" class="btn btn-ghost btn-sm" onclick="regeneratePassword()" title="Regenerate password"><i class="ti ti-refresh"></i></button>
-            </div>
-          </div>
-        </div>
-        <p style="font-size:11px;color:var(--gray-500);margin-top:-8px;">Print or write down these credentials to give to the senior citizen — they cannot be recovered online and must be reset by staff if lost.</p>
-
-        <div class="form-section-title"><i class="ti ti-file-check"></i> Required documents (OSCA Form No. 1)</div>
-        <div style="display:flex;flex-direction:column;gap:10px;">
-          <div id="docs-list">
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:.5px solid var(--gray-200);">
-              <div style="display:flex;align-items:center;gap:10px;">
-                <div class="req-check miss" id="chk-id"><i class="ti ti-x"></i></div>
-                <div>
-                  <p style="font-size:13px;font-weight:500;color:var(--gray-900)">Valid government ID</p>
-                  <p style="font-size:11px;color:var(--gray-400)">PhilSys, passport, driver's license, etc.</p>
-                </div>
-              </div>
-              <label class="btn btn-ghost btn-sm" style="cursor:pointer;">
-                <i class="ti ti-upload"></i> Upload
-                <input type="file" style="display:none" onchange="markUploaded('chk-id', this)">
-              </label>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:.5px solid var(--gray-200);">
-              <div style="display:flex;align-items:center;gap:10px;">
-                <div class="req-check ok" id="chk-birth"><i class="ti ti-check"></i></div>
-                <div>
-                  <p style="font-size:13px;font-weight:500;color:var(--gray-900)">PSA Birth certificate</p>
-                  <p style="font-size:11px;color:var(--gray-400)">Authenticated by Philippine Statistics Authority</p>
-                </div>
-              </div>
-              <span class="badge badge-ok">Uploaded</span>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:.5px solid var(--gray-200);">
-              <div style="display:flex;align-items:center;gap:10px;">
-                <div class="req-check miss" id="chk-photo"><i class="ti ti-x"></i></div>
-                <div>
-                  <p style="font-size:13px;font-weight:500;color:var(--gray-900)">2x2 ID photo</p>
-                  <p style="font-size:11px;color:var(--gray-400)">5.08cm x 5.08cm, recent photo</p>
-                </div>
-              </div>
-              <label class="btn btn-ghost btn-sm" style="cursor:pointer;">
-                <i class="ti ti-upload"></i> Upload
-                <input type="file" accept="image/*" style="display:none" onchange="markUploaded('chk-photo', this)">
-              </label>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:.5px solid var(--gray-200);">
-              <div style="display:flex;align-items:center;gap:10px;">
-                <div class="req-check miss" id="chk-fullbody"><i class="ti ti-x"></i></div>
-                <div>
-                  <p style="font-size:13px;font-weight:500;color:var(--gray-900)">Full body photo (A4)</p>
-                  <p style="font-size:11px;color:var(--gray-400)">Printed on A4 size bond or photo paper</p>
-                </div>
-              </div>
-              <label class="btn btn-ghost btn-sm" style="cursor:pointer;">
-                <i class="ti ti-upload"></i> Upload
-                <input type="file" accept="image/*" style="display:none" onchange="markUploaded('chk-fullbody', this)">
-              </label>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;">
-              <div style="display:flex;align-items:center;gap:10px;">
-                <div class="req-check miss" id="chk-lce"><i class="ti ti-x"></i></div>
-                <div>
-                  <p style="font-size:13px;font-weight:500;color:var(--gray-900)">LCE endorsement letter</p>
-                  <p style="font-size:11px;color:var(--gray-400)">Issued by Local Chief Executive</p>
-                </div>
-              </div>
-              <label class="btn btn-ghost btn-sm" style="cursor:pointer;">
-                <i class="ti ti-upload"></i> Upload
-                <input type="file" style="display:none" onchange="markUploaded('chk-lce', this)">
-              </label>
-            </div>
-          </div>
-        </div>
+        <div class="alert" style="margin-top:12px"><i class="ti ti-alert-circle"></i> Document uploads are not connected yet; selecting files here would not save them.</div>
       </div>
     </div>
 
@@ -315,9 +230,9 @@
     try {
       const context = await ArkheionAPI.getStaffContext();
       select.innerHTML = '<option value="">Select barangay</option>';
-      context.availableBarangays.forEach(item => select.add(new Option(item.name, item.name)));
+      context.availableBarangays.forEach(item => select.add(new Option(item.name, String(item.id))));
       if (context.user.role === 'regular_staff') {
-        select.value = context.user.barangay.name;
+        select.value = String(context.user.barangay.id);
         select.disabled = true;
       } else {
         select.disabled = false;
@@ -329,86 +244,20 @@
   }
   loadStaffBarangay();
 
-  // ---- Scan & auto fill-up -------------------------------------------------
-  // Simulated NLP extraction (same fake pipeline used in upload.html) — swap
-  // this out for a real call to the spaCy/HuggingFace backend once it exists.
-  function handleScanFile(input) {
-    if (!input.files[0]) return;
-    simulateScanAndFill(input.files[0].name);
-  }
-
-  function simulateScanAndFill(filename) {
-    const btn = document.getElementById('scan-btn');
-    const originalLabel = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite;"></i> Scanning...';
-
-    setTimeout(() => {
-      // Fake extracted data — mirrors the same demo result as upload.html's
-      // simulated NLP classification (PSA Birth Certificate for Juan dela Cruz).
-      const extracted = {
-        lastName: 'Dela Cruz',
-        firstName: 'Juan',
-        middleName: 'Santos',
-        dob: '1945-01-05',
-        pob: 'Carmen, Davao del Norte',
-        sex: 'Male',
-        address: 'Purok 3, Brgy. Ising',
-        barangay: 'Ising',
-      };
-
-      document.getElementById('last-name').value   = extracted.lastName;
-      document.getElementById('first-name').value  = extracted.firstName;
-      document.getElementById('middle-name').value = extracted.middleName;
-      document.getElementById('dob').value         = extracted.dob;
-      document.getElementById('pob').value         = extracted.pob;
-      document.getElementById('address').value     = extracted.address;
-
-      const sexSelect = document.getElementById('sex');
-      if (sexSelect) sexSelect.value = extracted.sex;
-
-      const brgySelect = document.getElementById('barangay');
-      if (brgySelect) {
-        const hasOption = Array.from(brgySelect.options).some(o => o.value === extracted.barangay || o.textContent === extracted.barangay);
-        if (hasOption) brgySelect.value = extracted.barangay;
-      }
-
-      computeAge();
-
-      btn.disabled = false;
-      btn.innerHTML = originalLabel;
-      showToast(`Form auto-filled from "${filename}". Please review before saving.`);
-    }, 1600);
-  }
-
   function switchTab(el, tabId) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('[id^="tab-"]').forEach(t => t.style.display = 'none');
     el.classList.add('active');
     document.getElementById(tabId).style.display = 'flex';
-    if (tabId === 'tab-documents' && !document.getElementById('gen-osca-id').value) {
-      generateCredentials();
-    }
-  }
-
-  function generateCredentials() {
-    const year = new Date().getFullYear();
-    const oscaId = year + '-' + Math.floor(Math.random()*900 + 100);
-    document.getElementById('gen-osca-id').value = oscaId;
-    regeneratePassword();
-  }
-
-  function regeneratePassword() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-    let pw = '';
-    for (let i = 0; i < 8; i++) pw += chars[Math.floor(Math.random()*chars.length)];
-    document.getElementById('gen-temp-pw').value = pw;
   }
 
   function computeAge() {
     const dob = new Date(document.getElementById('dob').value);
     if (!dob) return;
-    const age = Math.floor((new Date() - dob) / (365.25 * 24 * 60 * 60 * 1000));
+    if (Number.isNaN(dob.getTime())) return;
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    if (today.getMonth() < dob.getMonth() || (today.getMonth() === dob.getMonth() && today.getDate() < dob.getDate())) age -= 1;
     document.getElementById('age').value = age;
   }
 
@@ -418,38 +267,15 @@
     row.className = 'form-4col';
     row.style.alignItems = 'center';
     row.innerHTML = `
-      <div class="form-group"><label>Name</label><input type="text" placeholder="Full name"></div>
-      <div class="form-group"><label>Relation</label><select><option>Son</option><option>Daughter</option><option>Spouse</option><option>Sibling</option></select></div>
-      <div class="form-group"><label>Age</label><input type="number" placeholder="Age"></div>
-      <div class="form-group"><label>Occupation</label><input type="text" placeholder="Occupation"></div>
+      <div class="form-group"><label>Name</label><input class="family-name" type="text" placeholder="Full name"></div>
+      <div class="form-group"><label>Relation</label><select class="family-relation"><option>Son</option><option>Daughter</option><option>Spouse</option><option>Sibling</option><option>Other</option></select></div>
+      <div class="form-group"><label>Age</label><input class="family-age" type="number" min="0" placeholder="Age"></div>
+      <div class="form-group"><label>Occupation</label><input class="family-occupation" type="text" placeholder="Occupation"></div>
     `;
     list.appendChild(row);
   }
 
-  function markUploaded(checkId, input) {
-    if (!input.files[0]) return;
-    const chk = document.getElementById(checkId);
-    chk.className = 'req-check ok';
-    chk.innerHTML = '<i class="ti ti-check"></i>';
-    const btn = input.parentElement;
-    btn.outerHTML = `<span class="badge badge-ok">Uploaded</span>`;
-  }
-
-  function previewPhoto(input) {
-    if (!input.files[0]) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-      const box = input.parentElement;
-      box.style.backgroundImage = `url(${e.target.result})`;
-      box.style.backgroundSize = 'cover';
-      box.style.backgroundPosition = 'center';
-      box.querySelector('i').style.display = 'none';
-      box.querySelector('span').style.display = 'none';
-    };
-    reader.readAsDataURL(input.files[0]);
-  }
-
-  function saveRecord() {
+  async function saveRecord() {
     const required = ['last-name','first-name','dob','sex','civil-status','address','barangay','pob'];
     let allFilled = true;
     required.forEach(id => {
@@ -465,42 +291,46 @@
       showToast('Please fill in all required fields.', 'error');
       return;
     }
-    if (!document.getElementById('gen-osca-id').value) {
-      generateCredentials();
-    }
-    const oscaId = document.getElementById('gen-osca-id').value;
-    const fullName = [
-      document.getElementById('first-name').value.trim(),
-      document.getElementById('middle-name').value.trim(),
-      document.getElementById('last-name').value.trim(),
-    ].filter(Boolean).join(' ');
-    const submission = {
-      id: 'SUB-' + Date.now(),
-      type: 'New member record',
-      title: 'New member registration — ' + fullName,
-      name: fullName,
-      oscaId,
-      barangay: document.getElementById('barangay').value,
-      age: document.getElementById('age').value,
+    const buttons = Array.from(document.querySelectorAll('button[onclick="saveRecord()"]'));
+    buttons.forEach(button => { button.disabled = true; });
+    buttons.forEach(button => { button.dataset.originalLabel = button.innerHTML; button.innerHTML = '<i class="ti ti-loader-2"></i> Saving…'; });
+    const familyMembers = Array.from(document.querySelectorAll('.family-row')).map(row => ({
+      name: row.querySelector('.family-name').value.trim(),
+      relation: row.querySelector('.family-relation').value,
+      age: row.querySelector('.family-age').value ? Number(row.querySelector('.family-age').value) : null,
+      occupation: row.querySelector('.family-occupation').value.trim(),
+    })).filter(member => member.name);
+    const incomeValue = document.getElementById('income').value;
+    const member = {
+      first_name: document.getElementById('first-name').value.trim(),
+      middle_name: document.getElementById('middle-name').value.trim(),
+      last_name: document.getElementById('last-name').value.trim(),
+      suffix: document.getElementById('suffix').value.trim(),
+      date_of_birth: document.getElementById('dob').value,
       sex: document.getElementById('sex').value,
-      dateOfBirth: document.getElementById('dob').value,
-      civilStatus: document.getElementById('civil-status').value,
-      membershipStatus: document.getElementById('membership-status').value,
+      civil_status: document.getElementById('civil-status').value,
+      place_of_birth: document.getElementById('pob').value.trim(),
       address: document.getElementById('address').value.trim(),
-      placeOfBirth: document.getElementById('pob').value.trim(),
-      submittedBy: localStorage.getItem('ark_username') || 'Barangay Staff',
-      submittedAt: new Date().toISOString(),
-      status: 'Awaiting review',
+      barangay: Number(document.getElementById('barangay').value),
+      educational_attainment: document.getElementById('education').value,
+      occupation: document.getElementById('occupation').value.trim(),
+      annual_income: incomeValue ? incomeValue : null,
+      other_skills: document.getElementById('other-skills').value.trim(),
+      is_association_member: document.getElementById('membership-status').value === 'true',
+      association_name: document.getElementById('association-name').value.trim(),
+      association_address: document.getElementById('association-address').value.trim(),
+      date_of_membership: document.getElementById('membership-date').value || null,
+      position: document.getElementById('association-position').value.trim(),
+      family_members: familyMembers,
     };
-    const submissions = JSON.parse(localStorage.getItem('ark_record_submissions') || '[]');
-    submissions.unshift(submission);
-    localStorage.setItem('ark_record_submissions', JSON.stringify(submissions));
-
-    showToast('Record sent to Headstaff for review.');
-    setTimeout(() => {
-      alert('Record sent to Headstaff for review.\n\nOSCA ID: ' + oscaId + '\nThis frontend demo stores the submission in this browser only.');
-      location.href = 'members.html';
-    }, 350);
+    try {
+      const saved = await ArkheionAPI.post('/api/seniors/', member);
+      showToast(`Senior record saved. OSCA ID: ${saved.osca_id}`);
+      setTimeout(() => { location.href = 'members.html'; }, 1200);
+    } catch (error) {
+      showToast(error.message || 'Could not save the senior record.', 'error');
+      buttons.forEach(button => { button.disabled = false; button.innerHTML = button.dataset.originalLabel; });
+    }
   }
 </script>
 </body>

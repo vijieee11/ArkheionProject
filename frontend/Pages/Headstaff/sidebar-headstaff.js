@@ -66,9 +66,6 @@ function renderHeadStaffSidebar(activePage) {
 
   html += `
     <div class="sb-spacer"></div>
-    <a class="nav-item" href="../Staff/dashboard.html">
-      <i class="ti ti-arrow-back-up"></i>Switch to Staff view
-    </a>
     <a class="nav-item" href="#" onclick="logoutHS(event)">
       <i class="ti ti-logout"></i>Logout
     </a>

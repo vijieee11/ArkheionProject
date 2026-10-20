@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arkheion — Staff account request</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:22px; background:var(--gray-50); }
+    .signup-card { width:min(100%,620px); background:#fff; border:1px solid var(--gray-200); border-radius:var(--radius-lg); box-shadow:var(--shadow); padding:30px; }
+    .signup-brand { color:var(--navy); font-family:var(--font-display); font-size:21px; font-weight:700; margin-bottom:18px; }
+    .signup-card h1 { margin:0 0 6px; color:var(--gray-900); font:600 22px var(--font-display); }
+    .signup-card .intro { color:var(--gray-600); font-size:13px; line-height:1.6; margin:0 0 20px; }
+    .signup-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 14px; }
+    .signup-grid .wide { grid-column:1/-1; }
+    .signup-card label { display:block; font-size:12px; font-weight:600; margin:0 0 6px; color:var(--gray-700); }
+    .signup-card input,.signup-card select { display:block; width:100%; min-height:44px; padding:10px 12px; border:1px solid #b8c3cf; border-radius:7px; background:#fff; color:#17212b; font:inherit; box-shadow:0 1px 2px rgba(15,23,42,.06); }
+    .signup-card input::placeholder { color:#8a96a3; }
+    .signup-card input:focus,.signup-card select:focus { outline:0; border-color:#0b6b59; box-shadow:0 0 0 3px rgba(11,107,89,.16); }
+    .signup-card select:disabled { color:#6b7280; background:#f8fafc; }
+    .signup-card .form-group { margin-bottom:14px; }
+    .signup-button { width:100%; min-height:44px; border:0; border-radius:var(--radius-sm); background:var(--navy); color:var(--gold); font-weight:700; cursor:pointer; }
+    .signup-button:disabled { opacity:.65; cursor:wait; }
+    .notice { display:none; margin:0 0 16px; padding:11px 13px; border-radius:8px; font-size:13px; line-height:1.5; }
+    .notice.error { display:block; color:#8b1e14; background:#fff0ed; border:1px solid #f5c4b3; }
+    .notice.success { display:block; color:#075b48; background:#e8f7f2; border:1px solid #9fddce; }
+    .signup-footer { margin:16px 0 0; text-align:center; font-size:12px; color:var(--gray-600); }
+    .signup-footer a { color:var(--navy-light); font-weight:600; }
+    @media(max-width:560px) { .signup-card{padding:22px 18px;} .signup-grid{grid-template-columns:1fr;} .signup-grid .wide{grid-column:auto;} }
+  </style>
+</head>
+<body>
+  <main class="signup-card">
+    <div class="signup-brand">Arkheion · OSCA Carmen</div>
+    <h1>Request a staff account</h1>
+    <p class="intro">Submit your details and requested barangay. Your account remains inactive until OSCA Admin verifies and approves your request.</p>
+    <div id="signup-notice" class="notice" role="status" aria-live="polite"></div>
+    <form id="staff-signup-form" class="signup-grid">
+      <div class="form-group"><label for="first-name">First name *</label><input id="first-name" name="first_name" autocomplete="given-name" required maxlength="150"></div>
+      <div class="form-group"><label for="last-name">Last name *</label><input id="last-name" name="last_name" autocomplete="family-name" required maxlength="150"></div>
+      <div class="form-group"><label for="username">Username *</label><input id="username" name="username" autocomplete="username" required maxlength="150"></div>
+      <div class="form-group"><label for="email">Email address *</label><input id="email" name="email" type="email" autocomplete="email" required></div>
+      <div class="form-group"><label for="contact-number">Contact number</label><input id="contact-number" name="contact_number" type="tel" autocomplete="tel" maxlength="20"></div>
+      <div class="form-group"><label for="barangay">Requested barangay *</label><select id="barangay" name="barangay" required><option value="">Loading barangays…</option></select></div>
+      <div class="form-group"><label for="password">Password *</label><input id="password" name="password" type="password" autocomplete="new-password" required></div>
+      <div class="form-group"><label for="password-confirm">Confirm password *</label><input id="password-confirm" name="password_confirm" type="password" autocomplete="new-password" required></div>
+      <div class="wide"><button id="signup-button" class="signup-button" type="submit">Submit account request</button></div>
+    </form>
+    <p class="signup-footer">Already approved? <a href="login.html">Go to sign in</a></p>
+  </main>
+  <script src="api.js"></script>
+  <script>
+    const form = document.getElementById('staff-signup-form');
+    const notice = document.getElementById('signup-notice');
+    const button = document.getElementById('signup-button');
+    const barangaySelect = document.getElementById('barangay');
+
+    function showNotice(message, type) {
+      notice.className = `notice ${type}`;
+      notice.textContent = message;
+      notice.scrollIntoView({ behavior:'smooth', block:'nearest' });
+    }
+
+    async function loadBarangays() {
+      try {
+        const barangays = await ArkheionAPI.getBarangays();
+        barangaySelect.replaceChildren(new Option('Select your barangay', ''));
+        barangays.forEach((item) => barangaySelect.add(new Option(item.name, item.id)));
+      } catch (error) {
+        barangaySelect.replaceChildren(new Option('Could not load barangays', ''));
+        showNotice(error.message || 'Could not load barangays. Please refresh the page.', 'error');
+      }
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      notice.className = 'notice';
+      const values = Object.fromEntries(new FormData(form).entries());
+      values.barangay = Number(values.barangay);
+      if (values.password !== values.password_confirm) {
+        showNotice('The passwords do not match.', 'error');
+        return;
+      }
+      button.disabled = true;
+      button.textContent = 'Submitting request…';
+      try {
+        const result = await ArkheionAPI.post('/api/staff-registration/', values, { auth:false });
+        form.reset();
+        showNotice(result.detail || 'Request submitted. Wait for OSCA Admin approval before signing in.', 'success');
+      } catch (error) {
+        showNotice(error.message || 'Unable to submit the request. Please try again.', 'error');
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Submit account request';
+      }
+    });
+    loadBarangays();
+  </script>
+</body>
+</html>

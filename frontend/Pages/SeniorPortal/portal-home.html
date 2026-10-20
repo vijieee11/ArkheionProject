@@ -57,21 +57,20 @@
   <div class="portal-navlinks" id="portalNavLinks">
     <a class="active" href="portal-home.html">Home</a>
     <a href="portal-records.html">My records</a>
-    <a href="portal-booklet.html">Digital booklet</a>
     <a href="portal-services.html">Services</a>
     <a href="portal-faq.html">FAQ</a>
     <a href="portal-contact.html">Contact</a>
   </div>
   <div class="portal-user">
-    <div class="portal-avatar" id="portal-avatar-initials">JC</div>
-    <span class="portal-uname" id="portal-display-name">Juan dela Cruz</span>
+    <div class="portal-avatar" id="portal-avatar-initials">SC</div>
+    <span class="portal-uname" id="portal-display-name">Senior citizen</span>
     <button class="btn btn-ghost btn-sm" style="margin-left:8px;" onclick="location.href='../login.html'"><i class="ti ti-logout"></i></button>
   </div>
 </nav>
 
 <div class="portal-hero">
   <div>
-    <h2>Welcome back, <span id="portal-greeting-name">Juan dela Cruz</span> 👋</h2>
+    <h2>Welcome back, <span id="portal-greeting-name">Senior citizen</span> 👋</h2>
     <p>OSCA ID: <span id="portal-osca-id">2024-001</span> &nbsp;·&nbsp; <span id="portal-barangay">Barangay not set</span> &nbsp;·&nbsp; Member portal</p>
   </div>
   <div class="portal-status">
@@ -86,24 +85,6 @@
     <p class="section-heading">Your services</p>
     <p class="section-sub">Check your personal pension details and reminders for booklet-based assistance.</p>
     <div class="svc-grid">
-
-      <div class="svc-card">
-        <div class="svc-head">
-          <div class="svc-icon" style="background:var(--blue-50)"><i class="ti ti-book-2" style="color:var(--blue-900)"></i></div>
-          <div>
-            <div class="svc-title">Medicine and grocery booklet</div>
-        <div class="svc-sub">A digital backup of your OSCA booklet</div>
-          </div>
-        </div>
-        <div class="svc-body">
-          <div class="svc-row"><span class="svc-label">Backup</span><span class="svc-value">Photos and verified entries</span></div>
-          <div class="svc-row"><span class="svc-label">Download</span><span class="svc-value">Print or save as PDF</span></div>
-          <p style="font-size:12px;color:var(--gray-500);margin-top:8px;">Upload clear photos of booklet pages or receipts. OSCA staff reviews them before they are marked verified.</p>
-        </div>
-        <button class="svc-btn" style="background:var(--blue-900);color:var(--blue-50);" onclick="location.href='portal-booklet.html'">
-          <i class="ti ti-book-2"></i> Open digital booklet
-        </button>
-      </div>
 
       <div class="svc-card">
         <div class="svc-head">
@@ -183,7 +164,7 @@
         <span class="chat-status">Online</span>
       </div>
       <div class="chat-messages" id="chatMessages">
-        <div class="msg bot">Hello Lolo Juan! I am your Arkheion assistant. How can I help you today? 😊</div>
+        <div class="msg bot">Hello! I am your Arkheion assistant. How can I help you today? 😊</div>
         <div class="msg usr">Asa makita akong medicine ug grocery record?</div>
         <div class="msg bot">Ang imong release record naa sa <strong>physical booklet</strong>. Palihug dad-a ang booklet ug imong OSCA ID kung moadto sa OSCA. Tawagi ang opisina o pangutan-a ang barangay staff para sa schedule.</div>
         <div class="msg usr">Unsa pa akong kulang?</div>
@@ -271,5 +252,7 @@
     }, 1000);
   }
 </script>
+<script src="../api.js"></script>
+<script src="portal-identity.js"></script>
 </body>
 </html>

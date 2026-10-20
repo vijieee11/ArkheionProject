@@ -1,7 +1,9 @@
 // Turns raw usernames like "osca_staff2" into a friendly "Staff 2" display name.
 // If role is 'head_staff', always shows "Head Staff" regardless of the username used to log in
 // (so switching between the Head Staff and Staff views stays consistent).
-function formatStaffName(username, role) {
+function formatStaffName(username, role, firstName, lastName) {
+  const actualName = [firstName, lastName].filter(Boolean).join(' ').trim();
+  if (actualName) return actualName;
   if (role === 'head_staff') return 'Head Staff';
   if (!username) return 'Staff';
   const staffMatch = username.match(/^osca_staff(\d+)$/i);
@@ -14,6 +16,31 @@ function formatStaffName(username, role) {
     .filter(Boolean)
     .map(w => w[0].toUpperCase() + w.slice(1))
     .join(' ');
+}
+
+let staffIdentityPromise = null;
+function getStaffIdentity() {
+  if (staffIdentityPromise) return staffIdentityPromise;
+  staffIdentityPromise = new Promise((resolve, reject) => {
+    const loadIdentity = () => {
+      if (!window.ArkheionAPI) return reject(new Error('Staff profile API is unavailable.'));
+      window.ArkheionAPI.getCurrentUser().then(resolve, reject);
+    };
+    if (window.ArkheionAPI) return loadIdentity();
+    let script = document.querySelector('script[data-arkheion-api]');
+    if (!script) {
+      script = document.createElement('script');
+      script.src = '../api.js';
+      script.dataset.arkheionApi = 'true';
+      document.head.appendChild(script);
+    }
+    script.addEventListener('load', loadIdentity, { once: true });
+    script.addEventListener('error', () => reject(new Error('Could not load the staff profile API.')), { once: true });
+  }).catch(error => {
+    staffIdentityPromise = null;
+    throw error;
+  });
+  return staffIdentityPromise;
 }
 
 function renderSidebar(activePage) {
@@ -31,7 +58,6 @@ function renderSidebar(activePage) {
     ]},
     { section: 'Services', items: [
       { id: 'booklet-summary', label: 'Booklet summary', icon: 'ti-notes', href: 'booklet-summary.html' },
-      { id: 'booklet-review', label: 'Digital booklet review', icon: 'ti-book-2', href: 'booklet-review.html' },
       { id: 'pension',  label: 'Pension',   icon: 'ti-cash',          href: 'pension.html' },
     ]},
     { section: 'Documents', items: [
@@ -78,7 +104,7 @@ function renderSidebar(activePage) {
     <div class="sb-user">
       <div class="sb-avatar">${initials}</div>
       <div>
-        <div class="sb-uname">${displayName}</div>
+        <div class="sb-uname" id="staffSidebarName">${displayName}</div>
         <div class="sb-urole">${roleLabel}</div>
       </div>
     </div>
@@ -86,6 +112,12 @@ function renderSidebar(activePage) {
 
   document.body.insertAdjacentHTML('afterbegin', html);
   ensureLogoutModal();
+  getStaffIdentity().then(account => {
+    const name = formatStaffName(account.username, account.role, account.first_name, account.last_name);
+    const nameElement = document.getElementById('staffSidebarName');
+    if (nameElement) nameElement.textContent = name;
+    document.dispatchEvent(new CustomEvent('arkheion:staff-identity-loaded', { detail: { account, displayName: name } }));
+  }).catch(() => {});
 }
 
 // Injects the "Confirm logout" modal once per page, reusing the same

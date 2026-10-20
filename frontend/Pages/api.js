@@ -130,6 +130,34 @@
     return data;
   }
 
+  async function download(path, filename) {
+    const headers = new Headers({ Accept: "application/octet-stream" });
+    const token = sessionStorage.getItem("ark_token");
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    let response = await fetch(buildUrl(path), { method: "GET", headers, cache: "no-store" });
+    if (response.status === 401) {
+      const freshToken = await refreshAccessToken();
+      if (!freshToken) {
+        expireSession();
+        throw new Error("Your session expired. Please sign in again.");
+      }
+      headers.set("Authorization", `Bearer ${freshToken}`);
+      response = await fetch(buildUrl(path), { method: "GET", headers, cache: "no-store" });
+    }
+    if (!response.ok) {
+      const data = await readResponse(response);
+      throw new Error(toMessage(data, `Download failed (${response.status}).`));
+    }
+    const objectUrl = URL.createObjectURL(await response.blob());
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = filename || "document";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  }
+
   async function getStaffContext() {
     if (staffContextInProgress) return staffContextInProgress;
     staffContextInProgress = (async function () {
@@ -206,6 +234,7 @@
     request,
     get: (path, options) => request(path, Object.assign({}, options, { method: 'GET' })),
     post: (path, body, options) => request(path, Object.assign({}, options, { method: 'POST', body })),
+    download,
     patch: (path, body, options) => request(path, Object.assign({}, options, { method: 'PATCH', body })),
     delete: (path, options) => request(path, Object.assign({}, options, { method: 'DELETE' })),
     getCurrentUser: () => request('/api/me/'),

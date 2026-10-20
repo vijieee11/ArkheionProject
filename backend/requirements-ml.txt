@@ -1,0 +1,10 @@
+# Optional dependencies for text extraction, OCR, and classifier training.
+# Install these into the same virtual environment used by manage.py.
+scikit-learn
+joblib
+pypdf
+python-docx
+Pillow
+rapidocr
+onnxruntime
+PyMuPDF

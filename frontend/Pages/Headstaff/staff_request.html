@@ -3,414 +3,143 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arkheion — Staff Requests</title>
+  <title>Arkheion — Staff account requests</title>
   <link rel="stylesheet" href="output.css">
   <style>
-    .approvals-table th { padding: 12px 16px; font-size: 11.5px; }
-    .approvals-table td { padding: 15px 16px; font-size: 13px; }
-    .approvals-table th:first-child, .approvals-table td:first-child { width: 34%; }
-
-    /* Pill-shaped action buttons (scoped to this table only) */
-    .approvals-table .btn-lightgreen,
-    .approvals-table .btn-approve {
-      background: var(--teal-50);
-      color: var(--navy);
-      border: none;
-      border-radius: 999px;
-      font-weight: 600;
-    }
-    .approvals-table .btn-lightgreen:hover,
-    .approvals-table .btn-approve:hover { opacity: .85; }
-
-    .approvals-table .btn-coral {
-      background: #fdecea;
-      color: #c0392b;
-      border: none;
-      border-radius: 999px;
-      font-weight: 600;
-    }
-    .approvals-table .btn-coral:hover { opacity: .85; }
-
-    .rm-footer .btn-lightgreen,
-    .rm-footer .btn-approve {
-      background: var(--teal-50);
-      color: var(--navy);
-      border: 1.5px solid var(--navy-light);
-      border-radius: 999px;
-      font-weight: 600;
-    }
-    .rm-footer .btn-lightgreen:hover,
-    .rm-footer .btn-approve:hover { opacity: .85; }
-
-    .rm-footer .btn-coral {
-      background: #fdecea;
-      color: #c0392b;
-      border: 1.5px solid #f3c6c1;
-      border-radius: 999px;
-      font-weight: 600;
-    }
-    .rm-footer .btn-coral:hover { opacity: .85; }
-
-    .approvals-table .btn { height: 32px; padding: 0 16px; font-size: 12.5px; justify-content: center; }
-    .approvals-table .btn[disabled] { opacity: .4; cursor: not-allowed; pointer-events: none; }
-
-    /* View: icon in a light bordered square */
-    .approvals-table .btn-view-icon {
-      background: #fff;
-      border: 1px solid var(--gray-200, #e5e7eb);
-      color: var(--gray-600);
-      width: 32px;
-      height: 32px;
-      padding: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    .approvals-table .btn-view-icon:hover { background: var(--gray-100); color: var(--navy); }
-    .approvals-table .btn-view-icon i { font-size: 16px; }
-
-    .action-grid { display: grid; grid-template-columns: 150px 88px 32px; gap: 8px; align-items: center; }
-    .action-grid .btn { width: 100%; }
-
-    .badge-approved { background: var(--teal-50); color: var(--navy); }
-    .badge-declined { background: #fdecea; color: #c0392b; }
-
-    /* Request detail modal (self-contained, guarded with !important so it always shows) */
-    .rm-overlay {
-      display: none !important;
-      position: fixed !important; inset: 0;
-      background: rgba(15,23,42,.45);
-      align-items: center; justify-content: center;
-      z-index: 2147483000;
-    }
-    .rm-overlay.open { display: flex !important; }
-    .rm-modal {
-      background: #fff;
-      width: 420px;
-      max-width: 92vw;
-      border-radius: 12px;
-      box-shadow: 0 20px 50px rgba(0,0,0,.25);
-      overflow: hidden;
-    }
-    .rm-header {
-      display: flex; align-items: flex-start; justify-content: space-between;
-      padding: 18px 20px 12px;
-      border-bottom: .5px solid var(--gray-200);
-    }
-    .rm-header-id { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
-    .rm-close {
-      border: none; background: transparent; color: var(--gray-500);
-      width: 28px; height: 28px; border-radius: 6px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .rm-close:hover { background: var(--gray-100); color: var(--navy); }
-    .rm-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
-    .rm-row { display: flex; justify-content: space-between; font-size: 12.5px; }
-    .rm-row span:first-child { color: var(--gray-500); }
-    .rm-row span:last-child { color: var(--gray-900); font-weight: 500; text-align: right; }
-    .rm-desc { font-size: 12.5px; color: var(--gray-700); line-height: 1.5; background: var(--gray-50, #f8fafc); padding: 10px 12px; border-radius: 8px; }
-    .rm-footer { display: flex; gap: 8px; padding: 14px 20px 20px; }
-    .rm-footer .btn { flex: 1; height: 34px; font-size: 12.5px; justify-content: center; }
-    .rm-resolved-note { font-size: 12.5px; color: var(--gray-500); text-align: center; width: 100%; padding: 6px 0; }
+    .request-note { padding:13px 15px; border:1px solid #b9e5d8; border-radius:9px; background:#effaf6; color:#155e4b; font-size:13px; line-height:1.55; }
+    .request-alert { display:none; margin:14px 0; padding:11px 13px; border-radius:8px; font-size:13px; }
+    .request-alert.error { display:block; color:#8b1e14; background:#fff0ed; border:1px solid #f5c4b3; }
+    .request-alert.success { display:block; color:#075b48; background:#e8f7f2; border:1px solid #9fddce; }
+    .request-tools { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .request-tools select { min-height:36px; border:1px solid var(--gray-200); border-radius:7px; padding:5px 9px; background:#fff; }
+    .requests-table select { min-width:135px; min-height:34px; border:1px solid var(--gray-200); border-radius:7px; padding:5px 7px; }
+    .request-actions { display:flex; flex-direction:column; gap:6px; min-width:145px; }
+    .request-actions .btn { justify-content:center; }
+    .request-actions .btn-approve { border:1px solid #0b6b59; box-shadow:0 1px 2px rgba(15,23,42,.1); }
+    .request-actions .btn-approve:hover { border-color:#064e3b; box-shadow:0 0 0 2px rgba(11,107,89,.14); }
+    .empty-state { padding:35px 15px; text-align:center; color:var(--gray-500); }
+    .status-pill { display:inline-block; border-radius:99px; padding:4px 9px; font-size:11px; font-weight:600; text-transform:capitalize; background:#fff4d6; color:#805b00; }
+    @media(max-width:760px) { .requests-table-wrap{overflow-x:auto;} .requests-table{min-width:850px;} }
   </style>
 </head>
 <body>
 <script src="sidebar-headstaff.js"></script>
 <div class="main">
   <div class="topbar">
-    <span class="topbar-title">Staff Requests</span>
-    <div class="topbar-actions" style="margin-left:auto;">
-      <button class="btn btn-ghost btn-sm" onclick="location.href='audit.html'"><i class="ti ti-shield-check"></i> Audit log</button>
-      <button class="btn btn-navy btn-sm" onclick="location.href='headstaff.html'"><i class="ti ti-plus"></i> Add staff</button>
-      <div class="topbar-avatar" style="background:var(--gold);color:var(--navy);">HS</div>
-    </div>
+    <span class="topbar-title">Staff account requests</span>
+    <div class="topbar-actions" style="margin-left:auto;"><button class="btn btn-ghost btn-sm" onclick="loadRequests()"><i class="ti ti-refresh"></i> Refresh</button></div>
   </div>
-
-  <div class="content">
+  <main class="content">
     <div>
-      <h1 style="font-family:var(--font-display);font-size:20px;font-weight:600;color:var(--gray-900)">Requests from your staff</h1>
-      <p style="font-size:13px;color:var(--gray-600);margin-top:3px">OSCA Carmen — 4 requests need action, oldest submitted 2 days ago</p>
+      <h1 style="font-family:var(--font-display);font-size:20px;font-weight:600;color:var(--gray-900)">Review staff applications</h1>
+      <p style="font-size:13px;color:var(--gray-600);margin-top:4px">Staff submit their own account request. Approve only after verifying their identity and barangay assignment.</p>
     </div>
-
-    <!-- Key stats -->
-    <div class="stats-grid stats-4">
-      <div class="stat-card">
-        <div class="stat-label"><i class="ti ti-inbox-in"></i> Pending requests</div>
-        <div class="stat-value" style="color:#e74c3c;">4</div>
-        <div class="stat-sub">Awaiting your action</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label"><i class="ti ti-key"></i> Password resets</div>
-        <div class="stat-value">2</div>
-        <div class="stat-sub">Part of this week's queue</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label"><i class="ti ti-lock-open"></i> Access requests</div>
-        <div class="stat-value">1</div>
-        <div class="stat-sub">Part of this week's queue</div>
-      </div>
-      <div class="stat-card teal">
-        <div class="stat-label"><i class="ti ti-circle-check"></i> Resolved today</div>
-        <div class="stat-value">3</div>
-        <div class="stat-sub">Processed today</div>
-      </div>
-    </div>
-
-    <!-- Requests table -->
-    <div class="card">
+    <div class="request-note"><strong>Approval controls account access.</strong> Pending accounts cannot sign in. On approval, the selected barangay is assigned and the staff account is activated. Rejected accounts remain inactive.</div>
+    <div id="request-alert" class="request-alert" role="status" aria-live="polite"></div>
+    <section class="stats-grid stats-3">
+      <div class="stat-card"><div class="stat-label"><i class="ti ti-users"></i> Requests shown</div><div class="stat-value" id="stat-total">—</div><div class="stat-sub">Based on selected filter</div></div>
+      <div class="stat-card amber"><div class="stat-label"><i class="ti ti-hourglass"></i> Pending review</div><div class="stat-value" id="stat-pending">—</div><div class="stat-sub">Awaiting OSCA Admin decision</div></div>
+      <div class="stat-card teal"><div class="stat-label"><i class="ti ti-circle-check"></i> Approved</div><div class="stat-value" id="stat-approved">—</div><div class="stat-sub">In the selected result set</div></div>
+    </section>
+    <section class="card">
       <div class="card-header">
-        <div>
-          <div class="card-title">All staff requests</div>
-          <div class="card-subtitle">Sorted by date submitted, oldest first</div>
-        </div>
-        <div class="topbar-search" style="max-width:280px;">
-          <i class="ti ti-search"></i>
-          <input type="text" id="requestsSearch" placeholder="Search staff name" oninput="applyRequestFilters()">
-        </div>
+        <div><div class="card-title">Applications</div><div class="card-subtitle">Confirm the applicant's barangay before approving</div></div>
+        <div class="request-tools"><input id="request-search" type="search" placeholder="Search name or username" oninput="renderRequests()" style="min-height:36px;border:1px solid var(--gray-200);border-radius:7px;padding:5px 10px"><select id="status-filter" onchange="loadRequests()"><option value="pending">Pending</option><option value="all">All requests</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div>
       </div>
-
-      <div class="tabs">
-        <div class="tab active" onclick="filterRequests('All', this)">All (4)</div>
-        <div class="tab" onclick="filterRequests('Password reset', this)">Password reset</div>
-        <div class="tab" onclick="filterRequests('Access request', this)">Access</div>
-        <div class="tab" onclick="filterRequests('Schedule/Leave', this)">Schedule/Leave</div>
+      <div class="requests-table-wrap">
+        <table class="approvals-table requests-table">
+          <thead><tr><th>Applicant</th><th>Contact</th><th>Requested barangay</th><th>Confirm assignment</th><th>Submitted</th><th>Status / action</th></tr></thead>
+          <tbody id="requests-body"><tr><td colspan="6" class="empty-state">Loading requests…</td></tr></tbody>
+        </table>
       </div>
-
-      <table class="approvals-table">
-        <thead>
-          <tr><th>Request</th><th>Type</th><th>Staff member</th><th>Submitted</th><th>Status</th><th>Actions</th></tr>
-        </thead>
-        <tbody>
-          <tr data-id="SR-2026-0301" data-title="Forgot login password" data-type="Password reset"
-              data-staff="Regular Staff 1" data-submitted="Jul 25, 2026" data-status="Awaiting action"
-              data-desc="Staff member reported being locked out of their account and is unable to reset it themselves. Verify identity before resetting.">
-            <td>
-              <div class="td-bold">Forgot login password</div>
-              <div class="td-muted" style="font-size:11.5px;margin-top:2px;">SR-2026-0301 · Password reset</div>
-            </td>
-            <td><span class="badge badge-miss">Password reset</span></td>
-            <td class="td-muted">Regular Staff 1</td>
-            <td class="td-muted">Jul 25, 2026</td>
-            <td><span class="badge badge-pend">Awaiting action</span></td>
-            <td>
-              <div class="action-grid">
-                <button class="btn btn-lightgreen" onclick="resolveRequest(this, 'approve')">Reset password</button>
-                <button class="btn btn-coral" onclick="resolveRequest(this, 'decline')">Decline</button>
-                <button class="btn-view-icon" title="View request" onclick="openRequestModal(this)"><i class="ti ti-eye"></i></button>
-              </div>
-            </td>
-          </tr>
-          <tr data-id="SR-2026-0302" data-title="Forgot login password" data-type="Password reset"
-              data-staff="Regular Staff 3" data-submitted="Jul 25, 2026" data-status="Awaiting action"
-              data-desc="Staff member reported being locked out of their account and is unable to reset it themselves. Verify identity before resetting.">
-            <td>
-              <div class="td-bold">Forgot login password</div>
-              <div class="td-muted" style="font-size:11.5px;margin-top:2px;">SR-2026-0302 · Password reset</div>
-            </td>
-            <td><span class="badge badge-miss">Password reset</span></td>
-            <td class="td-muted">Regular Staff 3</td>
-            <td class="td-muted">Jul 25, 2026</td>
-            <td><span class="badge badge-pend">Awaiting action</span></td>
-            <td>
-              <div class="action-grid">
-                <button class="btn btn-lightgreen" onclick="resolveRequest(this, 'approve')">Reset password</button>
-                <button class="btn btn-coral" onclick="resolveRequest(this, 'decline')">Decline</button>
-                <button class="btn-view-icon" title="View request" onclick="openRequestModal(this)"><i class="ti ti-eye"></i></button>
-              </div>
-            </td>
-          </tr>
-          <tr data-id="SR-2026-0303" data-title="Access to Records module" data-type="Access request"
-              data-staff="Regular Staff 2" data-submitted="Jul 26, 2026" data-status="Awaiting action"
-              data-desc="Staff member is requesting access to the Records module to support day-to-day document processing tasks.">
-            <td>
-              <div class="td-bold">Access to Records module</div>
-              <div class="td-muted" style="font-size:11.5px;margin-top:2px;">SR-2026-0303 · Access request</div>
-            </td>
-            <td><span class="badge badge-ok">Access</span></td>
-            <td class="td-muted">Regular Staff 2</td>
-            <td class="td-muted">Jul 26, 2026</td>
-            <td><span class="badge badge-pend">Awaiting action</span></td>
-            <td>
-              <div class="action-grid">
-                <button class="btn btn-lightgreen" onclick="resolveRequest(this, 'approve')">Grant access</button>
-                <button class="btn btn-coral" onclick="resolveRequest(this, 'decline')">Decline</button>
-                <button class="btn-view-icon" title="View request" onclick="openRequestModal(this)"><i class="ti ti-eye"></i></button>
-              </div>
-            </td>
-          </tr>
-          <tr data-id="SR-2026-0304" data-title="Leave — family emergency" data-type="Schedule/Leave"
-              data-staff="Regular Staff 1" data-submitted="Jul 27, 2026" data-status="Awaiting action"
-              data-desc="Staff member is requesting emergency leave due to a family matter. No end date specified yet.">
-            <td>
-              <div class="td-bold">Leave — family emergency</div>
-              <div class="td-muted" style="font-size:11.5px;margin-top:2px;">SR-2026-0304 · Schedule/Leave</div>
-            </td>
-            <td><span class="badge badge-pend">Schedule/Leave</span></td>
-            <td class="td-muted">Regular Staff 1</td>
-            <td class="td-muted">Jul 27, 2026</td>
-            <td><span class="badge badge-pend">Awaiting action</span></td>
-            <td>
-              <div class="action-grid">
-                <button class="btn btn-lightgreen" onclick="resolveRequest(this, 'approve')">Approve</button>
-                <button class="btn btn-coral" onclick="resolveRequest(this, 'decline')">Decline</button>
-                <button class="btn-view-icon" title="View request" onclick="openRequestModal(this)"><i class="ti ti-eye"></i></button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div style="display:flex;justify-content:space-between;padding:10px 16px;font-size:11px;color:var(--gray-500);border-top:.5px solid var(--gray-200);">
-        <span id="requestsCount">Showing 4 of 4 staff requests</span>
-        <span>Oldest submitted 2 days ago</span>
-      </div>
-    </div>
-  </div>
+      <div style="padding:11px 16px;font-size:11px;color:var(--gray-500);border-top:1px solid var(--gray-200)" id="requests-count">Loading…</div>
+    </section>
+  </main>
 </div>
-
-<!-- Request detail modal -->
-<div class="rm-overlay" id="rmOverlay" onclick="if(event.target===this)closeRequestModal()">
-  <div class="rm-modal">
-    <div class="rm-header">
-      <div>
-        <div class="td-bold" id="rmTitle" style="font-size:14.5px;"></div>
-        <div class="rm-header-id" id="rmId"></div>
-      </div>
-      <button class="rm-close" onclick="closeRequestModal()"><i class="ti ti-x"></i></button>
-    </div>
-    <div class="rm-body">
-      <div class="rm-row"><span>Type</span><span id="rmType"></span></div>
-      <div class="rm-row"><span>Staff member</span><span id="rmStaff"></span></div>
-      <div class="rm-row"><span>Submitted</span><span id="rmSubmitted"></span></div>
-      <div class="rm-row"><span>Status</span><span id="rmStatus"></span></div>
-      <div class="rm-desc" id="rmDesc"></div>
-    </div>
-    <div class="rm-footer" id="rmFooter"></div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
+<script src="../api.js"></script>
 <script>
-  const BASE_RESOLVED_TODAY = 3;
-  let currentTypeFilter = 'All';
+  let registrationRequests = [];
+  let barangays = [];
 
-  if (typeof renderHeadStaffSidebar === 'function') {
-    renderHeadStaffSidebar('requests');
+  if (typeof renderHeadStaffSidebar === 'function') renderHeadStaffSidebar('requests');
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   }
-
-  function openRequestModal(btn) {
-    const row = btn.closest('tr');
-    const id = row.dataset.id;
-    document.getElementById('rmTitle').textContent = row.dataset.title;
-    document.getElementById('rmId').textContent = id + ' · ' + row.dataset.type;
-    document.getElementById('rmType').textContent = row.dataset.type;
-    document.getElementById('rmStaff').textContent = row.dataset.staff;
-    document.getElementById('rmSubmitted').textContent = row.dataset.submitted;
-    document.getElementById('rmStatus').textContent = row.dataset.status;
-    document.getElementById('rmDesc').textContent = row.dataset.desc;
-
-    const footer = document.getElementById('rmFooter');
-    footer.innerHTML = '';
-
-    if (row.dataset.resolved === 'true') {
-      const note = document.createElement('div');
-      note.className = 'rm-resolved-note';
-      note.textContent = 'This request has already been resolved.';
-      footer.appendChild(note);
-    } else {
-      const rowActions = row.querySelectorAll('.action-grid button');
-      rowActions.forEach(btnEl => {
-        if (btnEl.classList.contains('btn-view-icon')) return;
-        const clone = document.createElement('button');
-        clone.className = 'btn ' + (btnEl.classList.contains('btn-coral') ? 'btn-coral' : 'btn-lightgreen');
-        clone.textContent = btnEl.textContent;
-        clone.onclick = () => { btnEl.click(); closeRequestModal(); };
-        footer.appendChild(clone);
-      });
+  function showAlert(message, kind) {
+    const box = document.getElementById('request-alert');
+    box.textContent = message;
+    box.className = `request-alert ${kind}`;
+  }
+  function formatDate(value) {
+    if (!value) return '—';
+    return new Date(value).toLocaleString([], {dateStyle:'medium', timeStyle:'short'});
+  }
+  async function loadRequests() {
+    const body = document.getElementById('requests-body');
+    body.innerHTML = '<tr><td colspan="6" class="empty-state">Loading requests…</td></tr>';
+    try {
+      const [profile, result, barangayResult] = await Promise.all([
+        ArkheionAPI.getCurrentUser(),
+        ArkheionAPI.get(`/api/staff-registration/requests/?status=${encodeURIComponent(document.getElementById('status-filter').value)}`),
+        ArkheionAPI.getBarangays(),
+      ]);
+      if (profile.role !== 'head_staff') throw new Error('Only the OSCA Admin account can review staff requests.');
+      registrationRequests = Array.isArray(result) ? result : [];
+      barangays = Array.isArray(barangayResult) ? barangayResult : [];
+      renderRequests();
+      document.getElementById('request-alert').className = 'request-alert';
+    } catch (error) {
+      body.innerHTML = `<tr><td colspan="6" class="empty-state">${escapeHtml(error.message || 'Unable to load requests.')}</td></tr>`;
+      document.getElementById('requests-count').textContent = 'Could not load requests.';
     }
-
-    document.getElementById('rmOverlay').classList.add('open');
   }
-
-  function closeRequestModal() {
-    document.getElementById('rmOverlay').classList.remove('open');
-  }
-
-  function resolveRequest(triggerBtn, action) {
-    const row = triggerBtn.closest('tr');
-    if (!row || row.dataset.resolved === 'true') return;
-
-    const type = row.dataset.type;
-    const id = row.dataset.id;
-    let statusText, badgeClass, toastMsg;
-
-    if (action === 'decline') {
-      statusText = 'Declined';
-      badgeClass = 'badge-declined';
-      toastMsg = 'Request ' + id + ' declined';
-    } else if (type === 'Password reset') {
-      statusText = 'Password reset sent';
-      badgeClass = 'badge-approved';
-      toastMsg = 'Password reset for ' + id + ' sent';
-    } else if (type === 'Access request') {
-      statusText = 'Access granted';
-      badgeClass = 'badge-approved';
-      toastMsg = 'Access granted for ' + id;
-    } else {
-      statusText = 'Approved';
-      badgeClass = 'badge-approved';
-      toastMsg = 'Leave approved for ' + id;
+  function renderRequests() {
+    const query = document.getElementById('request-search').value.trim().toLowerCase();
+    const list = registrationRequests.filter((item) => `${item.first_name} ${item.last_name} ${item.username} ${item.email}`.toLowerCase().includes(query));
+    document.getElementById('stat-total').textContent = list.length;
+    document.getElementById('stat-pending').textContent = list.filter((item) => item.status === 'pending').length;
+    document.getElementById('stat-approved').textContent = list.filter((item) => item.status === 'approved').length;
+    document.getElementById('requests-count').textContent = `${list.length} application${list.length === 1 ? '' : 's'}`;
+    const tbody = document.getElementById('requests-body');
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No staff account requests in this view.</td></tr>';
+      return;
     }
-
-    const statusCell = row.children[4];
-    statusCell.innerHTML = '<span class="badge ' + badgeClass + '">' + statusText + '</span>';
-
-    row.dataset.status = statusText;
-    row.dataset.resolved = 'true';
-
-    row.querySelectorAll('.action-grid .btn').forEach(b => { b.disabled = true; });
-
-    showToast(toastMsg, action === 'decline' ? 'error' : undefined);
-    updateStats();
+    tbody.innerHTML = list.map((item) => {
+      const choices = barangays.map((barangay) => `<option value="${barangay.id}" ${Number(item.requested_barangay.id) === Number(barangay.id) ? 'selected' : ''}>${escapeHtml(barangay.name)}</option>`).join('');
+      const assignment = item.status === 'pending'
+        ? `<select id="assign-${item.id}" aria-label="Confirm assigned barangay">${choices}</select>`
+        : '—';
+      const actions = item.status === 'pending'
+        ? `<div class="request-actions"><button class="btn btn-approve btn-sm" onclick="reviewRequest(${item.id}, 'approve')"><i class="ti ti-user-check"></i> Approve & activate</button><button class="btn btn-coral btn-sm" onclick="reviewRequest(${item.id}, 'reject')"><i class="ti ti-user-x"></i> Reject</button></div>`
+        : `<span class="status-pill">${escapeHtml(item.status)}</span><small style="color:var(--gray-500)">${escapeHtml(item.review_note || (item.reviewed_by ? `Reviewed by ${item.reviewed_by}` : ''))}</small>`;
+      return `<tr><td><div class="td-bold">${escapeHtml(item.first_name)} ${escapeHtml(item.last_name)}</div><div class="td-muted" style="font-size:11px">@${escapeHtml(item.username)}</div></td><td><div>${escapeHtml(item.email)}</div><div class="td-muted">${escapeHtml(item.contact_number || 'No phone provided')}</div></td><td>${escapeHtml(item.requested_barangay.name)}</td><td>${assignment}</td><td>${escapeHtml(formatDate(item.created_at))}</td><td>${actions}</td></tr>`;
+    }).join('');
   }
-
-  function updateStats() {
-    const rows = document.querySelectorAll('.approvals-table tbody tr');
-    let pending = 0, resolvedNow = 0;
-    rows.forEach(r => {
-      if (r.dataset.resolved === 'true') resolvedNow++;
-      else pending++;
-    });
-
-    const statCards = document.querySelectorAll('.stats-grid .stat-card');
-    statCards[0].querySelector('.stat-value').textContent = pending;
-    statCards[3].querySelector('.stat-value').textContent = BASE_RESOLVED_TODAY + resolvedNow;
+  async function reviewRequest(id, decision) {
+    const item = registrationRequests.find((request) => request.id === id);
+    if (!item) return;
+    const promptText = decision === 'approve'
+      ? `Approve ${item.first_name} ${item.last_name} and activate their staff account?`
+      : `Reject ${item.first_name} ${item.last_name}'s request? Their account will remain inactive.`;
+    if (!window.confirm(promptText)) return;
+    const payload = {decision};
+    if (decision === 'reject') {
+      const note = window.prompt('Optional note for the audit record (do not include sensitive information):', '');
+      if (note === null) return;
+      payload.review_note = note;
+    }
+    if (decision === 'approve') payload.barangay = Number(document.getElementById(`assign-${id}`).value);
+    try {
+      const result = await ArkheionAPI.post(`/api/staff-registration/requests/${id}/review/`, payload);
+      showAlert(result.detail || 'Request reviewed.', 'success');
+      await loadRequests();
+    } catch (error) {
+      showAlert(error.message || 'Unable to review this request.', 'error');
+    }
   }
-
-  function filterRequests(type, tabEl) {
-    document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
-    tabEl.classList.add('active');
-    currentTypeFilter = type;
-    applyRequestFilters();
-  }
-
-  function applyRequestFilters() {
-    const query = document.getElementById('requestsSearch').value.trim().toLowerCase();
-    const rows = document.querySelectorAll('.approvals-table tbody tr');
-    let visibleCount = 0;
-
-    rows.forEach(row => {
-      const typeMatch = currentTypeFilter === 'All' || row.dataset.type === currentTypeFilter;
-      const searchMatch = !query || row.dataset.staff.toLowerCase().includes(query);
-      const match = typeMatch && searchMatch;
-      row.style.display = match ? '' : 'none';
-      if (match) visibleCount++;
-    });
-
-    document.getElementById('requestsCount').textContent =
-      'Showing ' + visibleCount + ' of ' + rows.length + ' staff requests';
-  }
+  loadRequests();
 </script>
 </body>
 </html>

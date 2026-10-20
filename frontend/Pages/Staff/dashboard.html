@@ -249,7 +249,7 @@ renderSidebar('dashboard');
 // Personalize the greeting and avatar based on the logged-in account.
 const rawUsername = localStorage.getItem('ark_username') || 'Staff';
 const role = localStorage.getItem('ark_role') || 'regular_staff';
-const displayName = formatStaffName(rawUsername, role);
+let displayName = formatStaffName(rawUsername, role);
 const initials = role === 'head_staff' ? 'HS' : 'S';
 
 document.getElementById('topbarAvatar').textContent = initials;
@@ -257,6 +257,10 @@ document.getElementById('topbarAvatar').textContent = initials;
 const hour = new Date().getHours();
 const timeGreeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 document.getElementById('pageGreeting').textContent = timeGreeting + ', ' + displayName + ' 👋';
+getStaffIdentity().then(account => {
+  displayName = formatStaffName(account.username, account.role, account.first_name, account.last_name);
+  document.getElementById('pageGreeting').textContent = timeGreeting + ', ' + displayName + ' 👋';
+}).catch(() => {});
 
 // --- Notification bell -----------------------------------------------------
 // Mirrors the "Notifications & alerts" card below — same three items, same

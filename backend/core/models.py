@@ -1,3 +1,6 @@
+import os
+import uuid
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
@@ -31,6 +34,44 @@ class StaffProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.get_username()} — {self.barangay.name}"
+
+
+class StaffRegistrationRequest(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+    ]
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="staff_registration_request",
+    )
+    requested_barangay = models.ForeignKey(
+        Barangay,
+        on_delete=models.PROTECT,
+        related_name="staff_registration_requests",
+    )
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default="pending")
+    review_note = models.CharField(max_length=500, blank=True)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reviewed_staff_registrations",
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "staff_registration_requests"
+        ordering = ["status", "created_at"]
+
+    def __str__(self):
+        return f"{self.user.get_username()} — {self.status}"
 
 
 
@@ -85,6 +126,7 @@ class SeniorCitizen(models.Model):
     last_name            = models.CharField(max_length=100)
     first_name           = models.CharField(max_length=100)
     middle_name          = models.CharField(max_length=100, blank=True)
+    suffix               = models.CharField(max_length=20, blank=True)
     date_of_birth        = models.DateField()
     age                  = models.IntegerField()
     sex                  = models.CharField(max_length=1, choices=SEX_CHOICES)
@@ -115,6 +157,7 @@ class SeniorCitizen(models.Model):
     # Association
     association_name    = models.CharField(max_length=200, blank=True)
     association_address = models.TextField(blank=True)
+    is_association_member = models.BooleanField(default=False)
     date_of_membership  = models.DateField(null=True, blank=True)
     position            = models.CharField(max_length=100, blank=True)
 
@@ -139,6 +182,69 @@ class SeniorCitizen(models.Model):
         ordering = ['last_name', 'first_name']
 
 
+class DeathRecord(models.Model):
+    senior_citizen = models.OneToOneField(
+        SeniorCitizen,
+        on_delete=models.PROTECT,
+        related_name="death_record",
+    )
+    date_of_death = models.DateField()
+    notes = models.TextField(blank=True)
+    recorded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="recorded_deaths",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "death_records"
+        ordering = ["-date_of_death", "-id"]
+
+    def __str__(self):
+        return f"Death of {self.senior_citizen} on {self.date_of_death}"
+
+
+class ResidenceTransferRecord(models.Model):
+    senior_citizen = models.ForeignKey(
+        SeniorCitizen,
+        on_delete=models.PROTECT,
+        related_name="residence_transfers",
+    )
+    from_barangay = models.ForeignKey(
+        Barangay,
+        on_delete=models.PROTECT,
+        related_name="outgoing_senior_transfers",
+    )
+    to_barangay = models.ForeignKey(
+        Barangay,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="incoming_senior_transfers",
+    )
+    destination_municipality = models.CharField(max_length=120, blank=True)
+    destination_address = models.TextField(blank=True)
+    transfer_date = models.DateField()
+    reason = models.CharField(max_length=300, blank=True)
+    recorded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="recorded_residence_transfers",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "residence_transfer_records"
+        ordering = ["-transfer_date", "-id"]
+
+    def __str__(self):
+        destination = self.to_barangay or self.destination_municipality or "Unspecified"
+        return f"{self.senior_citizen} transferred from {self.from_barangay} to {destination}"
+
+
 class FamilyMember(models.Model):
     senior_citizen = models.ForeignKey(
         SeniorCitizen, on_delete=models.CASCADE,
@@ -156,17 +262,39 @@ class FamilyMember(models.Model):
         db_table = 'family_members'
 
 
+def document_upload_path(instance, filename):
+    extension = os.path.splitext(filename)[1].lower()
+    return f"documents/{uuid.uuid4().hex}{extension}"
+
+
 class Document(models.Model):
+    REVIEW_STATUS_CHOICES = [
+        ("pending", "Pending review"),
+        ("verified", "Verified"),
+        ("rejected", "Rejected"),
+    ]
+
     senior_citizen     = models.ForeignKey(SeniorCitizen, on_delete=models.CASCADE, related_name='documents')
     document_type      = models.CharField(max_length=100)
-    file               = models.FileField(upload_to='documents/')
+    file               = models.FileField(upload_to=document_upload_path)
     file_name          = models.CharField(max_length=200)
     uploaded_by        = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     upload_date        = models.DateField(auto_now_add=True)
     nlp_classification = models.CharField(max_length=100, blank=True)
     nlp_confidence     = models.FloatField(null=True, blank=True)
+    classifier_source  = models.CharField(max_length=12, blank=True, default="")
     extracted_entities = models.JSONField(null=True, blank=True)
     is_verified        = models.BooleanField(default=False)
+    review_status      = models.CharField(max_length=12, choices=REVIEW_STATUS_CHOICES, default="pending")
+    review_note        = models.CharField(max_length=500, blank=True)
+    reviewed_by        = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reviewed_documents",
+    )
+    reviewed_at        = models.DateTimeField(null=True, blank=True)
     created_at         = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -220,115 +348,6 @@ class PensionRecord(models.Model):
 
     class Meta:
         db_table = 'pension_records'
-
-
-class MedicineBooklet(models.Model):
-    senior_citizen = models.ForeignKey(SeniorCitizen, on_delete=models.CASCADE, related_name='medicine_booklets')
-    booklet_number = models.CharField(max_length=50, unique=True)
-    date_issued    = models.DateField()
-    place_issued   = models.CharField(max_length=200)
-    is_active      = models.BooleanField(default=True)
-    STATUS_CHOICES = [
-        ('issued', 'Issued'),
-        ('full', 'Full'),
-        ('lost', 'Lost'),
-    ]
-    LOSS_STATUS_CHOICES = [
-        ('none', 'No loss report'),
-        ('pending', 'Pending review'),
-        ('confirmed', 'Confirmed'),
-        ('rejected', 'Rejected'),
-    ]
-    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default='issued')
-    full_at = models.DateTimeField(null=True, blank=True)
-    loss_status = models.CharField(max_length=12, choices=LOSS_STATUS_CHOICES, default='none')
-    loss_reported_at = models.DateTimeField(null=True, blank=True)
-    loss_note = models.TextField(blank=True)
-    loss_reviewed_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='reviewed_booklet_losses',
-    )
-    loss_reviewed_at = models.DateTimeField(null=True, blank=True)
-    digital_replacement_issued_at = models.DateTimeField(null=True, blank=True)
-    created_at     = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = 'medicine_booklets'
-
-
-class MedicineBookletEntry(models.Model):
-    CATEGORY_CHOICES = [
-        ('medicine', 'Medicine'),
-        ('grocery', 'Grocery'),
-    ]
-    REVIEW_CHOICES = [
-        ('pending', 'Pending review'),
-        ('verified', 'Verified'),
-        ('rejected', 'Rejected'),
-    ]
-
-    booklet = models.ForeignKey(MedicineBooklet, on_delete=models.CASCADE, related_name='backup_entries')
-    category = models.CharField(max_length=12, choices=CATEGORY_CHOICES)
-    purchase_date = models.DateField()
-    description = models.CharField(max_length=240)
-    quantity = models.CharField(max_length=80, blank=True)
-    proof_image = models.ImageField(upload_to='booklet_backup/%Y/%m/')
-    review_status = models.CharField(max_length=12, choices=REVIEW_CHOICES, default='pending')
-    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='booklet_uploads')
-    uploaded_at = models.DateTimeField(auto_now_add=True)
-    reviewed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_booklet_entries')
-    reviewed_at = models.DateTimeField(null=True, blank=True)
-    review_note = models.CharField(max_length=300, blank=True)
-
-    class Meta:
-        db_table = 'medicine_booklet_entries'
-        ordering = ['-purchase_date', '-id']
-
-
-class MedicinePrescription(models.Model):
-    booklet          = models.ForeignKey(MedicineBooklet, on_delete=models.CASCADE, related_name='prescriptions')
-    medicine_name    = models.CharField(max_length=200)
-    qty_prescribed   = models.IntegerField()
-    physician_name   = models.CharField(max_length=200)
-    physician_address= models.TextField(blank=True)
-    ptr_number       = models.CharField(max_length=50)
-    balance          = models.IntegerField(default=0)
-    prescription_date= models.DateField()
-    expiry_date      = models.DateField(null=True, blank=True)
-
-    # Partial fillings
-    filling_1_qty       = models.IntegerField(null=True, blank=True)
-    filling_1_date      = models.DateField(null=True, blank=True)
-    filling_1_drugstore = models.CharField(max_length=200, blank=True)
-    filling_1_pharmacist= models.CharField(max_length=200, blank=True)
-
-    filling_2_qty       = models.IntegerField(null=True, blank=True)
-    filling_2_date      = models.DateField(null=True, blank=True)
-    filling_2_drugstore = models.CharField(max_length=200, blank=True)
-    filling_2_pharmacist= models.CharField(max_length=200, blank=True)
-
-    filling_3_qty       = models.IntegerField(null=True, blank=True)
-    filling_3_date      = models.DateField(null=True, blank=True)
-    filling_3_drugstore = models.CharField(max_length=200, blank=True)
-    filling_3_pharmacist= models.CharField(max_length=200, blank=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def save(self, *args, **kwargs):
-        filled = (
-            (self.filling_1_qty or 0) +
-            (self.filling_2_qty or 0) +
-            (self.filling_3_qty or 0)
-        )
-        self.balance = self.qty_prescribed - filled
-        super().save(*args, **kwargs)
-
-    class Meta:
-        db_table = 'medicine_prescriptions'
 
 
 class AuditLog(models.Model):

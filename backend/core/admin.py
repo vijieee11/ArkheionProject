@@ -1,6 +1,6 @@
 # Register your models here.
 from django.contrib import admin
-from .models import Barangay, MedicineBooklet, MedicineBookletEntry, StaffProfile
+from .models import Barangay, DeathRecord, Document, ResidenceTransferRecord, StaffProfile, StaffRegistrationRequest
 
 
 @admin.register(Barangay)
@@ -17,19 +17,35 @@ class StaffProfileAdmin(admin.ModelAdmin):
     search_fields = ("user__username", "user__first_name", "user__last_name")
 
 
-@admin.register(MedicineBooklet)
-class MedicineBookletAdmin(admin.ModelAdmin):
-    list_display = ("booklet_number", "senior_citizen", "date_issued", "status", "loss_status", "is_active")
-    list_filter = ("status", "loss_status", "is_active", "date_issued")
-    search_fields = ("booklet_number", "senior_citizen__osca_id", "senior_citizen__first_name", "senior_citizen__last_name")
-    readonly_fields = ("created_at", "full_at", "loss_reported_at", "loss_reviewed_at", "digital_replacement_issued_at")
+@admin.register(StaffRegistrationRequest)
+class StaffRegistrationRequestAdmin(admin.ModelAdmin):
+    list_display = ("user", "requested_barangay", "status", "created_at", "reviewed_by", "reviewed_at")
+    list_filter = ("status", "requested_barangay", "created_at")
+    search_fields = ("user__username", "user__first_name", "user__last_name", "user__email")
+    readonly_fields = ("user", "created_at", "updated_at", "reviewed_by", "reviewed_at")
 
 
-@admin.register(MedicineBookletEntry)
-class MedicineBookletEntryAdmin(admin.ModelAdmin):
-    list_display = ("booklet", "category", "purchase_date", "review_status", "uploaded_at", "reviewed_by")
-    list_filter = ("category", "review_status", "purchase_date")
-    search_fields = ("booklet__booklet_number", "booklet__senior_citizen__osca_id", "description")
-    readonly_fields = ("uploaded_by", "uploaded_at", "reviewed_by", "reviewed_at")
+@admin.register(DeathRecord)
+class DeathRecordAdmin(admin.ModelAdmin):
+    list_display = ("senior_citizen", "date_of_death", "recorded_by", "created_at")
+    list_filter = ("date_of_death",)
+    search_fields = ("senior_citizen__osca_id", "senior_citizen__first_name", "senior_citizen__last_name")
+    readonly_fields = ("recorded_by", "created_at")
+
+
+@admin.register(Document)
+class DocumentAdmin(admin.ModelAdmin):
+    list_display = ("file_name", "senior_citizen", "document_type", "review_status", "upload_date", "uploaded_by", "reviewed_by")
+    list_filter = ("document_type", "review_status", "is_verified", "upload_date")
+    search_fields = ("file_name", "senior_citizen__osca_id", "senior_citizen__first_name", "senior_citizen__last_name")
+    readonly_fields = ("uploaded_by", "upload_date", "created_at", "nlp_classification", "nlp_confidence", "classifier_source", "extracted_entities", "reviewed_by", "reviewed_at")
+
+
+@admin.register(ResidenceTransferRecord)
+class ResidenceTransferRecordAdmin(admin.ModelAdmin):
+    list_display = ("senior_citizen", "from_barangay", "to_barangay", "destination_municipality", "transfer_date", "recorded_by")
+    list_filter = ("from_barangay", "to_barangay", "transfer_date")
+    search_fields = ("senior_citizen__osca_id", "senior_citizen__first_name", "senior_citizen__last_name", "destination_municipality")
+    readonly_fields = ("from_barangay", "recorded_by", "created_at")
 
 

@@ -24,20 +24,35 @@
           <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
             <div class="form-group">
               <label>Senior citizen <span class="required">*</span></label>
-              <input type="text" id="member-search" placeholder="Type name or OSCA ID to search...">
+              <input type="text" id="member-search" list="senior-options" placeholder="Type name or OSCA ID to search..." autocomplete="off">
+              <datalist id="senior-options"></datalist>
+            </div>
+            <div class="form-group">
+              <label>Document type <span class="required">*</span></label>
+              <select id="document-type">
+                <option value="">Select document type</option>
+                <option>OSCA Registration Form</option>
+                <option>NCSC Application Form</option>
+                <option>Birth certificate</option>
+                <option>Government ID</option>
+                <option>2x2 ID photo</option>
+                <option>Full body photo</option>
+                <option>LCE endorsement letter</option>
+                <option>Other</option>
+              </select>
             </div>
             <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--navy)'" ondragleave="this.style.borderColor=''" ondrop="handleDrop(event)">
               <i class="ti ti-cloud-upload"></i>
               <h4>Drop files here or click to upload</h4>
-              <p>PDF, DOCX, JPG, PNG — max 10MB per file</p>
+              <p>PDF, DOCX, JPG, PNG — max 10 MB</p>
               <button class="btn btn-navy" onclick="event.stopPropagation();document.getElementById('file-input').click()">
                 <i class="ti ti-folder-open"></i> Choose file
               </button>
               <input type="file" id="file-input" style="display:none" accept=".pdf,.docx,.jpg,.jpeg,.png" onchange="handleFile(this)">
             </div>
             <div class="alert alert-teal">
-              <i class="ti ti-brain"></i>
-              <div><strong>NLP auto-classification</strong> — The system will automatically classify the document type and extract key information (name, birthdate, ID number) after upload using spaCy and HuggingFace Transformers.</div>
+              <i class="ti ti-shield-check"></i>
+              <div>Documents are stored privately and linked to the selected senior. Suggestions require an evaluated classifier and must be verified by staff. The simulated demo model is for demonstration only and must not be used for real OSCA decisions.</div>
             </div>
           </div>
         </div>
@@ -46,47 +61,28 @@
         <div class="card">
           <div class="card-header">
             <div class="card-title">Recent uploads</div>
-            <span class="badge badge-ok">3 today</span>
+            <span class="badge badge-ok" id="upload-count">Loading…</span>
           </div>
           <table>
             <thead>
-              <tr><th>File</th><th>Senior citizen</th><th>NLP classification</th><th>Confidence</th></tr>
+              <tr><th>File</th><th>Senior citizen</th><th>Document type</th><th>AI suggestion</th><th>Review status</th><th>Uploaded</th><th>Actions</th></tr>
             </thead>
-            <tbody>
-              <tr>
-                <td><i class="ti ti-file-type-pdf" style="color:var(--coral-600);margin-right:6px"></i><span class="td-muted">birth_cert_juan.pdf</span></td>
-                <td class="td-bold">Juan dela Cruz</td>
-                <td><span class="badge badge-ok">PSA Birth Certificate</span></td>
-                <td style="color:var(--navy-light);font-weight:500;">98%</td>
-              </tr>
-              <tr>
-                <td><i class="ti ti-photo" style="color:var(--blue-900);margin-right:6px"></i><span class="td-muted">philsys_maria.jpg</span></td>
-                <td class="td-bold">Maria Santos</td>
-                <td><span class="badge badge-ok">PhilSys ID</span></td>
-                <td style="color:var(--navy-light);font-weight:500;">95%</td>
-              </tr>
-              <tr>
-                <td><i class="ti ti-file-type-pdf" style="color:var(--coral-600);margin-right:6px"></i><span class="td-muted">annex_a_rosario.pdf</span></td>
-                <td class="td-bold">Rosario Mendoza</td>
-                <td><span class="badge badge-pend">NCSC Annex A</span></td>
-                <td style="color:var(--navy-light);font-weight:500;">91%</td>
-              </tr>
-            </tbody>
+            <tbody id="uploads-body"><tr><td colspan="7">Loading uploads…</td></tr></tbody>
           </table>
         </div>
       </div>
 
       <!-- NLP result panel -->
       <div style="display:flex;flex-direction:column;gap:14px;">
-        <div class="card" id="nlp-result">
+      <div class="card" id="nlp-result">
           <div class="card-header">
-            <div class="card-title">NLP extraction result</div>
+            <div class="card-title">Upload result</div>
           </div>
           <div class="card-body" style="display:flex;flex-direction:column;gap:12px;" id="nlp-content">
             <div class="empty-state" style="padding:30px;">
               <i class="ti ti-file-search"></i>
               <h4>No document uploaded yet</h4>
-              <p>Upload a document to see the NLP classification and extracted information.</p>
+              <p>After upload, any available classifier suggestion will appear here for staff review. It will not be treated as verified automatically.</p>
             </div>
           </div>
         </div>
@@ -96,71 +92,312 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<script src="../api.js"></script>
 <script>
   renderSidebar('upload');
+  const seniorByOption = new Map();
+  const selectedFileTypes = new Set(['.pdf', '.docx', '.jpg', '.jpeg', '.png']);
+  const documentTypes = ['OSCA Registration Form', 'NCSC Application Form', 'Birth certificate', 'Government ID', '2x2 ID photo', 'Full body photo', 'LCE endorsement letter', 'Other'];
+
+  async function initializeUploadPage() {
+    try {
+      const context = await ArkheionAPI.getStaffContext();
+      const seniors = await ArkheionAPI.get('/api/seniors/');
+      const datalist = document.getElementById('senior-options');
+      datalist.replaceChildren();
+      seniors.forEach(senior => {
+        if (context.user.role === 'regular_staff' && senior.barangay !== context.user.barangay.id) return;
+        const name = [senior.first_name, senior.middle_name, senior.last_name, senior.suffix].filter(Boolean).join(' ');
+        const option = document.createElement('option');
+        option.value = `${senior.osca_id} — ${name}`;
+        datalist.appendChild(option);
+        seniorByOption.set(option.value, senior);
+      });
+      if (!datalist.options.length) {
+        document.getElementById('member-search').placeholder = 'No senior records in your available barangay';
+      }
+      await loadUploads();
+    } catch (error) {
+      showToast(error.message || 'Could not load the senior list.', 'error');
+      document.getElementById('uploads-body').innerHTML = '<tr><td colspan="7">Could not load documents.</td></tr>';
+      document.getElementById('upload-count').textContent = 'Unavailable';
+    }
+  }
+
+  function getSelectedSenior() {
+    return seniorByOption.get(document.getElementById('member-search').value.trim()) || null;
+  }
+
+  function classifierStatus(fileName, classification, confidenceValue, source) {
+    if (classification) {
+      const confidence = confidenceValue == null || confidenceValue === '' ? NaN : Number(confidenceValue);
+      const percent = Number.isFinite(confidence) ? `${Math.round(confidence * 100)}%` : '';
+      const provenance = source === 'demo' ? ' — DEMO' : source === 'simulated_test' ? ' — simulated test set' : source === 'evaluated' ? ' — anonymized OSCA test set' : source === 'configured' ? ' — configured model' : '';
+      return `${classification}${percent ? ` (${percent})` : ''}${provenance}`;
+    }
+    const extension = fileName && fileName.includes('.') ? `.${fileName.split('.').pop().toLowerCase()}` : '';
+    return 'No classifier result';
+  }
+
+  function appendClassifierResult(container, classification, confidenceValue, source) {
+    const confidence = confidenceValue == null || confidenceValue === '' ? NaN : Number(confidenceValue);
+    const hasConfidence = Number.isFinite(confidence) && confidence >= 0 && confidence <= 1;
+    const card = document.createElement('div');
+    card.style.cssText = 'padding:14px;border:1px solid #b7e4d8;border-radius:10px;background:#f0faf7;';
+    const heading = document.createElement('div');
+    heading.textContent = 'AI suggestion';
+    heading.style.cssText = 'font-size:12px;color:#52706a;margin-bottom:8px;';
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;';
+    const label = document.createElement('strong');
+    label.textContent = classification;
+    label.style.cssText = 'font-size:18px;color:#073b32;';
+    row.appendChild(label);
+    if (hasConfidence) {
+      const percent = document.createElement('strong');
+      percent.textContent = `${Math.round(confidence * 100)}%`;
+      percent.setAttribute('aria-label', `${Math.round(confidence * 100)} percent model confidence`);
+      percent.style.cssText = 'font-size:20px;color:#006b56;white-space:nowrap;';
+      row.appendChild(percent);
+      const meter = document.createElement('progress');
+      meter.max = 100;
+      meter.value = Math.round(confidence * 100);
+      meter.setAttribute('aria-label', `Model confidence ${Math.round(confidence * 100)} percent`);
+      meter.style.cssText = 'display:block;width:100%;height:9px;margin-top:10px;accent-color:#00866b;';
+      card.append(heading, row, meter);
+    } else {
+      const noScore = document.createElement('span');
+      noScore.textContent = 'Percentage unavailable';
+      noScore.style.cssText = 'font-size:12px;color:#687b78;';
+      row.appendChild(noScore);
+      card.append(heading, row);
+    }
+    const note = document.createElement('p');
+    note.textContent = 'Model confidence only. Staff must check the original document.';
+    note.style.cssText = 'font-size:12px;color:#52706a;margin:8px 0 0;';
+    card.appendChild(note);
+    if (source === 'demo' || source === 'simulated_test' || source === 'configured') {
+      const provenance = document.createElement('p');
+      provenance.textContent = source === 'demo'
+        ? 'Demo model: do not use this result for OSCA decisions.'
+        : source === 'simulated_test'
+          ? 'Evaluated on simulated documents; results may differ on real OSCA files.'
+          : 'This configured model has not been independently evaluated.';
+      provenance.style.cssText = 'font-size:12px;color:#805500;margin:8px 0 0;';
+      card.appendChild(provenance);
+    }
+    container.appendChild(card);
+  }
+
+  function renderSavedUploadResult(item) {
+    const content = document.getElementById('nlp-content');
+    content.replaceChildren();
+    const title = document.createElement('h4');
+    title.textContent = 'Most recent saved upload';
+    const details = document.createElement('p');
+    details.textContent = `${item.file_name} · ${item.senior_name} · ${item.document_type} · ${item.upload_date}`;
+    const result = document.createElement('p');
+    result.textContent = 'No classifier result was saved for this upload. Upload it again to run the current OCR and classifier.';
+    const review = document.createElement('p');
+    review.textContent = `Staff review: ${item.review_status || 'pending'}${item.reviewed_by ? ` by ${item.reviewed_by}` : ''}${item.review_note ? ` — ${item.review_note}` : ''}`;
+    content.append(title, details);
+    if (item.nlp_classification) appendClassifierResult(content, item.nlp_classification, item.nlp_confidence, item.classifier_source);
+    else content.appendChild(result);
+    content.appendChild(review);
+    const note = document.createElement('p');
+    note.textContent = 'Extracted OCR text is shown only immediately after upload and is not saved.';
+    note.style.cssText = 'color:var(--muted,#718096);font-size:12px;';
+    content.appendChild(note);
+  }
 
   function handleFile(input) {
-    if (!input.files[0]) return;
-    const file = input.files[0];
-    simulateNLP(file.name);
+    if (input.files[0]) uploadDocument(input.files[0]);
   }
 
   function handleDrop(e) {
     e.preventDefault();
     document.getElementById('drop-zone').style.borderColor = '';
     const file = e.dataTransfer.files[0];
-    if (file) simulateNLP(file.name);
+    if (file) uploadDocument(file);
   }
 
-  function simulateNLP(filename) {
+  async function uploadDocument(file) {
+    const senior = getSelectedSenior();
+    const documentType = document.getElementById('document-type').value;
+    const extension = `.${file.name.split('.').pop().toLowerCase()}`;
+    if (!senior) return showToast('Choose a senior from the suggestions before uploading.', 'error');
+    if (!documentType) return showToast('Choose the document type.', 'error');
+    if (!selectedFileTypes.has(extension)) return showToast('Choose a PDF, DOCX, JPG, JPEG, or PNG file.', 'error');
+    if (file.size > 10 * 1024 * 1024) return showToast('The file must be 10 MB or smaller.', 'error');
+
+    const zone = document.getElementById('drop-zone');
+    zone.style.pointerEvents = 'none';
     const nlpContent = document.getElementById('nlp-content');
-    nlpContent.innerHTML = `
-      <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--teal-50);border-radius:var(--radius-sm);">
-        <i class="ti ti-loader-2" style="font-size:20px;color:var(--navy);animation:spin 1s linear infinite;"></i>
-        <div>
-          <p style="font-size:13px;font-weight:500;color:var(--navy)">Processing document...</p>
-          <p style="font-size:11px;color:var(--navy-light)">Running NLP classification and entity extraction</p>
-        </div>
-      </div>
-    `;
-    setTimeout(() => {
-      nlpContent.innerHTML = `
-        <div style="background:var(--teal-50);border-radius:var(--radius-sm);padding:10px 12px;">
-          <p style="font-size:11px;color:var(--navy-mid);margin-bottom:4px;font-weight:500;">Document classified as:</p>
-          <p style="font-size:14px;font-weight:600;color:var(--navy);">PSA Birth Certificate</p>
-          <p style="font-size:11px;color:var(--navy-light);">Confidence: 98% · Processed by HuggingFace Transformers</p>
-        </div>
-        <div>
-          <p style="font-size:12px;font-weight:600;color:var(--gray-700);margin-bottom:8px;">Extracted entities (NER via spaCy):</p>
-          <div style="display:flex;flex-direction:column;gap:0;">
-            ${[
-              ['Full name',       'Juan Santos dela Cruz'],
-              ['Date of birth',   'January 5, 1945'],
-              ['Place of birth',  'Carmen, Davao del Norte'],
-              ['Document type',   'PSA Birth Certificate'],
-              ['PSA Reference',   'PSA-2024-XXXXXXX'],
-            ].map(([l,v]) => `
-              <div style="display:flex;justify-content:space-between;font-size:12px;padding:7px 0;border-bottom:.5px solid var(--gray-200);">
-                <span style="color:var(--gray-500);">${l}</span>
-                <span style="font-weight:500;color:var(--gray-900);">${v}</span>
-              </div>`).join('')}
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px;">
-          <button class="btn btn-navy btn-full" onclick="showToast('Document saved successfully!')">
-            <i class="ti ti-circle-check"></i> Confirm and save
-          </button>
-          <button class="btn btn-teal btn-full" onclick="useForRegistration()">
-            <i class="ti ti-user-plus"></i> Use this data to register member
-          </button>
-          <button class="btn btn-ghost btn-full">
-            <i class="ti ti-edit"></i> Edit extracted data
-          </button>
-        </div>
-      `;
-    }, 1800);
+    nlpContent.innerHTML = '<div class="empty-state" style="padding:30px"><i class="ti ti-loader-2"></i><h4>Uploading document…</h4><p>Please keep this page open until it finishes.</p></div>';
+    const formData = new FormData();
+    formData.append('senior_citizen', senior.id);
+    formData.append('document_type', documentType);
+    formData.append('file', file);
+    try {
+      const saved = await ArkheionAPI.post('/api/documents/', formData);
+      nlpContent.innerHTML = '';
+      const title = document.createElement('h4');
+      title.textContent = 'Document saved';
+      const details = document.createElement('p');
+      details.textContent = `${saved.file_name} · ${saved.senior_name} · ${saved.document_type}`;
+      if (saved.nlp_classification) {
+        appendClassifierResult(nlpContent, saved.nlp_classification, saved.nlp_confidence, saved.classifier_source);
+      } else {
+        const suggestion = document.createElement('p');
+        const statusMessages = {
+          ocr_complete: 'OCR completed. The extracted text is shown below. No type suggestion was produced; check the server configuration and try a clearer image.',
+          text_extracted: 'Text was extracted, but the classifier did not return a suggestion. Check the server configuration.',
+          ocr_engine_missing: 'OCR could not start. Confirm the optional OCR packages are installed in the backend virtual environment.',
+          ocr_dependencies_missing: 'OCR packages are missing on the backend. Install the packages from requirements-ml.txt.',
+          no_readable_text: 'OCR ran but could not read text. Try a clearer, upright scan with good lighting.',
+          ocr_timeout: 'OCR took too long on this file. Try a clearer image or a shorter PDF.',
+          ocr_error: 'OCR could not process this file. Try another image or PDF.',
+          extraction_error: 'Text extraction failed. Check the file and try uploading it again.'
+        };
+        suggestion.textContent = statusMessages[saved.ocr_status] || 'Document saved. No text was extracted.';
+        nlpContent.append(title, details, suggestion);
+      }
+      if (saved.nlp_classification) nlpContent.prepend(title, details);
+      if (saved.ocr_text) {
+        const extracted = document.createElement('details');
+        const summary = document.createElement('summary');
+        summary.textContent = 'Review extracted text (temporary; not saved)';
+        const preview = document.createElement('pre');
+        preview.textContent = saved.ocr_text;
+        preview.style.cssText = 'white-space:pre-wrap;max-height:320px;overflow:auto;padding:12px;background:#f5f7f8;border-radius:6px;font:12px/1.5 monospace;';
+        extracted.append(summary, preview);
+        nlpContent.appendChild(extracted);
+      }
+      const entityDraft = saved.extracted_entities_draft || {};
+      if (Object.keys(entityDraft).length) {
+        const draftDetails = document.createElement('details');
+        const draftSummary = document.createElement('summary');
+        draftSummary.textContent = 'Possible fields found by OCR (unverified)';
+        const draftNote = document.createElement('p');
+        draftNote.textContent = saved.entity_extraction_note || 'Check every value against the original. These suggestions are not saved to the senior record.';
+        const draftList = document.createElement('dl');
+        draftList.style.cssText = 'display:grid;grid-template-columns:max-content 1fr;gap:6px 12px;';
+        Object.entries(entityDraft).forEach(([key, value]) => {
+          const label = document.createElement('dt');
+          label.textContent = key.replaceAll('_', ' ');
+          const result = document.createElement('dd');
+          result.textContent = value;
+          draftList.append(label, result);
+        });
+        draftDetails.append(draftSummary, draftNote, draftList);
+        nlpContent.appendChild(draftDetails);
+      }
+      showToast('Document uploaded and linked to the senior.');
+      document.getElementById('file-input').value = '';
+    try { await loadUploads({ updateResult: false }); }
+      catch (_) { showToast('Document was saved, but the upload list could not refresh.', 'error'); }
+    } catch (error) {
+      nlpContent.innerHTML = '<div class="empty-state" style="padding:30px"><i class="ti ti-alert-circle"></i><h4>Upload failed</h4><p></p></div>';
+      nlpContent.querySelector('p').textContent = error.message || 'Could not upload the document.';
+      showToast(error.message || 'Could not upload the document.', 'error');
+    } finally {
+      zone.style.pointerEvents = '';
+    }
   }
+
+  async function loadUploads({ updateResult = true } = {}) {
+    const uploads = await ArkheionAPI.get('/api/documents/');
+    const body = document.getElementById('uploads-body');
+    body.replaceChildren();
+    document.getElementById('upload-count').textContent = `${uploads.length} total`;
+    if (!uploads.length) {
+      if (updateResult) {
+        document.getElementById('nlp-content').innerHTML = '<div class="empty-state" style="padding:30px"><i class="ti ti-file-search"></i><h4>No document uploaded yet</h4><p>After upload, the latest saved document and any available suggestion will appear here.</p></div>';
+      }
+      const row = body.insertRow();
+      const cell = row.insertCell();
+      cell.colSpan = 7;
+      cell.textContent = 'No documents have been uploaded yet.';
+      return;
+    }
+    if (updateResult) renderSavedUploadResult(uploads[0]);
+    uploads.forEach(item => {
+      const row = body.insertRow();
+      row.insertCell().textContent = item.file_name;
+      row.insertCell().textContent = `${item.senior_name} (${item.senior_osca_id})`;
+      row.insertCell().textContent = item.document_type;
+      row.insertCell().textContent = classifierStatus(item.file_name, item.nlp_classification, item.nlp_confidence, item.classifier_source);
+      row.insertCell().textContent = item.review_status === 'verified'
+        ? `Verified${item.reviewed_by ? ` by ${item.reviewed_by}` : ''}`
+        : item.review_status === 'rejected'
+          ? `Rejected${item.reviewed_by ? ` by ${item.reviewed_by}` : ''}`
+          : 'Pending review';
+      row.insertCell().textContent = item.upload_date;
+      const actionCell = row.insertCell();
+      const downloadButton = document.createElement('button');
+      downloadButton.type = 'button';
+      downloadButton.className = 'btn btn-ghost btn-sm';
+      downloadButton.textContent = 'Download';
+      downloadButton.addEventListener('click', async () => {
+        downloadButton.disabled = true;
+        try { await ArkheionAPI.download(`/api/documents/${item.id}/download/`, item.file_name); }
+        catch (error) { showToast(error.message || 'Could not download the document.', 'error'); }
+        finally { downloadButton.disabled = false; }
+      });
+      const typeSelect = document.createElement('select');
+      typeSelect.setAttribute('aria-label', `Verified document type for ${item.file_name}`);
+      documentTypes.forEach(type => typeSelect.add(new Option(type, type)));
+      typeSelect.value = item.document_type;
+      if (!documentTypes.includes(item.document_type)) typeSelect.add(new Option(item.document_type, item.document_type, true, true));
+      const verifyButton = document.createElement('button');
+      verifyButton.type = 'button'; verifyButton.className = 'btn btn-ghost btn-sm'; verifyButton.textContent = 'Verify';
+      verifyButton.addEventListener('click', () => reviewUpload(item.id, 'verify', typeSelect, reviewNote, verifyButton));
+      const rejectButton = document.createElement('button');
+      rejectButton.type = 'button'; rejectButton.className = 'btn btn-ghost btn-sm'; rejectButton.textContent = 'Reject';
+      rejectButton.addEventListener('click', () => reviewUpload(item.id, 'reject', typeSelect, reviewNote, rejectButton));
+      const deleteButton = document.createElement('button');
+      deleteButton.type = 'button'; deleteButton.className = 'btn btn-ghost btn-sm'; deleteButton.textContent = 'Delete';
+      deleteButton.addEventListener('click', async () => {
+        if (!window.confirm(`Permanently delete ${item.file_name} and its record?`)) return;
+        deleteButton.disabled = true;
+        try {
+          await ArkheionAPI.delete(`/api/documents/${item.id}/review/`);
+          showToast('Document and file deleted.');
+          await loadUploads();
+        } catch (error) { showToast(error.message || 'Could not delete the document.', 'error'); }
+        finally { deleteButton.disabled = false; }
+      });
+      const controls = document.createElement('div');
+      controls.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;align-items:center;';
+      const reviewNote = document.createElement('input');
+      reviewNote.type = 'text';
+      reviewNote.maxLength = 500;
+      reviewNote.placeholder = 'Review note (optional)';
+      reviewNote.setAttribute('aria-label', `Review note for ${item.file_name}`);
+      controls.append(downloadButton, typeSelect, reviewNote, verifyButton, rejectButton, deleteButton);
+      actionCell.appendChild(controls);
+    });
+  }
+
+  async function reviewUpload(id, decision, typeSelect, reviewNote, button) {
+    button.disabled = true;
+    try {
+      await ArkheionAPI.patch(`/api/documents/${id}/review/`, {
+        decision,
+        document_type: typeSelect.value,
+        review_note: reviewNote.value.trim(),
+      });
+      showToast(decision === 'verify' ? 'Document verified by staff.' : 'Document marked as rejected.');
+      await loadUploads();
+    } catch (error) {
+      showToast(error.message || 'Could not save the document review.', 'error');
+    } finally { button.disabled = false; }
+  }
+
+  initializeUploadPage();
 </script>
 <style>@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}</style>
 </body>
 </html>
+
+

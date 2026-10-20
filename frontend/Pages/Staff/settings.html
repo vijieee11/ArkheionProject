@@ -240,7 +240,7 @@ async function loadSettings() {
   localStorage.setItem('ark_username', rawUsername);
   localStorage.setItem('ark_role', role);
   const roleLabel = role === 'head_staff' ? 'Head Staff' : 'Regular Staff';
-  const displayName = formatStaffName(rawUsername, role);
+  const displayName = formatStaffName(rawUsername, role, account.first_name, account.last_name);
   const initials = role === 'head_staff' ? 'HS' : 'S';
   document.getElementById('usernameInput').value = rawUsername;
   document.getElementById('roleInput').value = roleLabel;
