@@ -516,6 +516,22 @@ class PensionRecordCreateAPIView(generics.CreateAPIView):
         record_action(self.request, "create", "pension", record, "Created pension history record.")
 
 
+class PensionRecordDetailAPIView(generics.RetrieveUpdateAPIView):
+    serializer_class = PensionRecordSerializer
+    permission_classes = [IsAuthenticated, IsOSCAStaff]
+
+    def get_queryset(self):
+        records = PensionRecord.objects.select_related("senior_citizen", "senior_citizen__barangay")
+        if self.request.user.role == "head_staff":
+            return records
+        profile = getattr(self.request.user, "staff_profile", None)
+        return records.filter(senior_citizen__barangay_id=profile.barangay_id) if profile else records.none()
+
+    def perform_update(self, serializer):
+        record = serializer.save()
+        record_action(self.request, "edit", "pension", record, "Updated pension claim record.")
+
+
 class DeathRecordListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = DeathRecordSerializer
     permission_classes = [IsAuthenticated, IsOSCAStaff]
@@ -529,13 +545,84 @@ class DeathRecordListCreateAPIView(generics.ListCreateAPIView):
         return records.filter(senior_citizen__barangay_id=profile.barangay_id) if profile else records.none()
 
     def perform_create(self, serializer):
-        senior = serializer.validated_data["senior_citizen"]
+        record = serializer.save(recorded_by=self.request.user, review_status="pending")
+        record_action(self.request, "create", "death_record", record, "Submitted a death report for Head Staff review.")
+
+
+class DeathRecordDetailAPIView(generics.RetrieveUpdateAPIView):
+    serializer_class = DeathRecordSerializer
+    permission_classes = [IsAuthenticated, IsOSCAStaff]
+
+    def get_queryset(self):
+        records = DeathRecord.objects.select_related(
+            "senior_citizen", "senior_citizen__barangay", "recorded_by", "reviewed_by"
+        )
+        if self.request.user.role == "head_staff":
+            return records
+        profile = getattr(self.request.user, "staff_profile", None)
+        return records.filter(
+            senior_citizen__barangay_id=profile.barangay_id,
+            review_status="needs_correction",
+        ) if profile else records.none()
+
+    def update(self, request, *args, **kwargs):
+        from rest_framework.exceptions import PermissionDenied
+
+        if request.user.role != "regular_staff":
+            raise PermissionDenied("Only the reporting barangay staff may resubmit a returned death report.")
+        return super().update(request, *args, **kwargs)
+
+    def perform_update(self, serializer):
+        record = serializer.save(
+            review_status="pending",
+            review_note="",
+            reviewed_by=None,
+            reviewed_at=None,
+        )
+        record_action(self.request, "edit", "death_record", record, "Corrected and resubmitted a death report for review.")
+
+
+class DeathRecordReviewAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        from rest_framework.exceptions import PermissionDenied, ValidationError
+
+        if request.user.role != "head_staff":
+            raise PermissionDenied("Only Head Staff may review death reports.")
+        decision = request.data.get("decision")
+        if decision not in {"verify", "return"}:
+            raise ValidationError({"decision": ["Choose verify or return."]})
+        note = str(request.data.get("review_note", "")).strip()[:1000]
+        if decision == "return" and not note:
+            raise ValidationError({"review_note": ["A correction note is required when returning a report."]})
+
+        record = get_object_or_404(
+            DeathRecord.objects.select_related("senior_citizen"), pk=pk
+        )
+        if record.review_status == "verified":
+            raise ValidationError({"detail": "This death report is already verified."})
+
         with transaction.atomic():
-            record = serializer.save(recorded_by=self.request.user)
-            senior.is_active = False
-            senior.save(update_fields=["is_active", "updated_at"])
-            senior.portal_users.update(is_active=False)
-            record_action(self.request, "create", "death_record", record, "Recorded senior citizen death and deactivated the senior record and portal accounts.")
+            record.review_status = "verified" if decision == "verify" else "needs_correction"
+            record.review_note = note
+            record.reviewed_by = request.user
+            record.reviewed_at = timezone.now()
+            record.save(update_fields=["review_status", "review_note", "reviewed_by", "reviewed_at"])
+            if decision == "verify":
+                senior = record.senior_citizen
+                senior.is_active = False
+                senior.save(update_fields=["is_active", "updated_at"])
+                senior.portal_users.update(is_active=False)
+            record_action(
+                request,
+                "approve" if decision == "verify" else "edit",
+                "death_record_review",
+                record,
+                "Verified death report and deactivated senior access." if decision == "verify" else "Returned death report for correction.",
+            )
+
+        return Response(DeathRecordSerializer(record, context={"request": request}).data)
 
 
 class ResidenceTransferListCreateAPIView(generics.ListCreateAPIView):

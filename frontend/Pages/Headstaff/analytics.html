@@ -81,13 +81,13 @@
     <div class="analytics-note" id="analyticsNotice"><i class="ti ti-info-circle"></i><div><strong>Live OSCA data.</strong> Deaths, transfers, senior records, and pension history are loaded from the backend. Resident population, bedridden status, and monthly booklet summaries are not yet available from backend records.</div></div>
 
     <div class="stats-grid stats-3" style="margin-top:14px">
-      <div class="stat-card coral"><div class="stat-label"><i class="ti ti-heart-broken"></i> Recorded deaths</div><div class="stat-value" id="deathTotal">0</div><div class="stat-sub" id="deathPeriodLabel">Selected year · all barangays</div></div>
+      <div class="stat-card coral"><div class="stat-label"><i class="ti ti-heart-broken"></i> Verified deaths</div><div class="stat-value" id="deathTotal">0</div><div class="stat-sub" id="deathPeriodLabel">Selected year · all barangays</div></div>
       <div class="stat-card"><div class="stat-label"><i class="ti ti-users"></i> Resident population</div><div class="stat-value" id="residentTotal">—</div><div class="stat-sub" id="residentScope">No resident population API yet</div></div>
       <div class="stat-card teal"><div class="stat-label"><i class="ti ti-user-heart"></i> Active senior citizens</div><div class="stat-value" id="seniorTotal">0</div><div class="stat-sub" id="seniorShare">Current registered senior records</div></div>
     </div>
 
     <div class="metric-grid">
-      <div class="stat-card coral"><div class="stat-label"><i class="ti ti-heart-broken"></i> Deaths</div><div class="stat-value" id="overviewDeaths">0</div><div class="stat-sub">Recorded · selected year</div></div>
+      <div class="stat-card coral"><div class="stat-label"><i class="ti ti-heart-broken"></i> Verified deaths</div><div class="stat-value" id="overviewDeaths">0</div><div class="stat-sub">Verified · selected year</div></div>
       <div class="stat-card"><div class="stat-label"><i class="ti ti-home-move"></i> Residence transfers</div><div class="stat-value" id="transferTotal">0</div><div class="stat-sub" id="transferScope">Selected year · backend</div></div>
       <div class="stat-card teal"><div class="stat-label"><i class="ti ti-user-plus"></i> New members</div><div class="stat-value" id="newMemberTotal">0</div><div class="stat-sub" id="newMemberScope">Based on registration date</div></div>
       <div class="stat-card"><div class="stat-label"><i class="ti ti-bed"></i> Bedridden</div><div class="stat-value" id="bedriddenTotal">—</div><div class="stat-sub">No backend field yet</div></div>
@@ -101,7 +101,7 @@
       <div class="card">
         <div class="card-header"><div><div class="card-title">Deaths by month</div><div class="card-subtitle" id="deathChartSubtitle">Death records for selected year</div></div></div>
         <div class="chart-area"><div class="month-chart" id="deathMonthChart"></div></div>
-        <div class="chart-footnote">Recorded death dates from the backend. Use the year and barangay filters above to narrow the chart.</div>
+        <div class="chart-footnote">Only death reports verified by Head Staff are counted. Use the year and barangay filters above to narrow the chart.</div>
       </div>
 
       <div class="card">
@@ -120,7 +120,7 @@
       <div class="card wide">
         <div class="card-header"><div><div class="card-title">Senior citizens by age group</div><div class="card-subtitle" id="ageChartSubtitle">Age distribution from backend records</div></div></div>
         <div class="chart-area"><div class="age-chart" id="ageGroupChart"></div></div>
-        <div class="chart-footnote">Age bands use the age stored in each active senior citizen record.</div>
+        <div class="chart-footnote">Age is calculated from each active senior's date of birth as of today.</div>
       </div>
 
       <div class="card">
@@ -130,8 +130,8 @@
       </div>
       <div class="card wide">
         <div class="card-header"><div><div class="card-title">Barangay record summary</div><div class="card-subtitle">Counts from connected records; unavailable fields are marked with a dash</div></div></div>
-        <div class="barangay-table-wrap"><table class="barangay-table"><thead><tr><th>Barangay</th><th>Deaths</th><th>Transfers</th><th>New members</th><th>Bedridden</th><th>Seniors with pension history</th><th>Non-pensioners</th></tr></thead><tbody id="barangaySummaryRows"></tbody></table></div>
-        <div class="chart-footnote">Death, transfer, and new-member counts use backend records. Bedridden and pension-enrollment fields are not available yet.</div>
+        <div class="barangay-table-wrap"><table class="barangay-table"><thead><tr><th>Barangay</th><th>Verified deaths</th><th>Transfers</th><th>New members</th><th>Bedridden</th><th>Seniors with pension history</th><th>Non-pensioners</th></tr></thead><tbody id="barangaySummaryRows"></tbody></table></div>
+        <div class="chart-footnote">Verified death, transfer, and new-member counts use backend records. Bedridden and pension-enrollment fields are not available yet.</div>
       </div>
       <div class="card wide">
         <div class="card-header"><div><div class="card-title">Medicine and grocery entries from physical booklets</div><div class="card-subtitle" id="bookletChartSubtitle">Monthly summary API not available yet</div></div></div>
@@ -213,7 +213,8 @@
   function selectedRecords() {
     const activeSeniors = filterByBarangay(analyticsData.seniors.filter(row => row.is_active), row => row.barangay_name || '');
     const allSeniors = filterByBarangay(analyticsData.seniors, row => row.barangay_name || '');
-    const deaths = filterByYear(filterByBarangay(analyticsData.deaths, row => row.barangay_name || ''), 'date_of_death');
+    const verifiedDeaths = analyticsData.deaths.filter(row => row.review_status === 'verified');
+    const deaths = filterByYear(filterByBarangay(verifiedDeaths, row => row.barangay_name || ''), 'date_of_death');
     const selectedBarangay = document.getElementById('analyticsBarangay').value;
     const transfersInScope = selectedBarangay
       ? analyticsData.transfers.filter(row => row.from_barangay_name === selectedBarangay || row.to_barangay_name === selectedBarangay)
@@ -225,13 +226,25 @@
     return { activeSeniors, allSeniors, deaths, transfers, seniorsForNewMembers, pensions };
   }
   function getAgeGroups(seniors) {
+    const today = new Date();
+    const ageAtToday = row => {
+      const dob = String(row.date_of_birth || '');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) return Number(row.age);
+      const [year, month, day] = dob.split('-').map(Number);
+      let age = today.getFullYear() - year;
+      if (today.getMonth() + 1 < month || (today.getMonth() + 1 === month && today.getDate() < day)) age -= 1;
+      return age;
+    };
     const bands = [
       {label:'60–69', test: age => age >= 60 && age <= 69},
       {label:'70–79', test: age => age >= 70 && age <= 79},
       {label:'80–89', test: age => age >= 80 && age <= 89},
       {label:'90+', test: age => age >= 90},
     ];
-    return bands.map(band => ({label:band.label, value:seniors.filter(row => Number.isFinite(Number(row.age)) && band.test(Number(row.age))).length}));
+    return bands.map(band => ({label:band.label, value:seniors.filter(row => {
+      const age = ageAtToday(row);
+      return Number.isFinite(age) && band.test(age);
+    }).length}));
   }
   function renderMonthlyChart(elementId, records, dateField, label, color) {
     const selectedYear = document.getElementById('analyticsYear').value || 'all years';
@@ -274,7 +287,7 @@
     document.getElementById('deathTotal').textContent = deaths.length.toLocaleString();
     document.getElementById('overviewDeaths').textContent = deaths.length.toLocaleString();
     document.getElementById('deathPeriodLabel').textContent = `${year} · ${barangay}`;
-    document.getElementById('deathChartSubtitle').textContent = `Recorded deaths · ${year}`;
+    document.getElementById('deathChartSubtitle').textContent = `Verified deaths · ${year}`;
     renderMonthlyChart('deathMonthChart', deaths, 'date_of_death', 'deaths', 'var(--coral-600)');
 
     const transferTotal = transfers.length;

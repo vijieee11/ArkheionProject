@@ -90,14 +90,8 @@ function renderSidebar(activePage) {
     });
   });
 
-  const backToHsBtn = role === 'head_staff' ? `
-    <a class="nav-item" href="../Headstaff/hs-dashboard.html">
-      <i class="ti ti-arrow-back-up"></i>Switch to Head Staff view
-    </a>` : '';
-
   html += `
     <div class="sb-spacer"></div>
-    ${backToHsBtn}
     <a class="nav-item" href="#" onclick="logout(event)">
       <i class="ti ti-logout"></i>Logout
     </a>

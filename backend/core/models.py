@@ -183,6 +183,11 @@ class SeniorCitizen(models.Model):
 
 
 class DeathRecord(models.Model):
+    REVIEW_STATUS_CHOICES = [
+        ("pending", "Pending review"),
+        ("verified", "Verified"),
+        ("needs_correction", "Needs correction"),
+    ]
     senior_citizen = models.OneToOneField(
         SeniorCitizen,
         on_delete=models.PROTECT,
@@ -190,6 +195,16 @@ class DeathRecord(models.Model):
     )
     date_of_death = models.DateField()
     notes = models.TextField(blank=True)
+    review_status = models.CharField(max_length=20, choices=REVIEW_STATUS_CHOICES, default="pending")
+    review_note = models.TextField(blank=True)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reviewed_death_reports",
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
     recorded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

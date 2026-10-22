@@ -235,18 +235,24 @@ class DeathRecordSerializer(serializers.ModelSerializer):
     senior_address = serializers.CharField(source="senior_citizen.address", read_only=True)
     barangay_name = serializers.CharField(source="senior_citizen.barangay.name", read_only=True, allow_null=True)
     recorded_by_name = serializers.CharField(source="recorded_by.username", read_only=True, allow_null=True)
+    reviewed_by_name = serializers.CharField(source="reviewed_by.username", read_only=True, allow_null=True)
+    pension_status = serializers.SerializerMethodField()
 
     class Meta:
         model = DeathRecord
         fields = [
             "id", "senior_citizen", "senior_name", "senior_osca_id", "senior_address", "barangay_name",
-            "date_of_death", "notes", "recorded_by_name", "created_at",
+            "date_of_death", "notes", "review_status", "review_note", "reviewed_by_name", "reviewed_at",
+            "pension_status", "recorded_by_name", "created_at",
         ]
-        read_only_fields = ["recorded_by_name", "created_at"]
+        read_only_fields = ["review_status", "review_note", "reviewed_by_name", "reviewed_at", "recorded_by_name", "created_at"]
 
     def get_senior_name(self, obj):
         senior = obj.senior_citizen
         return f"{senior.first_name} {senior.last_name}".strip()
+
+    def get_pension_status(self, obj):
+        return "Pensioner" if obj.senior_citizen.pension_records.exists() else "No pension record"
 
     def validate_date_of_death(self, value):
         from django.utils import timezone
@@ -313,7 +319,7 @@ class ResidenceTransferRecordSerializer(serializers.ModelSerializer):
             raise drf_serializers.ValidationError({"senior_citizen": "This senior has no current barangay recorded."})
         if destination and senior and destination.pk == senior.barangay_id:
             raise drf_serializers.ValidationError({"to_barangay": "The destination is already the senior's barangay."})
-        if senior and hasattr(senior, "death_record"):
+        if senior and hasattr(senior, "death_record") and senior.death_record.review_status == "verified":
             raise drf_serializers.ValidationError({"senior_citizen": "A deceased senior cannot be transferred."})
         if request and request.user.role == "regular_staff":
             profile = getattr(request.user, "staff_profile", None)
@@ -349,7 +355,7 @@ class PensionRecordSerializer(serializers.ModelSerializer):
         if not request:
             return attrs
         senior = attrs.get("senior_citizen", getattr(self.instance, "senior_citizen", None))
-        if senior and hasattr(senior, "death_record"):
+        if senior and hasattr(senior, "death_record") and senior.death_record.review_status == "verified":
             raise serializers.ValidationError({"senior_citizen": "Pension records cannot be created for a senior with a recorded death."})
         if senior and request.user.role == "regular_staff":
             profile = getattr(request.user, "staff_profile", None)

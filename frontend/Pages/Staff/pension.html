@@ -50,7 +50,7 @@
 <script src="../api.js"></script>
 <div class="main">
   <div class="topbar">
-    <span class="topbar-title">Social pension — July 2026</span>
+    <span class="topbar-title" id="pension-title">Social pension records</span>
     <div class="topbar-actions" style="margin-left:auto;">
       <button class="btn btn-ghost btn-sm" onclick="exportPayroll()"><i class="ti ti-download"></i> Export payroll</button>
     </div>
@@ -60,13 +60,13 @@
     <div class="stats-grid stats-3">
       <div class="stat-card amber">
         <div class="stat-label"><i class="ti ti-circle-check"></i> Claimed</div>
-        <div class="stat-value" id="stat-claimed-count">754</div>
-        <div class="stat-sub" id="stat-claimed-total">₱377,000 total released</div>
+        <div class="stat-value" id="stat-claimed-count">—</div>
+        <div class="stat-sub" id="stat-claimed-total">Loading pension records…</div>
       </div>
       <div class="stat-card coral">
         <div class="stat-label"><i class="ti ti-clock"></i> Unclaimed</div>
-        <div class="stat-value" id="stat-unclaimed-count">530</div>
-        <div class="stat-sub" id="stat-unclaimed-total">₱265,000 still pending</div>
+        <div class="stat-value" id="stat-unclaimed-count">—</div>
+        <div class="stat-sub" id="stat-unclaimed-total">Loading pension records…</div>
       </div>
       <div class="stat-card">
         <div class="stat-label"><i class="ti ti-cash"></i> Amount per member</div>
@@ -78,8 +78,8 @@
     <div class="card">
       <div class="card-header">
         <div>
-          <div class="card-title">Pension claim list — July 2026</div>
-          <div class="card-subtitle">Mark senior citizens as they claim their pension</div>
+          <div class="card-title">Pension claim records</div>
+          <div class="card-subtitle">Records loaded from the OSCA database</div>
         </div>
         <div class="card-actions">
           <select id="filter-brgy" class="filter-select" data-arkheion-barangay="filter" onchange="renderTable()">
@@ -87,7 +87,10 @@
           </select>
           <select id="filter-status" class="filter-select" onchange="renderTable()">
             <option>All status</option>
-            <option>Claimed</option><option>Unclaimed</option><option>Urgent</option>
+            <option>Claimed</option><option>Unclaimed</option>
+          </select>
+          <select id="filter-period" class="filter-select" onchange="renderTable()" aria-label="Filter by pension period">
+            <option value="">All periods</option>
           </select>
         </div>
       </div>
@@ -111,9 +114,10 @@
       <div class="form-group"><label>Senior citizen</label><input type="text" id="claim-name" value="" readonly></div>
       <div class="form-group"><label>Amount</label><input type="text" id="claim-amount" value="" readonly></div>
       <div class="form-2col">
-        <div class="form-group"><label>Date claimed</label><input type="date" id="claim-date" value="2026-07-09"></div>
-        <div class="form-group"><label>Claimed by</label><select id="claim-by"><option>Self</option><option>Authorized representative</option></select></div>
+        <div class="form-group"><label>Date claimed</label><input type="date" id="claim-date"></div>
+        <div class="form-group"><label>Claimed by</label><select id="claim-by"><option value="self">Self</option><option value="representative">Authorized representative</option></select></div>
       </div>
+      <div class="form-group"><label>Representative name (if applicable)</label><input type="text" id="claim-representative" maxlength="200" placeholder="Name of authorized representative"></div>
       <div class="form-group"><label>Remarks (optional)</label><textarea id="claim-remarks" placeholder="Any notes..."></textarea></div>
     </div>
     <div class="modal-footer">
@@ -126,109 +130,190 @@
 <div class="toast" id="toast"></div>
 <script>
   renderSidebar('pension');
-  ArkheionAPI.populateBarangaySelects().catch(error => showToast(error.message || 'Could not load barangays.', 'error'));
-
-  // Pension records — in production, fetch/patch these via the backend instead.
-  const records = [
-    { osca: '2024-001', name: 'Juan dela Cruz',  brgy: 'Ising', amount: 500, status: 'claimed',   dateClaimed: 'Jul 5, 2026', claimedBy: 'Self' },
-    { osca: '2024-033', name: 'Pedro Ramos',     brgy: 'Alejal',       amount: 500, status: 'unclaimed', dateClaimed: null,          claimedBy: null },
-    { osca: '2022-114', name: 'Lourdes Garcia',  brgy: 'Asuncion',     amount: 500, status: 'urgent',    dateClaimed: null,          claimedBy: null },
-    { osca: '2023-087', name: 'Maria Santos',    brgy: 'Tuganay',      amount: 500, status: 'claimed',   dateClaimed: 'Jul 7, 2026', claimedBy: 'Son' },
-  ];
-
-  let activeOsca = null; // which record the "Mark claimed" modal is currently open for
-
+  const records = [];
+  let activeRecordId = null;
+  let pageHasError = false;
   const statusMeta = {
-    claimed:   { badge: 'badge-ok',     label: 'Claimed' },
-    unclaimed: { badge: 'badge-pend',   label: 'Unclaimed' },
-    urgent:    { badge: 'badge-urgent', label: 'Urgent' },
+    claimed: { badge: 'badge-ok', label: 'Claimed' },
+    unclaimed: { badge: 'badge-pend', label: 'Unclaimed' },
   };
 
-  function peso(n) {
-    return '₱' + n.toLocaleString('en-PH');
+  function unwrapList(value) {
+    return Array.isArray(value) ? value : (Array.isArray(value?.results) ? value.results : []);
   }
 
-  function renderStats() {
-    const claimed = records.filter(r => r.status === 'claimed');
-    const unclaimed = records.filter(r => r.status !== 'claimed');
+  function peso(value) {
+    const amount = Number(value) || 0;
+    return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 2 }).format(amount);
+  }
+
+  function formatDate(value) {
+    if (!value) return '—';
+    const date = new Date(`${value}T00:00:00`);
+    return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium' }).format(date);
+  }
+
+  function periodLabel(value) {
+    const match = String(value || '').match(/^(\d{4})-(\d{1,2})$/);
+    if (!match) return value || 'Unspecified period';
+    return new Intl.DateTimeFormat('en-PH', { month: 'long', year: 'numeric' }).format(new Date(Number(match[1]), Number(match[2]) - 1, 1));
+  }
+
+  function getFilteredRecords() {
+    const brgy = document.getElementById('filter-brgy').value;
+    const status = document.getElementById('filter-status').value;
+    const period = document.getElementById('filter-period').value;
+    return records.filter(record =>
+      (brgy === 'All barangays' || record.brgy === brgy) &&
+      (status === 'All status' || statusMeta[record.status]?.label === status) &&
+      (!period || record.period === period)
+    );
+  }
+
+  function renderStats(rows) {
+    const claimed = rows.filter(record => record.status === 'claimed');
+    const unclaimed = rows.filter(record => record.status === 'unclaimed');
     document.getElementById('stat-claimed-count').textContent = claimed.length;
-    document.getElementById('stat-claimed-total').textContent = `${peso(claimed.reduce((s,r)=>s+r.amount,0))} total released`;
+    document.getElementById('stat-claimed-total').textContent = `${peso(claimed.reduce((sum, record) => sum + record.amount, 0))} total released`;
     document.getElementById('stat-unclaimed-count').textContent = unclaimed.length;
-    document.getElementById('stat-unclaimed-total').textContent = `${peso(unclaimed.reduce((s,r)=>s+r.amount,0))} still pending`;
+    document.getElementById('stat-unclaimed-total').textContent = `${peso(unclaimed.reduce((sum, record) => sum + record.amount, 0))} pending`;
   }
 
   function renderTable() {
-    const brgy = document.getElementById('filter-brgy').value;
-    const status = document.getElementById('filter-status').value;
+    const body = document.getElementById('pension-rows');
+    const rows = getFilteredRecords();
+    body.replaceChildren();
+    renderStats(rows);
+    const selectedPeriod = document.getElementById('filter-period').value;
+    document.getElementById('pension-title').textContent = selectedPeriod
+      ? `Social pension — ${periodLabel(selectedPeriod)}`
+      : 'Social pension records';
 
-    const rows = records.filter(r => {
-      const matchesBrgy = brgy === 'All barangays' || r.brgy === brgy;
-      const matchesStatus = status === 'All status' || statusMeta[r.status].label === status;
-      return matchesBrgy && matchesStatus;
+    if (!rows.length) {
+      const row = body.insertRow();
+      const cell = row.insertCell();
+      cell.colSpan = 8;
+      cell.style.textAlign = 'center';
+      cell.style.padding = '24px';
+      cell.textContent = pageHasError
+        ? 'Pension records could not be loaded. Check your connection and refresh the page.'
+        : 'No pension records match these filters. Records will appear here after they are saved to the database.';
+      return;
+    }
+
+    rows.forEach(record => {
+      const row = body.insertRow();
+      const values = [record.osca, record.name, record.brgy || '—', peso(record.amount)];
+      values.forEach((value, index) => {
+        const cell = row.insertCell();
+        cell.textContent = value;
+        cell.className = index === 1 ? 'td-bold' : 'td-muted';
+      });
+      const statusCell = row.insertCell();
+      const badge = document.createElement('span');
+      badge.className = `badge ${statusMeta[record.status].badge}`;
+      badge.textContent = statusMeta[record.status].label;
+      statusCell.appendChild(badge);
+      row.insertCell().textContent = formatDate(record.dateClaimed);
+      row.insertCell().textContent = record.claimedBy || '—';
+      const actionCell = row.insertCell();
+      if (record.status === 'unclaimed') {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn btn-navy btn-sm';
+        button.innerHTML = '<i class="ti ti-check"></i> Mark claimed';
+        button.addEventListener('click', () => openClaimModal(record.id));
+        actionCell.appendChild(button);
+      } else {
+        actionCell.textContent = '—';
+      }
     });
-
-    document.getElementById('pension-rows').innerHTML = rows.map(r => {
-      const meta = statusMeta[r.status];
-      const action = r.status === 'claimed'
-        ? `<button class="btn btn-ghost btn-sm btn-icon tooltip" data-tooltip="View" onclick="location.href='member-detail.html?id=${encodeURIComponent(r.osca)}'"><i class="ti ti-eye"></i></button>`
-        : `<button class="btn btn-navy btn-sm" onclick="openClaimModal('${r.osca}')"><i class="ti ti-check"></i> Mark</button>`;
-
-      return `
-        <tr>
-          <td class="td-muted">${r.osca}</td>
-          <td class="td-bold">${r.name}</td>
-          <td class="td-muted">${r.brgy}</td>
-          <td class="td-muted">${peso(r.amount)}</td>
-          <td><span class="badge ${meta.badge}">${meta.label}</span></td>
-          <td class="td-muted">${r.dateClaimed || '—'}</td>
-          <td class="td-muted">${r.claimedBy || '—'}</td>
-          <td>${action}</td>
-        </tr>`;
-    }).join('');
   }
 
-  // Opens the modal pre-filled for a given OSCA ID.
-  function openClaimModal(osca) {
-    const r = records.find(x => x.osca === osca);
-    if (!r) return;
-    activeOsca = osca;
-    document.getElementById('claim-name').value = `${r.name} — ${r.osca}`;
-    document.getElementById('claim-amount').value = peso(r.amount) + '.00';
-    document.getElementById('claim-remarks').value = '';
+  async function loadPensionRecords() {
+    pageHasError = false;
+    const body = document.getElementById('pension-rows');
+    body.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px">Loading pension records…</td></tr>';
+    try {
+      await ArkheionAPI.populateBarangaySelects();
+      const [seniorResponse, pensionResponse] = await Promise.all([
+        ArkheionAPI.get('/api/seniors/'),
+        ArkheionAPI.get('/api/pensions/'),
+      ]);
+      const seniors = unwrapList(seniorResponse);
+      const seniorById = new Map(seniors.map(senior => [String(senior.id), senior]));
+      const pensionRows = unwrapList(pensionResponse);
+      records.splice(0, records.length, ...pensionRows.map(item => {
+        const senior = seniorById.get(String(item.senior_citizen)) || {};
+        return {
+          id: item.id,
+          seniorId: item.senior_citizen,
+          osca: item.senior_osca_id || senior.osca_id || '—',
+          name: item.senior_name || [senior.first_name, senior.last_name].filter(Boolean).join(' ') || 'Unknown senior',
+          brgy: senior.barangay_name || senior.barangay || '',
+          amount: Number(item.amount) || 0,
+          status: item.claimed ? 'claimed' : 'unclaimed',
+          dateClaimed: item.date_claimed || '',
+          claimedBy: item.claimed ? (item.claimed_by === 'self' ? 'Self' : item.representative || 'Authorized representative') : '',
+          period: item.period || '',
+          remarks: item.remarks || '',
+        };
+      }));
+      const periodSelect = document.getElementById('filter-period');
+      const previousPeriod = periodSelect.value;
+      periodSelect.replaceChildren(new Option('All periods', ''));
+      [...new Set(records.map(record => record.period).filter(Boolean))]
+        .sort((a, b) => b.localeCompare(a))
+        .forEach(period => periodSelect.add(new Option(periodLabel(period), period)));
+      if ([...periodSelect.options].some(option => option.value === previousPeriod)) periodSelect.value = previousPeriod;
+      renderTable();
+    } catch (error) {
+      pageHasError = true;
+      renderTable();
+      showToast(error.message || 'Could not load pension records.', 'error');
+    }
+  }
+
+  function openClaimModal(recordId) {
+    const record = records.find(item => item.id === recordId);
+    if (!record) return;
+    activeRecordId = recordId;
+    document.getElementById('claim-name').value = `${record.name} — ${record.osca}`;
+    document.getElementById('claim-amount').value = peso(record.amount);
+    document.getElementById('claim-date').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('claim-by').value = 'self';
+    document.getElementById('claim-representative').value = '';
+    document.getElementById('claim-remarks').value = record.remarks;
     openModal('modal-claim');
   }
 
-  function confirmClaim() {
-    const r = records.find(x => x.osca === activeOsca);
-    if (!r) { closeModal('modal-claim'); return; }
-
-    const dateVal = document.getElementById('claim-date').value;
+  async function confirmClaim() {
+    const record = records.find(item => item.id === activeRecordId);
+    if (!record) { closeModal('modal-claim'); return; }
+    const button = document.querySelector('#modal-claim .modal-footer .btn-navy');
     const claimedBy = document.getElementById('claim-by').value;
-
-    r.status = 'claimed';
-    r.dateClaimed = dateVal
-      ? new Date(dateVal + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-      : 'Today';
-    r.claimedBy = claimedBy;
-
-    // Frontend demo only: make a claim visible in this member's Headstaff profile.
-    // The real app should write this event through the backend with an audit trail.
-    try {
-      const history = JSON.parse(localStorage.getItem('ark_pension_history') || '[]');
-      history.push({
-        id: 'PEN-' + Date.now(), osca: r.osca, name: r.name, period: 'July 2026', amount: r.amount,
-        status: 'Claimed', date: dateVal || new Date().toISOString().slice(0, 10), claimedBy,
-        remarks: document.getElementById('claim-remarks').value.trim(), source: 'Staff entry'
-      });
-      localStorage.setItem('ark_pension_history', JSON.stringify(history));
-    } catch (error) {
-      console.warn('Could not save demo pension history.', error);
+    const representative = document.getElementById('claim-representative').value.trim();
+    if (claimedBy === 'representative' && !representative) {
+      showToast('Enter the authorized representative name.', 'error');
+      return;
     }
-
-    closeModal('modal-claim');
-    renderStats();
-    renderTable();
-    showToast(`Pension marked as claimed for ${r.name}.`);
+    button.disabled = true;
+    try {
+      await ArkheionAPI.patch(`/api/pensions/${record.id}/`, {
+        claimed: true,
+        date_claimed: document.getElementById('claim-date').value || new Date().toISOString().slice(0, 10),
+        claimed_by: claimedBy,
+        representative: claimedBy === 'representative' ? representative : '',
+        remarks: document.getElementById('claim-remarks').value.trim(),
+      });
+      closeModal('modal-claim');
+      showToast(`Pension claim saved for ${record.name}.`);
+      await loadPensionRecords();
+    } catch (error) {
+      showToast(error.message || 'Could not save the pension claim.', 'error');
+    } finally {
+      button.disabled = false;
+    }
   }
 
   function showToast(msg) {
@@ -239,12 +324,13 @@
   }
 
   function exportPayroll() {
-    if (!records.length) {
+    const rows = getFilteredRecords();
+    if (!rows.length) {
       showToast('Nothing to export.');
       return;
     }
     const headers = ['OSCA ID', 'Name', 'Barangay', 'Amount', 'Status', 'Date Claimed', 'Claimed By'];
-    const csvRows = records.map(r => [
+    const csvRows = rows.map(r => [
       r.osca, r.name, r.brgy, r.amount, statusMeta[r.status].label, r.dateClaimed || '', r.claimedBy || ''
     ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
     const csv = [headers.join(','), ...csvRows].join('\n');
@@ -253,17 +339,21 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `pension-payroll-july-2026.csv`;
+    const period = document.getElementById('filter-period').value || 'all-periods';
+    a.download = `pension-payroll-${period}.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
 
-    showToast(`Exported ${records.length} record${records.length === 1 ? '' : 's'}.`);
+    showToast(`Exported ${rows.length} record${rows.length === 1 ? '' : 's'}.`);
   }
 
-  renderStats();
-  renderTable();
+  document.getElementById('claim-by').addEventListener('change', event => {
+    document.getElementById('claim-representative').closest('.form-group').hidden = event.target.value !== 'representative';
+  });
+  document.getElementById('claim-representative').closest('.form-group').hidden = true;
+  loadPensionRecords();
 </script>
 </body>
 </html>

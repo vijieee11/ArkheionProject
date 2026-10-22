@@ -52,7 +52,7 @@
   <div class="content">
     <div class="death-alert">
       <i class="ti ti-alert-triangle"></i>
-      <div><strong>Pension audit follow-up.</strong> Pensioner death records are flagged for review. This page records OSCA review only; it does not stop or change pension payments.</div>
+      <div><strong>Review before account deactivation.</strong> New reports remain pending, and the senior account stays active until Head Staff verifies the report. Verification deactivates the senior and portal account.</div>
     </div>
 
     <div class="stats-grid stats-4" style="margin-top:14px">
@@ -64,7 +64,7 @@
 
     <div class="card">
       <div class="card-header" style="gap:12px;flex-wrap:wrap">
-        <div><div class="card-title">Reports from barangay staff</div><div class="card-subtitle">Review reported deaths, verify details, or return incomplete reports for correction.</div></div>
+        <div><div class="card-title">Reports from barangay staff</div><div class="card-subtitle">Verify a report to deactivate the senior account, or return it with a correction note.</div></div>
         <div class="death-toolbar" style="margin-left:auto">
           <input id="deathSearch" type="search" placeholder="Search name or OSCA ID" oninput="renderDeaths()">
           <select id="deathBarangay" data-arkheion-barangay="filter-empty" onchange="renderDeaths()">
@@ -94,7 +94,7 @@
     </div>
 
     <div class="card" style="margin-top:14px">
-      <div class="card-header"><div><div class="card-title">Recent review activity</div><div class="card-subtitle">Headstaff decisions recorded for audit.</div></div></div>
+      <div class="card-header"><div><div class="card-title">Latest review activity</div><div class="card-subtitle">Most recent review decision for each report.</div></div></div>
       <div class="death-table-wrap">
         <table class="death-table"><thead><tr><th>When</th><th>OSCA ID</th><th>Senior citizen</th><th>Action</th><th>Reviewed by</th><th>Note</th></tr></thead><tbody id="auditRows"></tbody></table>
         <div class="death-empty" id="auditEmpty" style="display:none">No Headstaff review activity yet.</div>
@@ -113,23 +113,18 @@
 <div class="death-toast" id="deathToast" role="status"></div>
 
 <script>
-  const DEATH_STORAGE_KEY = 'ark_death_records';
-  const DEATH_AUDIT_KEY = 'ark_death_audit';
+  let deathRecords = [];
   let selectedDeathId = null;
   renderHeadStaffSidebar('deaths');
-  ArkheionAPI.populateBarangaySelects().catch(error => showToast(error.message || 'Could not load barangays.', 'error'));
   document.getElementById('yearLabel').textContent = String(new Date().getFullYear());
   if (new URLSearchParams(location.search).get('status') === 'review') {
     document.getElementById('deathStatus').value = 'Needs action';
   }
 
-  function readStoredArray(key) {
-    try { const value = JSON.parse(localStorage.getItem(key) || '[]'); return Array.isArray(value) ? value : []; }
-    catch { return []; }
-  }
   function escapeHTML(value) {
     return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   }
+  const asArray = data => Array.isArray(data) ? data : (data && Array.isArray(data.results) ? data.results : []);
   function shortDate(value) {
     if (!value) return '—';
     const parts = value.slice(0, 10).split('-');
@@ -141,21 +136,36 @@
     if (status === 'Needs correction') return 'death-status-correction';
     return 'death-status-review';
   }
+  function statusLabel(status) {
+    return status === 'verified' ? 'Verified' : status === 'needs_correction' ? 'Needs correction' : 'For review';
+  }
+  async function loadDeathRecords() {
+    const rows = document.getElementById('deathRows');
+    rows.innerHTML = '<tr><td colspan="8" class="death-empty">Loading death reports…</td></tr>';
+    try {
+      await ArkheionAPI.populateBarangaySelects();
+      deathRecords = asArray(await ArkheionAPI.get('/api/deaths/'));
+      renderDeaths();
+    } catch (error) {
+      rows.innerHTML = `<tr><td colspan="8" class="death-empty">${escapeHTML(error.message || 'Could not load death reports.')}</td></tr>`;
+      showDeathToast(error.message || 'Could not load death reports.');
+    }
+  }
   function refreshYearFilter(records) {
     const select = document.getElementById('deathYear');
     const selected = select.value;
-    const years = [...new Set(records.map(row => (row.dateOfDeath || '').slice(0,4)).filter(Boolean))].sort().reverse();
+    const years = [...new Set(records.map(row => (row.date_of_death || '').slice(0,4)).filter(Boolean))].sort().reverse();
     select.innerHTML = '<option value="">All years</option>' + years.map(year => `<option value="${escapeHTML(year)}">${escapeHTML(year)}</option>`).join('');
     if (years.includes(selected)) select.value = selected;
   }
   function renderDeaths() {
-    const records = readStoredArray(DEATH_STORAGE_KEY);
+    const records = deathRecords;
     const yearNow = String(new Date().getFullYear());
-    const pending = records.filter(record => (record.status || 'For review') !== 'Verified').length;
+    const pending = records.filter(record => record.review_status !== 'verified').length;
     document.getElementById('totalDeaths').textContent = records.length;
-    document.getElementById('deathsThisYear').textContent = records.filter(record => (record.dateOfDeath || '').startsWith(yearNow)).length;
-    document.getElementById('verifiedDeaths').textContent = records.filter(record => record.status === 'Verified').length;
-    document.getElementById('pensionReviews').textContent = records.filter(record => record.pensionStatus === 'Pensioner').length;
+    document.getElementById('deathsThisYear').textContent = records.filter(record => (record.date_of_death || '').startsWith(yearNow)).length;
+    document.getElementById('verifiedDeaths').textContent = records.filter(record => record.review_status === 'verified').length;
+    document.getElementById('pensionReviews').textContent = records.filter(record => record.pension_status === 'Pensioner').length;
     document.getElementById('reviewQueueBadge').textContent = `${pending} for review`;
     refreshYearFilter(records);
 
@@ -165,47 +175,48 @@
     const year = document.getElementById('deathYear').value;
     const status = document.getElementById('deathStatus').value;
     const filtered = records.filter(record => {
-      const [recordYear, recordMonth] = (record.dateOfDeath || '').split('-');
-      const matchesQuery = !query || (record.name || '').toLowerCase().includes(query) || (record.oscaId || '').toLowerCase().includes(query);
-      const currentStatus = record.status || 'For review';
+      const [recordYear, recordMonth] = (record.date_of_death || '').split('-');
+      const matchesQuery = !query || (record.senior_name || '').toLowerCase().includes(query) || (record.senior_osca_id || '').toLowerCase().includes(query);
+      const currentStatus = statusLabel(record.review_status);
       const matchesStatus = !status || (status === 'Needs action' ? currentStatus !== 'Verified' : currentStatus === status);
-      return matchesQuery && (!barangay || record.barangay === barangay) && (!month || month === recordMonth) && (!year || year === recordYear) && matchesStatus;
+      return matchesQuery && (!barangay || record.barangay_name === barangay) && (!month || month === recordMonth) && (!year || year === recordYear) && matchesStatus;
     });
     document.getElementById('deathRows').innerHTML = filtered.map(record => {
-      const recordStatus = record.status || 'For review';
+      const recordStatus = statusLabel(record.review_status);
       const actions = recordStatus === 'Verified'
         ? '<span style="color:var(--gray-500)">Reviewed</span>'
         : `<div class="death-actions"><button class="death-review-btn death-verify" data-action="verify" data-id="${escapeHTML(record.id)}">Verify</button><button class="death-review-btn death-return" data-action="return" data-id="${escapeHTML(record.id)}">Return</button><button class="action-icon-btn" title="View details" data-action="details" data-id="${escapeHTML(record.id)}"><i class="ti ti-eye"></i></button></div>`;
-      return `<tr><td>${escapeHTML(record.oscaId)}</td><td class="td-bold">${escapeHTML(record.name)}</td><td>${escapeHTML(record.barangay)}</td><td>${escapeHTML(shortDate(record.dateOfDeath))}</td><td>${record.pensionStatus === 'Pensioner' ? '<span class="badge death-risk">Review pension</span>' : escapeHTML(record.pensionStatus || 'Unknown')}</td><td><span class="badge ${statusClass(recordStatus)}">${escapeHTML(recordStatus)}</span></td><td>${escapeHTML(record.recordedBy || '—')}</td><td>${actions}</td></tr>`;
+      return `<tr><td>${escapeHTML(record.senior_osca_id)}</td><td class="td-bold">${escapeHTML(record.senior_name)}</td><td>${escapeHTML(record.barangay_name || '—')}</td><td>${escapeHTML(shortDate(record.date_of_death))}</td><td>${record.pension_status === 'Pensioner' ? '<span class="badge death-risk">Review pension</span>' : escapeHTML(record.pension_status || 'Unknown')}</td><td><span class="badge ${statusClass(recordStatus)}">${escapeHTML(recordStatus)}</span></td><td>${escapeHTML(record.recorded_by_name || '—')}</td><td>${actions}</td></tr>`;
     }).join('');
     document.getElementById('deathEmpty').style.display = filtered.length ? 'none' : 'block';
     document.getElementById('deathCount').textContent = `Showing ${filtered.length} of ${records.length} death reports`;
     renderAudit();
   }
   function renderAudit() {
-    const entries = readStoredArray(DEATH_AUDIT_KEY).slice(0, 10);
-    document.getElementById('auditRows').innerHTML = entries.map(entry => `<tr><td>${escapeHTML(new Date(entry.at).toLocaleString())}</td><td>${escapeHTML(entry.oscaId)}</td><td class="td-bold">${escapeHTML(entry.name)}</td><td>${escapeHTML(entry.action)}</td><td>${escapeHTML(entry.reviewedBy)}</td><td>${escapeHTML(entry.note || '—')}</td></tr>`).join('');
+    const entries = deathRecords.filter(record => record.reviewed_at).sort((a,b) => new Date(b.reviewed_at) - new Date(a.reviewed_at)).slice(0, 10);
+    document.getElementById('auditRows').innerHTML = entries.map(record => `<tr><td>${escapeHTML(new Date(record.reviewed_at).toLocaleString())}</td><td>${escapeHTML(record.senior_osca_id)}</td><td class="td-bold">${escapeHTML(record.senior_name)}</td><td>${escapeHTML(statusLabel(record.review_status))}</td><td>${escapeHTML(record.reviewed_by_name || '—')}</td><td>${escapeHTML(record.review_note || '—')}</td></tr>`).join('');
     document.getElementById('auditEmpty').style.display = entries.length ? 'none' : 'block';
   }
-  function recordById(id) { return readStoredArray(DEATH_STORAGE_KEY).find(record => record.id === id); }
+  function recordById(id) { return deathRecords.find(record => String(record.id) === String(id)); }
   function openDeathDetails(id) {
     const record = recordById(id);
     if (!record) return;
     selectedDeathId = id;
-    document.getElementById('modalTitle').textContent = record.name || 'Death report';
-    document.getElementById('modalSubtitle').textContent = `${record.oscaId || 'No OSCA ID'} · ${record.barangay || 'Barangay not set'}`;
+    document.getElementById('modalTitle').textContent = record.senior_name || 'Death report';
+    document.getElementById('modalSubtitle').textContent = `${record.senior_osca_id || 'No OSCA ID'} · ${record.barangay_name || 'Barangay not set'}`;
     const details = [
-      ['Date of death', shortDate(record.dateOfDeath)], ['Pension status', record.pensionStatus || 'Unknown'],
-      ['Record status', record.status || 'For review'], ['Reported by', record.recordedBy || '—'],
-      ['Date reported', record.recordedAt ? new Date(record.recordedAt).toLocaleString() : '—'],
-      ['Last review note', record.reviewNote || '—']
+      ['Date of death', shortDate(record.date_of_death)], ['Pension status', record.pension_status || 'Unknown'],
+      ['Record status', statusLabel(record.review_status)], ['Reported by', record.recorded_by_name || '—'],
+      ['Date reported', record.created_at ? new Date(record.created_at).toLocaleString() : '—'],
+      ['Reviewed by', record.reviewed_by_name || '—'], ['Date reviewed', record.reviewed_at ? new Date(record.reviewed_at).toLocaleString() : '—'],
+      ['Last review note', record.review_note || '—']
     ];
     document.getElementById('deathDetails').innerHTML = details.map(([label,value]) => `<div class="death-detail"><span>${escapeHTML(label)}</span><span>${escapeHTML(value)}</span></div>`).join('') + `<div><div style="font-size:11px;color:var(--gray-500);margin-bottom:5px">Staff notes / source</div><div class="death-note">${escapeHTML(record.notes || 'No notes provided.')}</div></div>`;
     const actions = document.getElementById('deathModalActions');
     actions.innerHTML = '';
-    if (record.status !== 'Verified') {
-      const returnBtn = document.createElement('button'); returnBtn.className = 'btn btn-ghost'; returnBtn.textContent = 'Return for correction'; returnBtn.onclick = () => reviewDeath('Needs correction'); actions.appendChild(returnBtn);
-      const verifyBtn = document.createElement('button'); verifyBtn.className = 'btn btn-navy'; verifyBtn.innerHTML = '<i class="ti ti-circle-check"></i> Mark verified'; verifyBtn.onclick = () => reviewDeath('Verified'); actions.appendChild(verifyBtn);
+    if (record.review_status !== 'verified') {
+      const returnBtn = document.createElement('button'); returnBtn.className = 'btn btn-ghost'; returnBtn.textContent = 'Return for correction'; returnBtn.onclick = () => reviewDeath('return'); actions.appendChild(returnBtn);
+      const verifyBtn = document.createElement('button'); verifyBtn.className = 'btn btn-navy'; verifyBtn.innerHTML = '<i class="ti ti-circle-check"></i> Verify & deactivate'; verifyBtn.onclick = () => reviewDeath('verify'); actions.appendChild(verifyBtn);
     } else {
       const done = document.createElement('span'); done.className = 'badge death-status-verified'; done.textContent = 'Verified'; actions.appendChild(done);
     }
@@ -217,43 +228,41 @@
     const toast = document.getElementById('deathToast'); toast.textContent = message; toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 2800);
   }
-  function reviewDeath(newStatus) {
+  async function reviewDeath(decision) {
     const recordId = selectedDeathId;
     if (!recordId) return;
-    const records = readStoredArray(DEATH_STORAGE_KEY);
-    const record = records.find(row => row.id === recordId);
+    const record = recordById(recordId);
     if (!record) return;
     let note = '';
-    if (newStatus === 'Needs correction') {
+    if (decision === 'return') {
       note = window.prompt('What should the barangay staff correct?') || '';
       if (!note.trim()) { showDeathToast('Please enter a correction note before returning the report.'); return; }
     }
-    record.status = newStatus;
-    record.reviewNote = note.trim();
-    record.reviewedBy = localStorage.getItem('ark_username') || 'Head Staff';
-    record.reviewedAt = new Date().toISOString();
-    localStorage.setItem(DEATH_STORAGE_KEY, JSON.stringify(records));
-    const audit = readStoredArray(DEATH_AUDIT_KEY);
-    audit.unshift({id:record.id,oscaId:record.oscaId,name:record.name,action:newStatus,reviewedBy:record.reviewedBy,note:record.reviewNote,at:record.reviewedAt});
-    localStorage.setItem(DEATH_AUDIT_KEY, JSON.stringify(audit));
-    closeDeathDetails(); renderDeaths(); showDeathToast(newStatus === 'Verified' ? 'Death report verified.' : 'Report returned for correction.');
+    if (decision === 'verify' && !window.confirm('Verify this death report and deactivate the senior and their portal account?')) return;
+    try {
+      await ArkheionAPI.patch(`/api/deaths/${record.id}/review/`, { decision, review_note: note.trim() });
+      closeDeathDetails();
+      await loadDeathRecords();
+      showDeathToast(decision === 'verify' ? 'Death report verified; senior access deactivated.' : 'Report returned to staff with a correction note.');
+    } catch (error) {
+      showDeathToast(error.message || 'Could not save the review decision.');
+    }
   }
   document.getElementById('deathRows').addEventListener('click', event => {
     const button = event.target.closest('[data-action]'); if (!button) return;
     const record = recordById(button.dataset.id); if (!record) return;
     if (button.dataset.action === 'details') { openDeathDetails(record.id); return; }
     selectedDeathId = record.id;
-    reviewDeath(button.dataset.action === 'verify' ? 'Verified' : 'Needs correction');
+    openDeathDetails(record.id);
   });
   function exportDeaths() {
-    const records = readStoredArray(DEATH_STORAGE_KEY);
+    const records = deathRecords;
     const headers = ['OSCA ID','Name','Barangay','Date of death','Pension status','Record status','Reported by','Reviewed by','Review note'];
-    const rows = records.map(record => [record.oscaId,record.name,record.barangay,record.dateOfDeath,record.pensionStatus,record.status,record.recordedBy,record.reviewedBy,record.reviewNote].map(value => `"${String(value ?? '').replace(/"/g,'""')}"`).join(','));
+    const rows = records.map(record => [record.senior_osca_id,record.senior_name,record.barangay_name,record.date_of_death,record.pension_status,statusLabel(record.review_status),record.recorded_by_name,record.reviewed_by_name,record.review_note].map(value => `"${String(value ?? '').replace(/"/g,'""')}"`).join(','));
     const blob = new Blob([headers.join(',')+'\n'+rows.join('\n')],{type:'text/csv;charset=utf-8;'});
     const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href=url; link.download='osca-death-review.csv'; link.click(); URL.revokeObjectURL(url);
   }
-  window.addEventListener('storage', event => { if (event.key === DEATH_STORAGE_KEY || event.key === DEATH_AUDIT_KEY) renderDeaths(); });
-  renderDeaths();
+  loadDeathRecords();
 </script>
 </body>
 </html>
