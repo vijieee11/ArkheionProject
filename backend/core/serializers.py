@@ -56,6 +56,8 @@ class SeniorCitizenSerializer(serializers.ModelSerializer):
             "address",
             "barangay",
             "barangay_name",
+            "latitude",
+            "longitude",
             "place_of_birth",
             "educational_attainment",
             "occupation",

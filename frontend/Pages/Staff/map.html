@@ -28,6 +28,7 @@
 </head>
 <body>
 <script src="sidebar.js"></script>
+<script src="../api.js"></script>
 <div class="main">
   <div class="topbar">
     <span class="topbar-title">Senior citizen map</span>
@@ -40,18 +41,18 @@
     <div class="stats-grid stats-3">
       <div class="stat-card teal">
         <div class="stat-label"><i class="ti ti-circle-check"></i> Complete records</div>
-        <div class="stat-value">1,109</div>
-        <div class="stat-sub">86% of total members</div>
+        <div class="stat-value" id="complete-count">—</div>
+        <div class="stat-sub">Complete registration records</div>
       </div>
       <div class="stat-card amber">
         <div class="stat-label"><i class="ti ti-alert-triangle"></i> Incomplete records</div>
-        <div class="stat-value">166</div>
-        <div class="stat-sub">Missing requirements</div>
+        <div class="stat-value" id="incomplete-count">—</div>
+        <div class="stat-sub">Incomplete or pending registration</div>
       </div>
       <div class="stat-card coral">
-        <div class="stat-label"><i class="ti ti-alert-circle"></i> Urgent cases</div>
-        <div class="stat-value">9</div>
-        <div class="stat-sub">Unclaimed pension/grocery 2+ months</div>
+        <div class="stat-label"><i class="ti ti-alert-circle"></i> Documents pending review</div>
+        <div class="stat-value" id="pending-doc-count">—</div>
+        <div class="stat-sub">Based on document API status</div>
       </div>
     </div>
 
@@ -69,7 +70,7 @@
             <option value="all">All status</option>
             <option value="ok">Complete</option>
             <option value="inc">Incomplete</option>
-            <option value="urg">Urgent</option>
+            <option value="pending">Pending</option>
           </select>
         </div>
       </div>
@@ -79,7 +80,7 @@
           <div class="map-legend-full">
             <span style="color:var(--navy)">● Complete</span>
             <span style="color:var(--gold-dark)">● Incomplete</span>
-            <span style="color:var(--coral-600)">● Urgent</span>
+            <span style="color:var(--coral-600)">● Pending</span>
             <span style="color:var(--navy-light,#0F6E56)">● Barangay center</span>
           </div>
         </div>
@@ -118,19 +119,39 @@
     { name:'Tuganay',               lat:7.370734, lng:125.721613, pop:4966 },
   ];
 
-  // Sample senior-citizen members — each pinned at their real barangay's
-  // coordinates (with a small offset so multiple pins in one barangay don't
-  // sit exactly on top of each other).
-  const members = [
-    { name:'Juan dela Cruz',  osca:'2024-001', brgy:'Ising', status:'ok',  dlat: 0.0025, dlng:-0.0025 },
-    { name:'Maria Santos',    osca:'2023-087', brgy:'Tuganay',           status:'ok',  dlat:-0.0020, dlng: 0.0018 },
-    { name:'Rosario Mendoza', osca:'2025-012', brgy:'Tubod',             status:'inc', dlat: 0.0015, dlng: 0.0022 },
-    { name:'Lourdes Garcia',  osca:'2022-114', brgy:'Alejal',            status:'ok',  dlat:-0.0018, dlng:-0.0015 },
-    { name:'Pedro Ramos',     osca:'2024-033', brgy:'Mangalcal',         status:'urg', dlat: 0.0020, dlng:-0.0020 },
-    { name:'Felipe Torres',   osca:'2023-055', brgy:'New Camiling',      status:'ok',  dlat:-0.0022, dlng: 0.0020 },
-    { name:'Wyndell Joshua Camacho',   osca:'2024-057', brgy:'Tuganay',      status:'urg',  dlat:-0.0022, dlng: 0.0020 },
-
-  ];
+  let members = [];
+  let documentCounts = new Map();
+  function coordinate(value) {
+    if (value === null || value === undefined || value === '') return null;
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+  }
+  function asList(data) { return Array.isArray(data) ? data : (data && Array.isArray(data.results) ? data.results : []); }
+  function memberStatus(senior) {
+    if (senior.registration_status === 'complete') return 'ok';
+    if (senior.registration_status === 'pending') return 'pending';
+    return 'inc';
+  }
+  async function loadMapRecords() {
+    const [seniorResponse, documentResponse] = await Promise.all([
+      ArkheionAPI.get('/api/seniors/'), ArkheionAPI.get('/api/documents/')
+    ]);
+    const seniors = asList(seniorResponse);
+    const documents = asList(documentResponse);
+    documentCounts = new Map();
+    documents.forEach(doc => documentCounts.set(Number(doc.senior_citizen), (documentCounts.get(Number(doc.senior_citizen)) || 0) + 1));
+    members = seniors.map(senior => ({
+      id: senior.id,
+      name: [senior.first_name, senior.middle_name, senior.last_name, senior.suffix].filter(Boolean).join(' '),
+      osca: senior.osca_id, brgy: senior.barangay_name || '', status: memberStatus(senior),
+      lat: coordinate(senior.latitude),
+      lng: coordinate(senior.longitude),
+    }));
+    document.getElementById('complete-count').textContent = members.filter(m => m.status === 'ok').length.toLocaleString();
+    document.getElementById('incomplete-count').textContent = members.filter(m => m.status !== 'ok').length.toLocaleString();
+    document.getElementById('pending-doc-count').textContent = documents.filter(doc => !doc.is_verified && doc.review_status !== 'rejected').length.toLocaleString();
+    renderMemberPins();
+  }
 
   // Populate the barangay filter dropdown from the real list.
   const brgySelect = document.getElementById('brgy-filter');
@@ -187,7 +208,7 @@
 
   let memberMarkers = [];
 
-  function statusClass(s){ return s === 'ok' ? 'pin-ok' : s === 'inc' ? 'pin-inc' : 'pin-urg'; }
+  function statusClass(s){ return s === 'ok' ? 'pin-ok' : s === 'pending' ? 'pin-urg' : 'pin-inc'; }
 
   function renderMemberPins(filterBrgy='all', filterStatus='all'){
     memberMarkers.forEach(m => map.removeLayer(m));
@@ -199,7 +220,8 @@
 
       const b = barangays.find(x => x.name === m.brgy);
       if (!b) return;
-      const lat = b.lat + m.dlat, lng = b.lng + m.dlng;
+      const hasCoordinates = Number.isFinite(m.lat) && Number.isFinite(m.lng);
+      const lat = hasCoordinates ? m.lat : b.lat, lng = hasCoordinates ? m.lng : b.lng;
 
       const icon = L.divIcon({
         className: '',
@@ -208,10 +230,13 @@
       });
 
       const marker = L.marker([lat, lng], { icon }).addTo(map);
+      const safeName = String(m.name || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      const safeOsca = String(m.osca || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
       marker.bindPopup(`
-        <p style="font-weight:600;color:var(--gray-900);margin-bottom:4px;">${m.name}</p>
-        <p style="color:var(--gray-500);margin-bottom:2px;">OSCA ID: ${m.osca}</p>
-        <p style="color:var(--gray-500);margin-bottom:8px;">Barangay ${m.brgy}</p>
+        <p style="font-weight:600;color:var(--gray-900);margin-bottom:4px;">${safeName}</p>
+        <p style="color:var(--gray-500);margin-bottom:2px;">OSCA ID: ${safeOsca}</p>
+        <p style="color:var(--gray-500);margin-bottom:2px;">Barangay ${b.name}</p>
+        <p style="color:var(--gray-500);margin-bottom:8px;">Documents: ${documentCounts.get(Number(m.id)) || 0}${hasCoordinates ? '' : ' · location shown at barangay center'}</p>
         <button class="btn btn-navy btn-sm btn-full" onclick="location.href='member-detail.html?id=${encodeURIComponent(m.osca)}'">View profile</button>
       `);
       memberMarkers.push(marker);
@@ -230,12 +255,15 @@
   }
 
   function exportMapData(){
-    const headers = ['Name','OSCA ID','Barangay','Status','Latitude','Longitude'];
+    const headers = ['Name','OSCA ID','Barangay','Status','Latitude','Longitude','Location source'];
     const rows = members.map(m => {
       const b = barangays.find(x => x.name === m.brgy);
-      const lat = (b.lat + m.dlat).toFixed(6), lng = (b.lng + m.dlng).toFixed(6);
-      return [m.name, m.osca, m.brgy, m.status, lat, lng].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
-    });
+      if (!b) return null;
+      const hasCoordinates = Number.isFinite(m.lat) && Number.isFinite(m.lng);
+      const lat = (hasCoordinates ? m.lat : b.lat).toFixed(6), lng = (hasCoordinates ? m.lng : b.lng).toFixed(6);
+      const source = hasCoordinates ? 'Member coordinates' : 'Barangay center (approximate)';
+      return [m.name, m.osca, m.brgy, m.status, lat, lng, source].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
+    }).filter(Boolean);
     const csv = [headers.join(','), ...rows].join('\n');
     const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -246,7 +274,7 @@
     showToast(`Exported ${members.length} pinned member${members.length === 1 ? '' : 's'}.`);
   }
 
-  renderMemberPins();
+  loadMapRecords().catch(error => showToast(error.message || 'Could not load map records.', 'error'));
 </script>
 </body>
 </html>

@@ -70,7 +70,7 @@
         </select>
         <select id="filter-status" class="filter-select" onchange="doSearch()">
           <option>All status</option>
-          <option>Verified</option><option>For validation</option><option>Pending</option><option>Missing</option>
+          <option>Verified</option><option>Pending</option><option>Rejected</option><option>No document</option>
         </select>
         <button class="btn btn-ghost btn-sm" onclick="clearFilters()"><i class="ti ti-x"></i> Clear</button>
       </div>
@@ -99,21 +99,49 @@
 <script>
   renderSidebar('search');
   ArkheionAPI.populateBarangaySelects().catch(error => showToast(error.message || 'Could not load barangays.', 'error'));
-
-  const sampleResults = [
-    { osca: '2024-001', name: 'Juan dela Cruz', type: 'OSCA Form No. 1',        cls: 'Registration form',    brgy: 'Ising', year: '2024', status: 'ok',   statusLabel: 'Verified' },
-    { osca: '2024-001', name: 'Juan dela Cruz', type: 'PSA Birth Certificate',  cls: 'Birth certificate',    brgy: 'Ising', year: '2024', status: 'ok',   statusLabel: 'Verified' },
-    { osca: '2024-001', name: 'Juan dela Cruz', type: 'NCSC Annex A',           cls: 'NCSC application',     brgy: 'Ising', year: '2025', status: 'proc', statusLabel: 'For validation' },
-    { osca: '2023-087', name: 'Maria Santos',   type: 'PhilSys ID',             cls: 'Government ID',        brgy: 'Anibongan',    year: '2023', status: 'ok',   statusLabel: 'Verified' },
-    { osca: '2025-014', name: 'Christian Ramos',type: 'OSCA Form No. 1',        cls: 'Registration form',    brgy: 'Ising', year: '2025', status: 'ok',   statusLabel: 'Verified' },
-    { osca: '2022-039', name: 'Pedro San Juan', type: 'PSA Birth Certificate',  cls: 'Birth certificate',    brgy: 'Alejal',       year: '2023', status: 'missing', statusLabel: 'Pending' },
-    { osca: '2024-056', name: 'Wyndell Joshua Camacho',     type: 'PhilSys ID',             cls: 'Government ID',        brgy: 'Tuganay',      year: '2024', status: 'pending', statusLabel: 'Pending' },
-    { osca: '2023-078', name: 'Carlos Mendoza',  type: 'NCSC Annex A',           cls: 'NCSC application',     brgy: 'Anibongan',    year: '2023', status: 'missing', statusLabel: 'Missing' },
-    { osca: '2025-022', name: 'Ana Villanueva',  type: 'Medicine booklet',       cls: 'Medical document',     brgy: 'Ising', year: '2025', status: 'ok',   statusLabel: 'Verified' },
-    { osca: '2024-099', name: 'Ramon Bautista',  type: 'OSCA Form No. 1',        cls: 'Registration form',    brgy: 'Alejal',       year: '2024', status: 'proc', statusLabel: 'For validation' }
-  ];
-
+  let searchRecords = [];
   let lastResults = [];
+
+  function asList(data) { return Array.isArray(data) ? data : (data && Array.isArray(data.results) ? data.results : []); }
+  function seniorName(s) { return [s.first_name, s.middle_name, s.last_name, s.suffix].filter(Boolean).join(' '); }
+  function documentStatus(doc) {
+    if (doc.review_status === 'verified' || doc.is_verified) return 'Verified';
+    if (doc.review_status === 'rejected') return 'Rejected';
+    return 'Pending';
+  }
+  async function loadSearchRecords() {
+    const results = await Promise.all([ArkheionAPI.get('/api/seniors/'), ArkheionAPI.get('/api/documents/')]);
+    const seniors = asList(results[0]);
+    const documents = asList(results[1]);
+    searchRecords = seniors.flatMap(senior => {
+      const name = seniorName(senior);
+      const memberDocs = documents.filter(doc => Number(doc.senior_citizen) === Number(senior.id));
+      const rows = memberDocs.length ? memberDocs : [null];
+      return rows.map(doc => {
+        const date = doc && (doc.upload_date || doc.created_at);
+        return {
+          seniorId: senior.id, osca: senior.osca_id || '', name, brgy: senior.barangay_name || '',
+          type: doc ? doc.document_type : 'No document uploaded',
+          cls: doc && doc.nlp_classification ? doc.nlp_classification : 'Not classified',
+          year: date ? String(date).slice(0, 4) : '',
+          statusLabel: doc ? documentStatus(doc) : 'No document',
+          documentId: doc && doc.id,
+        };
+      });
+    });
+    const typeSelect = document.getElementById('filter-type');
+    const types = [...new Set(searchRecords.map(row => row.type).filter(type => type && type !== 'No document uploaded'))].sort();
+    typeSelect.replaceChildren(new Option('All document types', 'All document types'), ...types.map(type => new Option(type, type)));
+    const yearSelect = document.getElementById('filter-year');
+    const years = [...new Set(searchRecords.map(row => row.year).filter(Boolean))].sort().reverse();
+    yearSelect.replaceChildren(new Option('All years', 'All years'), ...years.map(year => new Option(year, year)));
+    doSearch();
+  }
+  loadSearchRecords().catch(error => {
+    document.getElementById('results-sub').textContent = 'Could not load records from the API.';
+    document.getElementById('results-body').innerHTML = `<div class="empty-state"><h4>Records unavailable</h4><p>${escapeHtml(error.message || 'Could not load records.')}</p></div>`;
+    showToast(error.message || 'Could not load records.', 'error');
+  });
 
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -142,7 +170,7 @@
     const year = document.getElementById('filter-year').value;
     const status = document.getElementById('filter-status').value;
 
-    return sampleResults.filter(r => {
+    return searchRecords.filter(r => {
       const matchesQuery = !q ||
         r.name.toLowerCase().includes(q) ||
         r.osca.toLowerCase().includes(q) ||
@@ -157,15 +185,12 @@
     });
   }
 
-  // Maps a status label to its badge color class.
-  // Verified = green (existing badge-ok), For validation = light orange,
-  // Pending = light blue, Missing = light red.
+  // Match badge colors to the review status returned by the document API.
   function statusClass(label) {
     switch (label) {
       case 'Verified': return 'badge-ok';
-      case 'For validation': return 'badge-warn';
       case 'Pending': return 'badge-info';
-      case 'Missing': return 'badge-danger';
+      case 'Rejected': return 'badge-danger';
       default: return 'badge-proc';
     }
   }
@@ -216,7 +241,7 @@
         <td class="td-muted">${highlight(r.osca, q)}</td>
         <td class="td-bold">${highlight(r.name, q)}</td>
         <td class="td-muted">${highlight(r.type, q)}</td>
-        <td><span class="badge ${statusClass(r.statusLabel)}">${r.cls}</span></td>
+        <td><span class="badge ${statusClass(r.statusLabel)}">${escapeHtml(r.cls)}</span></td>
         <td class="td-muted">${highlight(r.brgy, q)}</td>
         <td class="td-muted">${highlight(r.year, q)}</td>
         <td><span class="badge ${statusClass(r.statusLabel)}">${r.statusLabel}</span></td>

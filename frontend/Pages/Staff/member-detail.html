@@ -69,6 +69,7 @@
 </head>
 <body>
 <script src="sidebar.js"></script>
+<script src="../api.js"></script>
 <div class="main">
   <div class="topbar">
     <span class="topbar-title">Member details</span>
@@ -85,16 +86,16 @@
     <!-- Profile summary -->
     <div class="card" style="padding:20px;">
       <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-        <div id="avatar" style="width:64px;height:64px;border-radius:50%;background:var(--teal-50);border:1.5px solid var(--teal-100);display:flex;align-items:center;justify-content:center;font-family:var(--font-body);font-weight:700;font-size:22px;color:var(--navy);flex-shrink:0;">JD</div>
+        <div id="avatar" style="width:64px;height:64px;border-radius:50%;background:var(--teal-50);border:1.5px solid var(--teal-100);display:flex;align-items:center;justify-content:center;font-family:var(--font-body);font-weight:700;font-size:22px;color:var(--navy);flex-shrink:0;">—</div>
         <div style="flex:1;min-width:200px;">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-            <h3 id="m-name" style="margin:0;color:var(--navy);">Juan dela Cruz</h3>
-            <span class="badge badge-ok" id="m-status">Verified</span>
+            <h3 id="m-name" style="margin:0;color:var(--navy);">Loading member…</h3>
+            <span class="badge badge-proc" id="m-status">Loading</span>
           </div>
           <div class="card-subtitle" style="margin-top:4px;">
-            OSCA ID <span id="m-osca" class="td-bold">2024-001</span>
-            &nbsp;·&nbsp; <span id="m-brgy">Brgy 2</span>
-            &nbsp;·&nbsp; Registered <span id="m-year">2024</span>
+            OSCA ID <span id="m-osca" class="td-bold">—</span>
+            &nbsp;·&nbsp; <span id="m-brgy">—</span>
+            &nbsp;·&nbsp; Registered <span id="m-year">—</span>
           </div>
         </div>
         <div style="display:flex;gap:8px;" id="profile-actions">
@@ -114,14 +115,14 @@
         </div>
       </div>
       <div id="info-grid" style="display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:24px 20px;padding:16px 24px;">
-        <div><div class="td-muted" style="font-size:12px;">Full name</div><div class="td-bold" id="i-name">Juan dela Cruz</div></div>
-        <div><div class="td-muted" style="font-size:12px;">Birthdate</div><div class="td-bold" id="i-birthdate">May 14, 1958</div></div>
-        <div><div class="td-muted" style="font-size:12px;">Age</div><div class="td-bold" id="i-age">68</div></div>
-        <div><div class="td-muted" style="font-size:12px;">Sex</div><div class="td-bold" id="i-sex">Male</div></div>
-        <div><div class="td-muted" style="font-size:12px;">Civil status</div><div class="td-bold" id="i-civil">Married</div></div>
-        <div><div class="td-muted" style="font-size:12px;">Barangay</div><div class="td-bold" id="i-brgy">Brgy 2</div></div>
-        <div><div class="td-muted" style="font-size:12px;">Contact number</div><div class="td-bold" id="i-contact">09171234567</div></div>
-        <div><div class="td-muted" style="font-size:12px;">Address</div><div class="td-bold" id="i-address">Purok 3, Brgy. Ising</div></div>
+        <div><div class="td-muted" style="font-size:12px;">Full name</div><div class="td-bold" id="i-name">—</div></div>
+        <div><div class="td-muted" style="font-size:12px;">Birthdate</div><div class="td-bold" id="i-birthdate">—</div></div>
+        <div><div class="td-muted" style="font-size:12px;">Age</div><div class="td-bold" id="i-age">—</div></div>
+        <div><div class="td-muted" style="font-size:12px;">Sex</div><div class="td-bold" id="i-sex">—</div></div>
+        <div><div class="td-muted" style="font-size:12px;">Civil status</div><div class="td-bold" id="i-civil">—</div></div>
+        <div><div class="td-muted" style="font-size:12px;">Barangay</div><div class="td-bold" id="i-brgy">—</div></div>
+        <div><div class="td-muted" style="font-size:12px;">Contact number</div><div class="td-bold" id="i-contact">—</div></div>
+        <div><div class="td-muted" style="font-size:12px;">Address</div><div class="td-bold" id="i-address">—</div></div>
       </div>
     </div>
 
@@ -154,7 +155,7 @@
       <div class="card-header">
         <div>
           <div class="card-title">Documents on file</div>
-          <div class="card-subtitle" id="docs-sub">All submitted documents for this member</div>
+          <div class="card-subtitle" id="docs-sub">Loading documents…</div>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="openAddDocumentModal()"><i class="ti ti-upload"></i> Add document</button>
       </div>
@@ -201,16 +202,7 @@
     </div>
     <div class="mdl-body">
       <div class="form-group"><label>Document type <span class="required">*</span></label><input type="text" id="ad-type" placeholder="e.g. OSCA Form No. 1"></div>
-      <div class="form-group"><label>NLP classification <span class="required">*</span></label><input type="text" id="ad-cls" placeholder="e.g. Registration form"></div>
-      <div class="form-group"><label>Year filed <span class="required">*</span></label><input type="text" id="ad-year" placeholder="e.g. 2026"></div>
-      <div class="form-group"><label>Status <span class="required">*</span></label>
-        <select id="ad-status">
-          <option value="Verified">Verified</option>
-          <option value="For validation">For validation</option>
-          <option value="Pending">Pending</option>
-          <option value="Missing">Missing</option>
-        </select>
-      </div>
+      <div class="form-group"><label>Document file <span class="required">*</span></label><input type="file" id="ad-file" accept=".pdf,.docx,.jpg,.jpeg,.png" required><small>PDF, DOCX, JPG, or PNG, up to 10 MB. Classification and review status come from the API.</small></div>
     </div>
     <div class="mdl-footer">
       <button class="btn btn-ghost" onclick="closeMdl('modal-add-doc')">Cancel</button>
@@ -228,21 +220,20 @@
     </div>
     <div class="mdl-body">
       <div class="form-group"><label>Full name <span class="required">*</span></label><input type="text" id="em-name"></div>
-      <div class="form-group"><label>Birthdate <span class="required">*</span></label><input type="text" id="em-birthdate" placeholder="e.g. May 14, 1958"></div>
-      <div class="form-group"><label>Age <span class="required">*</span></label><input type="text" id="em-age"></div>
+      <div class="form-group"><label>Birthdate <span class="required">*</span></label><input type="date" id="em-birthdate"></div>
+      <div class="form-group"><label>Age</label><input type="text" id="em-age" disabled></div>
       <div class="form-group"><label>Sex <span class="required">*</span></label>
-        <select id="em-sex"><option value="Male">Male</option><option value="Female">Female</option></select>
+        <select id="em-sex"><option value="M">Male</option><option value="F">Female</option></select>
       </div>
       <div class="form-group"><label>Civil status <span class="required">*</span></label>
         <select id="em-civil">
-          <option value="Single">Single</option>
-          <option value="Married">Married</option>
-          <option value="Widowed">Widowed</option>
-          <option value="Separated">Separated</option>
+          <option value="single">Single</option>
+          <option value="married">Married</option>
+          <option value="widowed">Widowed</option>
+          <option value="others">Others</option>
         </select>
       </div>
-      <div class="form-group"><label>Barangay <span class="required">*</span></label><input type="text" id="em-brgy"></div>
-      <div class="form-group"><label>Contact number</label><input type="text" id="em-contact"></div>
+      <div class="form-group"><label>Barangay <span class="required">*</span></label><select id="em-brgy"></select></div>
       <div class="form-group"><label>Address</label><input type="text" id="em-address"></div>
     </div>
     <div class="mdl-footer">
@@ -265,51 +256,15 @@
   function openMdl(id) { document.getElementById(id).classList.add('open'); }
   function closeMdl(id) { document.getElementById(id).classList.remove('open'); }
 
-  // Sample records — mirrors the dataset used in search.html.
-  // In production, fetch by OSCA ID from the query string instead.
-  const allMembers = {
-    '2024-001': {
-      name: 'Juan dela Cruz', brgy: 'Ising', year: '2024', status: 'ok', statusLabel: 'Verified',
-      birthdate: 'May 14, 1958', age: 68, sex: 'Male', civil: 'Married',
-      contact: '09171234567', address: 'Purok 3, Brgy. Ising',
-      services: {
-        pension:  { label: 'Active',              cls: 'badge-ok' },
-        medicine: { label: 'Pending refill',       cls: 'badge-proc' },
-        grocery:  { label: 'Claimed - Aug 2026',   cls: 'badge-ok' },
-      },
-      docs: [
-        { type: 'OSCA Form No. 1',       cls: 'Registration form', year: '2024', status: 'ok',   statusLabel: 'Verified' },
-        { type: 'PSA Birth Certificate', cls: 'Birth certificate', year: '2024', status: 'ok',   statusLabel: 'Verified' },
-        { type: 'NCSC Annex A',          cls: 'NCSC application',  year: '2025', status: 'proc', statusLabel: 'For validation' },
-      ]
-    },
-    '2023-087': {
-      name: 'Maria Santos', brgy: 'Anobongan', year: '2023', status: 'ok', statusLabel: 'Verified',
-      birthdate: 'Jan 22, 1961', age: 65, sex: 'Female', civil: 'Widowed',
-      contact: '09209876543', address: 'Purok 1, Brgy. Anobongan',
-      services: {
-        pension:  { label: 'Unclaimed - 2 months', cls: 'badge-danger' },
-        medicine: { label: 'No active request',    cls: 'badge-proc' },
-        grocery:  { label: 'Claimed - Jul 2026',    cls: 'badge-ok' },
-      },
-      docs: [
-        { type: 'PhilSys ID', cls: 'Government ID', year: '2023', status: 'ok', statusLabel: 'Verified' },
-      ]
-    },
-    '2024-056': {
-      name: 'Wyndell Joshua Camacho', brgy: 'Tuganay', year: '2024', status: 'pending', statusLabel: 'Pending',
-      birthdate: 'March 30, 1959', age: 67, sex: 'Male', civil: 'Single',
-      contact: '09173456789', address: 'Purok 2, Brgy. Tuganay',
-      services: {
-        pension:  { label: 'Application pending', cls: 'badge-info' },
-        medicine: { label: 'No active request',   cls: 'badge-proc' },
-        grocery:  { label: 'Not yet claimed',      cls: 'badge-warn' },
-      },
-      docs: [
-        { type: 'PhilSys ID', cls: 'Government ID', year: '2024', status: 'pending', statusLabel: 'Pending' },
-      ]
-    }
-  };
+  let barangays = [];
+  function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function displayName(s) { return [s.first_name, s.middle_name, s.last_name, s.suffix].filter(Boolean).join(' '); }
+  function displayStatus(doc) { return doc.review_status === 'verified' || doc.is_verified ? 'Verified' : doc.review_status === 'rejected' ? 'Rejected' : 'Pending'; }
+  function normalizeSenior(s) {
+    return { ...s, name: displayName(s), brgy: s.barangay_name || '', year: s.date_of_registration ? String(s.date_of_registration).slice(0,4) : '',
+      statusLabel: s.registration_status === 'complete' ? 'Complete' : s.registration_status === 'incomplete' ? 'Incomplete' : 'Pending',
+      birthdate: s.date_of_birth || '', civil: s.civil_status || '', docs: [] };
+  }
 
   function initials(name) {
     return name.split(' ').filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase();
@@ -318,10 +273,9 @@
   // Same mapping used in search.html — keeps status colors consistent site-wide.
   function statusClass(label) {
     switch (label) {
-      case 'Verified': return 'badge-ok';
-      case 'For validation': return 'badge-warn';
-      case 'Pending': return 'badge-info';
-      case 'Missing': return 'badge-danger';
+      case 'Complete': case 'Verified': return 'badge-ok';
+      case 'Incomplete': case 'Pending': return 'badge-info';
+      case 'Rejected': return 'badge-danger';
       default: return 'badge-proc';
     }
   }
@@ -331,53 +285,52 @@
       `${currentMember.docs.length} document(s) on file for OSCA ID ${currentOsca}`;
     document.getElementById('docs-rows').innerHTML = currentMember.docs.map((d, i) => `
       <tr>
-        <td class="td-bold">${d.type}</td>
-        <td><span class="badge ${statusClass(d.statusLabel)}">${d.cls}</span></td>
-        <td class="td-muted">${d.year}</td>
-        <td><span class="badge ${statusClass(d.statusLabel)}">${d.statusLabel}</span></td>
-        <td><button class="btn btn-ghost btn-sm btn-icon" title="View" onclick="viewDocument(${i})"><i class="ti ti-eye"></i></button></td>
+        <td class="td-bold">${escapeHtml(d.document_type)}</td>
+        <td><span class="badge ${statusClass(displayStatus(d))}">${escapeHtml(d.nlp_classification || 'Not classified')}</span></td>
+        <td class="td-muted">${escapeHtml((d.upload_date || '').slice(0,4))}</td>
+        <td><span class="badge ${statusClass(displayStatus(d))}">${displayStatus(d)}</span></td>
+        <td><button class="btn btn-ghost btn-sm btn-icon" title="Download" onclick="viewDocument(${i})"><i class="ti ti-download"></i></button></td>
       </tr>`).join('');
+    if (!currentMember.docs.length) document.getElementById('docs-rows').innerHTML = '<tr><td colspan="5" class="td-muted">No documents uploaded.</td></tr>';
   }
 
   function viewDocument(index) {
     const d = currentMember.docs[index];
     if (!d) return;
-    document.getElementById('vd-title').textContent = d.type;
+    document.getElementById('vd-title').textContent = d.document_type;
     document.getElementById('vd-subtitle').textContent = currentMember.name;
-    document.getElementById('vd-type').textContent = d.type;
-    document.getElementById('vd-cls').textContent = d.cls;
-    document.getElementById('vd-year').textContent = d.year;
-    document.getElementById('vd-status').innerHTML = '<span class="badge ' + statusClass(d.statusLabel) + '">' + d.statusLabel + '</span>';
+    document.getElementById('vd-type').textContent = d.document_type;
+    document.getElementById('vd-cls').textContent = d.nlp_classification || 'Not classified';
+    document.getElementById('vd-year').textContent = (d.upload_date || '').slice(0,4);
+    document.getElementById('vd-status').textContent = displayStatus(d);
     document.getElementById('vd-osca').textContent = currentOsca;
     openMdl('modal-view-doc');
+    ArkheionAPI.download(`/api/documents/${d.id}/download/`, d.file_name || d.document_type).catch(error => showToast(error.message || 'Could not download document.', 'error'));
   }
 
   function openAddDocumentModal() {
-    ['ad-type','ad-cls','ad-year'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('ad-status').value = 'Pending';
+    document.getElementById('ad-type').value = '';
+    document.getElementById('ad-file').value = '';
     openMdl('modal-add-doc');
   }
 
-  function addDocument() {
+  async function addDocument() {
     const type = document.getElementById('ad-type').value.trim();
-    const cls = document.getElementById('ad-cls').value.trim();
-    const year = document.getElementById('ad-year').value.trim();
-    const statusLabel = document.getElementById('ad-status').value;
-
-    if (!type || !cls || !year) {
-      showToast('Please fill in all required fields', 'error');
+    const file = document.getElementById('ad-file').files[0];
+    if (!type || !file) {
+      showToast('Choose a document type and file.', 'error');
       return;
     }
-
-    currentMember.docs.push({
-      type, cls, year,
-      status: statusLabel === 'Verified' ? 'ok' : statusLabel === 'For validation' ? 'proc' : statusLabel === 'Missing' ? 'danger' : 'pending',
-      statusLabel
-    });
-
-    renderDocsTable();
-    closeMdl('modal-add-doc');
-    showToast('Document added successfully!');
+    const body = new FormData();
+    body.append('senior_citizen', currentMember.id);
+    body.append('document_type', type);
+    body.append('file', file);
+    try {
+      const created = await ArkheionAPI.post('/api/documents/', body);
+      currentMember.docs.unshift(created);
+      renderDocsTable(); closeMdl('modal-add-doc');
+      showToast('Document uploaded. Review status is pending.');
+    } catch (error) { showToast(error.message || 'Could not upload document.', 'error'); }
   }
 
   function renderMemberInfo() {
@@ -391,35 +344,45 @@
     document.getElementById('m-year').textContent = m.year;
 
     document.getElementById('i-name').textContent = m.name;
-    document.getElementById('i-birthdate').textContent = m.birthdate;
+    document.getElementById('i-birthdate').textContent = m.birthdate || '—';
     document.getElementById('i-age').textContent = m.age;
-    document.getElementById('i-sex').textContent = m.sex;
-    document.getElementById('i-civil').textContent = m.civil;
+    document.getElementById('i-sex').textContent = m.sex === 'M' ? 'Male' : m.sex === 'F' ? 'Female' : '—';
+    document.getElementById('i-civil').textContent = m.civil || '—';
     document.getElementById('i-brgy').textContent = m.brgy;
-    document.getElementById('i-contact').textContent = m.contact;
-    document.getElementById('i-address').textContent = m.address;
+    document.getElementById('i-contact').textContent = '—';
+    document.getElementById('i-address').textContent = m.address || '—';
 
-    // Services status — per-member, so each record shows its own real standing
-    // (e.g. Maria Santos shows her actual unclaimed pension, not a shared default).
-    const svc = m.services || {};
+    // These service areas do not have matching records in the current API yet.
     ['pension', 'medicine', 'grocery'].forEach(key => {
       const el = document.getElementById('svc-' + key);
-      const data = svc[key] || { label: 'No data', cls: 'badge-proc' };
+      const data = { label: 'No linked record', cls: 'badge-proc' };
       el.textContent = data.label;
       el.className = 'badge ' + data.cls;
     });
   }
 
-  function loadMember() {
+  async function loadMember() {
     const params = new URLSearchParams(location.search);
-    const osca = params.get('id') || '2024-001';
-    const m = allMembers[osca] || allMembers['2024-001'];
-
-    currentMember = m;
-    currentOsca = osca;
-
-    renderMemberInfo();
-    renderDocsTable();
+    const osca = params.get('id');
+    currentOsca = osca || '';
+    try {
+      const [seniorResponse, docResponse, barangayResponse] = await Promise.all([
+        ArkheionAPI.get('/api/seniors/'), ArkheionAPI.get('/api/documents/'), ArkheionAPI.get('/api/barangays/')
+      ]);
+      const seniors = Array.isArray(seniorResponse) ? seniorResponse : (seniorResponse.results || []);
+      const docs = Array.isArray(docResponse) ? docResponse : (docResponse.results || []);
+      barangays = Array.isArray(barangayResponse) ? barangayResponse : (barangayResponse.results || []);
+      document.getElementById('em-brgy').replaceChildren(...barangays.map(item => new Option(item.name, item.name)));
+      const senior = seniors.find(item => item.osca_id === osca);
+      if (!senior) throw new Error('Member record not found or you do not have access.');
+      currentMember = normalizeSenior(senior);
+      currentMember.docs = docs.filter(doc => Number(doc.senior_citizen) === Number(senior.id));
+      renderMemberInfo(); renderDocsTable();
+    } catch (error) {
+      document.getElementById('m-name').textContent = 'Member unavailable';
+      document.getElementById('docs-rows').innerHTML = `<tr><td colspan="5">${escapeHtml(error.message || 'Could not load member.')}</td></tr>`;
+      showToast(error.message || 'Could not load member record.', 'error');
+    }
   }
 
   function exportMemberData() {
@@ -439,7 +402,7 @@
       '',
       'Documents on File',
       'Document,Classification,Year,Status',
-      ...m.docs.map(d => `${d.type},${d.cls},${d.year},${d.statusLabel}`)
+      ...m.docs.map(d => `${d.document_type},${d.nlp_classification || ''},${d.upload_date || ''},${displayStatus(d)}`)
     ];
     const csv = lines.join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -462,31 +425,34 @@
     document.getElementById('em-sex').value = m.sex;
     document.getElementById('em-civil').value = m.civil;
     document.getElementById('em-brgy').value = m.brgy;
-    document.getElementById('em-contact').value = m.contact;
     document.getElementById('em-address').value = m.address;
     openMdl('modal-edit-member');
   }
 
-  function saveMemberEdits() {
+  async function saveMemberEdits() {
     const name = document.getElementById('em-name').value.trim();
     const birthdate = document.getElementById('em-birthdate').value.trim();
-    const age = document.getElementById('em-age').value.trim();
     const sex = document.getElementById('em-sex').value;
     const civil = document.getElementById('em-civil').value;
     const brgy = document.getElementById('em-brgy').value.trim();
-    const contact = document.getElementById('em-contact').value.trim();
     const address = document.getElementById('em-address').value.trim();
 
-    if (!name || !birthdate || !age || !brgy) {
+    if (!name || !birthdate || !brgy) {
       showToast('Please fill in all required fields', 'error');
       return;
     }
+    const parts = name.trim().split(/\s+/);
+    if (parts.length < 2) { showToast('Enter both a first and last name.', 'error'); return; }
 
-    Object.assign(currentMember, { name, birthdate, age, sex, civil, brgy, contact, address });
-
-    renderMemberInfo();
-    closeMdl('modal-edit-member');
-    showToast('Member information updated successfully!');
+    const selectedBarangay = barangays.find(item => item.name === brgy);
+    if (!selectedBarangay) { showToast('Choose a barangay returned by the API.', 'error'); return; }
+    const patch = { first_name: parts.shift(), last_name: parts.pop() || '', middle_name: parts.join(' '), date_of_birth: birthdate, sex, civil_status: civil, barangay: selectedBarangay.id, address };
+    try {
+      const updated = await ArkheionAPI.patch(`/api/seniors/${currentMember.id}/`, patch);
+      currentMember = { ...normalizeSenior(updated), docs: currentMember.docs };
+      currentOsca = currentMember.osca_id;
+      renderMemberInfo(); closeMdl('modal-edit-member'); showToast('Member information updated.');
+    } catch (error) { showToast(error.message || 'Could not update member.', 'error'); }
   }
 
   function printMemberDetails() {
