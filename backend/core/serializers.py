@@ -7,6 +7,7 @@ from .models import (
     DeathRecord,
     Document,
     FamilyMember,
+    GroceryClaim,
     PensionRecord,
     ResidenceTransferRecord,
     SeniorCitizen,
@@ -364,5 +365,22 @@ class PensionRecordSerializer(serializers.ModelSerializer):
             if not profile or senior.barangay_id != profile.barangay_id:
                 raise serializers.ValidationError({"senior_citizen": "You may only manage seniors in your assigned barangay."})
         return attrs
+class GroceryClaimReportSerializer(serializers.ModelSerializer):
+    senior_osca_id = serializers.CharField(source="senior_citizen.osca_id", read_only=True)
+    senior_name = serializers.SerializerMethodField()
+    barangay = serializers.CharField(source="distribution.barangay", read_only=True)
+    period = serializers.CharField(source="distribution.period", read_only=True)
+    distribution_date = serializers.DateField(source="distribution.distribution_date", read_only=True)
+    distribution_status = serializers.CharField(source="distribution.status", read_only=True)
 
+    class Meta:
+        model = GroceryClaim
+        fields = [
+            "id", "senior_citizen", "senior_osca_id", "senior_name", "barangay",
+            "period", "distribution_date", "distribution_status", "claimed",
+            "date_claimed", "claimed_by", "representative", "remarks",
+        ]
 
+    def get_senior_name(self, obj):
+        senior = obj.senior_citizen
+        return f"{senior.first_name} {senior.last_name}".strip()

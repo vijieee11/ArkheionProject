@@ -22,6 +22,7 @@ from .models import (
     Barangay,
     DeathRecord,
     Document,
+    GroceryClaim,
     PensionRecord,
     ResidenceTransferRecord,
     SeniorCitizen,
@@ -33,6 +34,7 @@ from .serializers import (
     DeathRecordSerializer,
     DocumentSerializer,
     GenerateSeniorAccountsSerializer,
+    GroceryClaimReportSerializer,
     PensionRecordSerializer,
     ResidenceTransferRecordSerializer,
     SeniorCitizenSerializer,
@@ -219,6 +221,20 @@ class StaffRegistrationReviewAPIView(APIView):
 class IsOSCAStaff(BasePermission):
     def has_permission(self, request, view):
         return request.user.role in ["head_staff", "regular_staff"]
+
+
+class GroceryClaimListAPIView(ListAPIView):
+    serializer_class = GroceryClaimReportSerializer
+    permission_classes = [IsAuthenticated, IsOSCAStaff]
+
+    def get_queryset(self):
+        claims = GroceryClaim.objects.select_related(
+            "distribution", "senior_citizen", "senior_citizen__barangay"
+        ).order_by("distribution__distribution_date", "senior_citizen__last_name", "senior_citizen__first_name")
+        if self.request.user.role == "head_staff":
+            return claims
+        profile = getattr(self.request.user, "staff_profile", None)
+        return claims.filter(distribution__barangay=profile.barangay.name) if profile else claims.none()
 
 
 class SeniorCitizenListAPIView(ListCreateAPIView):

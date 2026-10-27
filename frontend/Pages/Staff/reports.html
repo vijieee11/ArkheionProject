@@ -5,95 +5,71 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Arkheion — Reports</title>
   <link rel="stylesheet" href="styles.css">
-  <style>body{display:flex;}</style>
+  <style>
+    body{display:flex}
+    .report-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-left:auto}
+    .report-toolbar label{font-size:11px;color:var(--gray-500)}
+    .report-toolbar input,.report-toolbar select{min-height:36px;padding:6px 10px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);background:#fff;color:var(--gray-800)}
+    .report-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .report-card-body{display:flex;flex-direction:column;gap:12px;height:100%}
+    .report-icon{width:40px;height:40px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:20px}
+    .report-actions{display:flex;gap:7px;margin-top:auto}
+    .report-actions button{flex:1}
+    .report-subtitle{font-size:12px;color:var(--gray-500);line-height:1.5}
+    .report-source-note{font-size:11px;color:var(--gray-500);line-height:1.45;padding:10px 12px;border-radius:7px;background:var(--gray-50)}
+    .report-status{display:none;margin-bottom:12px;padding:10px 12px;border-radius:7px;font-size:12px;line-height:1.5}
+    .report-status.show{display:block}.report-status.error{background:#fff1f0;color:#9f2720}.report-status.success{background:#e5f5ef;color:#075e50}.report-status.info{background:#eff6ff;color:#1e40af}
+    @media(max-width:700px){.report-grid{grid-template-columns:1fr}.report-toolbar{margin-left:0;width:100%}.report-toolbar input,.report-toolbar select{flex:1}}
+  </style>
 </head>
 <body>
 <script src="sidebar.js"></script>
+<script src="../api.js"></script>
 <div class="main">
-  <div class="topbar">
+  <div class="topbar" style="gap:12px;flex-wrap:wrap">
     <span class="topbar-title">Reports</span>
-    <div class="topbar-actions" style="margin-left:auto;">
-      <select class="filter-select">
-        <option>July 2026</option><option>June 2026</option><option>May 2026</option>
-      </select>
+    <div class="report-toolbar">
+      <label for="reportMonth">Report month</label><input type="month" id="reportMonth" aria-label="Report month">
+      <label for="reportBarangay">Barangay</label><select id="reportBarangay" data-arkheion-barangay="filter-empty"><option value="">All barangays</option></select>
     </div>
   </div>
 
   <div class="content">
     <div class="alert alert-teal">
       <i class="ti ti-info-circle"></i>
-      Quick exports for day-to-day use — printing distribution lists, checking numbers. For official reports to submit to DSWD, NCSC, or LGU, use the Head Staff Reports page.
+      Quick operational exports. PDF opens a print-ready page that you can print or save as PDF. Excel downloads an Excel-compatible CSV file. Official reports for DSWD, NCSC, or LGU should use the Head Staff Reports page.
     </div>
+    <div id="reportStatus" class="report-status" role="status" aria-live="polite"></div>
 
-    <div class="grid-auto">
-      <div class="card">
-        <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
-          <div style="width:40px;height:40px;border-radius:var(--radius-sm);background:var(--teal-50);display:flex;align-items:center;justify-content:center;">
-            <i class="ti ti-users" style="font-size:20px;color:var(--navy)"></i>
-          </div>
-          <div>
-            <p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900);">Masterlist report</p>
-            <p style="font-size:12px;color:var(--gray-500);margin-top:3px;">All registered members by barangay</p>
-          </div>
-          <div style="display:flex;gap:6px;">
-            <button class="btn btn-ghost btn-sm btn-full" onclick="showToast('Downloading PDF...')"><i class="ti ti-file-type-pdf"></i> PDF</button>
-            <button class="btn btn-ghost btn-sm btn-full" onclick="showToast('Downloading Excel...')"><i class="ti ti-file-spreadsheet"></i> Excel</button>
-          </div>
-        </div>
-      </div>
+    <div class="report-grid">
+      <div class="card"><div class="card-body report-card-body">
+        <div class="report-icon" style="background:var(--teal-50);color:var(--navy)"><i class="ti ti-users"></i></div>
+        <div><p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900)">Masterlist report</p><p class="report-subtitle">Active senior records visible to your account, grouped by barangay.</p></div>
+        <div class="report-actions"><button class="btn btn-ghost btn-sm" onclick="generateReport(this,'masterlist','pdf')"><i class="ti ti-file-type-pdf"></i> PDF / Print</button><button class="btn btn-ghost btn-sm" onclick="generateReport(this,'masterlist','csv')"><i class="ti ti-file-spreadsheet"></i> Excel (CSV)</button></div>
+      </div></div>
 
-      <div class="card">
-        <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
-          <div style="width:40px;height:40px;border-radius:var(--radius-sm);background:var(--amber-100);display:flex;align-items:center;justify-content:center;">
-            <i class="ti ti-cash" style="font-size:20px;color:var(--gold-dark)"></i>
-          </div>
-          <div>
-            <p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900);">Pension payroll</p>
-            <p style="font-size:12px;color:var(--gray-500);margin-top:3px;">Monthly pension report for this month</p>
-          </div>
-          <div style="display:flex;gap:6px;">
-            <button class="btn btn-ghost btn-sm btn-full" onclick="showToast('Downloading PDF...')"><i class="ti ti-file-type-pdf"></i> PDF</button>
-            <button class="btn btn-ghost btn-sm btn-full" onclick="showToast('Downloading Excel...')"><i class="ti ti-file-spreadsheet"></i> Excel</button>
-          </div>
-        </div>
-      </div>
+      <div class="card"><div class="card-body report-card-body">
+        <div class="report-icon" style="background:var(--amber-100);color:var(--gold-dark)"><i class="ti ti-cash"></i></div>
+        <div><p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900)">Pension payroll</p><p class="report-subtitle">Claim records for the selected month and barangay.</p></div>
+        <div class="report-actions"><button class="btn btn-ghost btn-sm" onclick="generateReport(this,'pension','pdf')"><i class="ti ti-file-type-pdf"></i> PDF / Print</button><button class="btn btn-ghost btn-sm" onclick="generateReport(this,'pension','csv')"><i class="ti ti-file-spreadsheet"></i> Excel (CSV)</button></div>
+      </div></div>
 
-      <div class="card">
-        <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
-          <div style="width:40px;height:40px;border-radius:var(--radius-sm);background:var(--coral-50);display:flex;align-items:center;justify-content:center;">
-            <i class="ti ti-shopping-cart" style="font-size:20px;color:var(--coral-900)"></i>
-          </div>
-          <div>
-            <p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900);">Grocery distribution list</p>
-            <p style="font-size:12px;color:var(--gray-500);margin-top:3px;">Print list for today's distribution</p>
-          </div>
-          <div style="display:flex;gap:6px;">
-            <button class="btn btn-ghost btn-sm btn-full" onclick="showToast('Downloading PDF...')"><i class="ti ti-file-type-pdf"></i> PDF</button>
-            <button class="btn btn-ghost btn-sm btn-full" onclick="showToast('Downloading Excel...')"><i class="ti ti-file-spreadsheet"></i> Excel</button>
-          </div>
-        </div>
-      </div>
+      <div class="card"><div class="card-body report-card-body">
+        <div class="report-icon" style="background:var(--coral-50);color:var(--coral-900)"><i class="ti ti-shopping-cart"></i></div>
+        <div><p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900)">Grocery distribution list</p><p class="report-subtitle">Beneficiary and claim status from saved grocery distribution records.</p></div>
+        <div class="report-actions"><button class="btn btn-ghost btn-sm" onclick="generateReport(this,'grocery','pdf')"><i class="ti ti-file-type-pdf"></i> PDF / Print</button><button class="btn btn-ghost btn-sm" onclick="generateReport(this,'grocery','csv')"><i class="ti ti-file-spreadsheet"></i> Excel (CSV)</button></div>
+      </div></div>
 
-      <div class="card">
-        <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
-          <div style="width:40px;height:40px;border-radius:var(--radius-sm);background:var(--teal-50);display:flex;align-items:center;justify-content:center;">
-            <i class="ti ti-pill" style="font-size:20px;color:var(--navy)"></i>
-          </div>
-          <div>
-            <p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900);">Medicine summary</p>
-            <p style="font-size:12px;color:var(--gray-500);margin-top:3px;">Booklet and prescription overview</p>
-          </div>
-          <div style="display:flex;gap:6px;">
-            <button class="btn btn-ghost btn-sm btn-full" onclick="showToast('Downloading PDF...')"><i class="ti ti-file-type-pdf"></i> PDF</button>
-            <button class="btn btn-ghost btn-sm btn-full" onclick="showToast('Downloading Excel...')"><i class="ti ti-file-spreadsheet"></i> Excel</button>
-          </div>
-        </div>
-      </div>
+      <div class="card"><div class="card-body report-card-body">
+        <div class="report-icon" style="background:var(--teal-50);color:var(--navy)"><i class="ti ti-pill"></i></div>
+        <div><p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900)">Physical booklet summary</p><p class="report-subtitle">Monthly medicine and grocery entry totals from the booklet summary form.</p></div>
+        <div class="report-source-note">These summaries are currently saved only in this browser. They are not yet shared through the backend.</div>
+        <div class="report-actions"><button class="btn btn-ghost btn-sm" onclick="generateReport(this,'booklet','pdf')"><i class="ti ti-file-type-pdf"></i> PDF / Print</button><button class="btn btn-ghost btn-sm" onclick="generateReport(this,'booklet','csv')"><i class="ti ti-file-spreadsheet"></i> Excel (CSV)</button></div>
+      </div></div>
     </div>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
-<script>renderSidebar('reports');</script>
+<script src="reports.js"></script>
 </body>
 </html>
