@@ -19,6 +19,7 @@ from rest_framework.views import APIView
 
 from .models import (
     AuditLog,
+    BookletReturn,
     Barangay,
     DeathRecord,
     Document,
@@ -31,6 +32,7 @@ from .models import (
 )
 from .serializers import (
     BarangaySerializer,
+    BookletReturnSerializer,
     DeathRecordSerializer,
     DocumentSerializer,
     GenerateSeniorAccountsSerializer,
@@ -236,6 +238,39 @@ class GroceryClaimListAPIView(ListAPIView):
         profile = getattr(self.request.user, "staff_profile", None)
         return claims.filter(distribution__barangay=profile.barangay.name) if profile else claims.none()
 
+
+class IsIsingStaff(BasePermission):
+    def has_permission(self, request, view):
+        if not request.user.is_authenticated or request.user.role != "regular_staff":
+            return False
+        profile = getattr(request.user, "staff_profile", None)
+        return bool(profile and profile.barangay.name.strip().casefold() == "ising")
+
+
+class BookletReturnListCreateAPIView(ListCreateAPIView):
+    serializer_class = BookletReturnSerializer
+    permission_classes = [IsAuthenticated, IsIsingStaff]
+
+    def get_queryset(self):
+        profile = self.request.user.staff_profile
+        returns = BookletReturn.objects.select_related(
+            "senior_citizen", "senior_citizen__barangay", "recorded_by"
+        ).filter(senior_citizen__barangay_id=profile.barangay_id)
+        month = self.request.query_params.get("month")
+        year = self.request.query_params.get("year")
+        barangay_id = self.request.query_params.get("barangay")
+        if month:
+            parts = month.split("-")
+            if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():
+                returns = returns.filter(date_returned__year=int(parts[0]), date_returned__month=int(parts[1]))
+        elif year and year.isdigit():
+            returns = returns.filter(date_returned__year=int(year))
+        if barangay_id and barangay_id.isdigit():
+            returns = returns.filter(senior_citizen__barangay_id=int(barangay_id))
+        return returns.order_by("-date_returned", "senior_citizen__last_name")
+
+    def perform_create(self, serializer):
+        serializer.save(recorded_by=self.request.user)
 
 class SeniorCitizenListAPIView(ListCreateAPIView):
     serializer_class = SeniorCitizenSerializer

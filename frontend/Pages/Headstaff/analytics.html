@@ -78,7 +78,7 @@
     </div>
   </div>
   <div class="content">
-    <div class="analytics-note" id="analyticsNotice"><i class="ti ti-info-circle"></i><div><strong>Live OSCA data.</strong> Deaths, transfers, senior records, and pension history are loaded from the backend. Resident population, bedridden status, and monthly booklet summaries are not yet available from backend records.</div></div>
+    <div class="analytics-note" id="analyticsNotice"><i class="ti ti-info-circle"></i><div><strong>Live OSCA data.</strong> Deaths, transfers, senior records, and pension history are loaded from the backend. Full booklets returned to the OSCA office are loaded from the backend. Resident population and bedridden status are not yet recorded.</div></div>
 
     <div class="stats-grid stats-3" style="margin-top:14px">
       <div class="stat-card coral"><div class="stat-label"><i class="ti ti-heart-broken"></i> Verified deaths</div><div class="stat-value" id="deathTotal">0</div><div class="stat-sub" id="deathPeriodLabel">Selected year · all barangays</div></div>
@@ -93,8 +93,8 @@
       <div class="stat-card"><div class="stat-label"><i class="ti ti-bed"></i> Bedridden</div><div class="stat-value" id="bedriddenTotal">—</div><div class="stat-sub">No backend field yet</div></div>
       <div class="stat-card teal"><div class="stat-label"><i class="ti ti-cash"></i> Seniors with pension history</div><div class="stat-value" id="pensionerTotal">0</div><div class="stat-sub">At least one pension record</div></div>
       <div class="stat-card coral"><div class="stat-label"><i class="ti ti-user-x"></i> Non-pensioners</div><div class="stat-value" id="nonPensionerTotal">—</div><div class="stat-sub">No enrollment status field yet</div></div>
-      <div class="stat-card"><div class="stat-label"><i class="ti ti-pill"></i> Medicine booklet entries</div><div class="stat-value" id="medicineBookletTotal">—</div><div class="stat-sub">Monthly summary API not available yet</div></div>
-      <div class="stat-card"><div class="stat-label"><i class="ti ti-shopping-bag"></i> Grocery booklet entries</div><div class="stat-value" id="groceryBookletTotal">—</div><div class="stat-sub">Monthly summary API not available yet</div></div>
+      <div class="stat-card"><div class="stat-label"><i class="ti ti-pill"></i> Full booklets returned</div><div class="stat-value" id="bookletReturnTotal">—</div><div class="stat-sub">Totals recorded in OSCA database</div></div>
+      <div class="stat-card"><div class="stat-label"><i class="ti ti-shopping-bag"></i> Seniors who returned a booklet</div><div class="stat-value" id="bookletSeniorTotal">—</div><div class="stat-sub">Totals recorded in OSCA database</div></div>
     </div>
 
     <div class="analytics-grid" style="margin-top:14px">
@@ -134,11 +134,11 @@
         <div class="chart-footnote">Verified death, transfer, and new-member counts use backend records. Bedridden and pension-enrollment fields are not available yet.</div>
       </div>
       <div class="card wide">
-        <div class="card-header"><div><div class="card-title">Medicine and grocery entries from physical booklets</div><div class="card-subtitle" id="bookletChartSubtitle">Monthly summary API not available yet</div></div></div>
+        <div class="card-header"><div><div class="card-title">Full physical booklets returned to OSCA</div><div class="card-subtitle" id="bookletChartSubtitle">Totals recorded in OSCA database</div></div></div>
         <div class="chart-area"><div class="booklet-month-chart" id="bookletMonthChart"></div></div>
-        <div class="chart-legend"><span class="legend-item"><i class="legend-dot" style="background:var(--navy-light)"></i>Medicine entries</span><span class="legend-item"><i class="legend-dot" style="background:var(--teal-600,var(--navy-light))"></i>Grocery entries</span></div>
-        <div class="chart-footnote">This panel will show real monthly totals when the booklet-summary API is available.</div>
-        <div class="barangay-table-wrap"><table class="booklet-record-table"><thead><tr><th>Month</th><th>Barangay</th><th>Medicine entries</th><th>Grocery entries</th><th>Submitted by</th><th>Last updated</th></tr></thead><tbody id="bookletSummaryRows"></tbody></table><div id="bookletSummaryEmpty" class="empty-chart" style="display:none">No physical-booklet summaries match these filters.</div></div>
+        <div class="chart-legend"><span class="legend-item"><i class="legend-dot" style="background:var(--navy-light)"></i>Booklets returned</span></div>
+        <div class="chart-footnote">Each row is one full physical booklet received by OSCA; monthly totals show return volume.</div>
+        <div class="barangay-table-wrap"><table class="booklet-record-table"><thead><tr><th>Date returned</th><th>Barangay</th><th>OSCA ID</th><th>Senior citizen</th><th>Status</th><th>Recorded by</th></tr></thead><tbody id="bookletSummaryRows"></tbody></table><div id="bookletSummaryEmpty" class="empty-chart" style="display:none">No full booklet returns match these filters.</div></div>
       </div>
     </div>
   </div>
@@ -148,7 +148,7 @@
 <script>
   renderHeadStaffSidebar('analytics');
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  let analyticsData = { seniors: [], pensions: [], deaths: [], transfers: [], barangays: [] };
+  let analyticsData = { seniors: [], pensions: [], deaths: [], transfers: [], bookletReturns: [], barangays: [] };
   const asArray = data => Array.isArray(data) ? data : (data && Array.isArray(data.results) ? data.results : []);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const yearOf = value => String(value || '').slice(0, 4);
@@ -166,22 +166,24 @@
         select.value = context.user.barangay.name;
         select.disabled = true;
       } else select.disabled = false;
-      const [seniors, pensions, deaths, transfers] = await Promise.all([
+      const [seniors, pensions, deaths, transfers, bookletReturns] = await Promise.all([
         ArkheionAPI.get('/api/seniors/'),
         ArkheionAPI.get('/api/pensions/'),
         ArkheionAPI.get('/api/deaths/'),
         ArkheionAPI.get('/api/transfers/'),
+        ArkheionAPI.get('/api/booklet-returns/'),
       ]);
       analyticsData = {
         seniors: asArray(seniors),
         pensions: asArray(pensions),
         deaths: asArray(deaths),
         transfers: asArray(transfers),
+        bookletReturns: asArray(bookletReturns),
         barangays: context.availableBarangays,
       };
       populateYearFilter();
       renderAnalytics();
-      notice.innerHTML = '<i class="ti ti-info-circle"></i><div><strong>Live OSCA data.</strong> Deaths, transfers, senior records, and pension history are loaded from the backend. Resident population, bedridden status, and monthly booklet summaries are not yet available from backend records.</div>';
+      notice.innerHTML = '<i class="ti ti-info-circle"></i><div><strong>Live OSCA data.</strong> Deaths, transfers, senior records, and pension history are loaded from the backend. Full booklets returned to the OSCA office are loaded from the backend. Resident population and bedridden status are not yet recorded.</div>';
     } catch (error) {
       notice.innerHTML = `<i class="ti ti-alert-circle"></i><div><strong>Could not load analytics.</strong> ${esc(error.message || 'Check the server and staff login, then refresh this page.')}</div>`;
     }
@@ -194,6 +196,7 @@
       ...analyticsData.deaths.map(row => row.date_of_death),
       ...analyticsData.transfers.map(row => row.transfer_date),
       ...analyticsData.seniors.map(row => row.date_of_registration),
+      ...analyticsData.bookletReturns.map(row => row.date_returned),
     ];
     const years = [...new Set(dates.map(yearOf).filter(year => /^\d{4}$/.test(year)))].sort().reverse();
     const currentYear = String(new Date().getFullYear());
@@ -280,6 +283,28 @@
     document.getElementById('pensionChart').innerHTML = counts.length ? counts.map(row => `<div><div class="metric-line"><span class="metric-line-label">${esc(row.name)}</span><div class="metric-track"><div class="metric-track-fill" style="width:${row.value / max * 100}%"></div></div><span class="metric-num">${row.value.toLocaleString()}</span></div></div>`).join('') : '<div class="empty-chart">No barangay data available.</div>';
     return seniors.filter(row => pensionSeniorIds.has(Number(row.id))).length;
   }
+  function renderBookletReturns(year, barangay) {
+    const selectedYear = year === 'All years' ? '' : year;
+    const records = analyticsData.bookletReturns.filter(row =>
+      (!selectedYear || yearOf(row.date_returned) === selectedYear) &&
+      (barangay === 'All barangays' || row.barangay_name === barangay)
+    );
+    const seniorCount = new Set(records.map(row => Number(row.senior_citizen))).size;
+    document.getElementById('bookletChartSubtitle').textContent = `Returns received · ${year} · ${barangay}`;
+    document.getElementById('bookletSummaryEmpty').style.display = records.length ? 'none' : 'flex';
+    document.getElementById('bookletSummaryEmpty').textContent = 'No full booklet returns match these filters.';
+    document.getElementById('bookletSummaryRows').innerHTML = records.slice().sort((a,b) => b.date_returned.localeCompare(a.date_returned) || a.barangay_name.localeCompare(b.barangay_name)).map(row =>
+      `<tr><td>${esc(row.date_returned)}</td><td>${esc(row.barangay_name)}</td><td>${esc(row.senior_osca_id)}</td><td>${esc(row.senior_name)}</td><td>Full</td><td>${esc(row.recorded_by_name||'Unknown staff')}</td></tr>`
+    ).join('');
+    const monthly = Array(12).fill(0);
+    records.forEach(row => { const month = monthOf(row.date_returned); if (month >= 1 && month <= 12) monthly[month-1] += 1; });
+    const max = Math.max(1, ...monthly);
+    document.getElementById('bookletMonthChart').innerHTML = MONTHS.map((month,index) => {
+      const count=monthly[index], height=count?Math.max(2,count/max*100):0;
+      return `<div class="booklet-month-col" title="${month}: ${count} full booklets returned"><span class="month-value">${count||''}</span><div class="booklet-month-bars"><div class="booklet-month-bar" style="width:100%;height:${height}%;background:var(--navy-light)"></div></div><span class="booklet-month-label">${month}</span></div>`;
+    }).join('');
+    return {total:records.length, seniors:seniorCount};
+  }
   function renderAnalytics() {
     const {activeSeniors, allSeniors, deaths, transfers, seniorsForNewMembers, pensions} = selectedRecords();
     const year = document.getElementById('analyticsYear').value || 'All years';
@@ -290,18 +315,17 @@
     document.getElementById('deathChartSubtitle').textContent = `Verified deaths · ${year}`;
     renderMonthlyChart('deathMonthChart', deaths, 'date_of_death', 'deaths', 'var(--coral-600)');
 
-    const transferTotal = transfers.length;
-    const newMemberTotal = seniorsForNewMembers.length;
-    document.getElementById('transferTotal').textContent = transferTotal.toLocaleString();
+    document.getElementById('transferTotal').textContent = transfers.length.toLocaleString();
     document.getElementById('transferScope').textContent = `${year} · ${barangay}`;
-    document.getElementById('newMemberTotal').textContent = newMemberTotal.toLocaleString();
+    document.getElementById('newMemberTotal').textContent = seniorsForNewMembers.length.toLocaleString();
     document.getElementById('newMemberScope').textContent = `Registered ${year.toLowerCase()} · ${barangay}`;
     document.getElementById('bedriddenTotal').textContent = '—';
     document.getElementById('nonPensionerTotal').textContent = '—';
     const pensionCount = renderPensionHistory(pensions, activeSeniors);
     document.getElementById('pensionerTotal').textContent = pensionCount.toLocaleString();
-    document.getElementById('medicineBookletTotal').textContent = '—';
-    document.getElementById('groceryBookletTotal').textContent = '—';
+    const bookletTotals = renderBookletReturns(year, barangay);
+    document.getElementById('bookletReturnTotal').textContent = bookletTotals.total.toLocaleString();
+    document.getElementById('bookletSeniorTotal').textContent = bookletTotals.seniors.toLocaleString();
     renderPopulation(activeSeniors);
 
     document.getElementById('transferChartSubtitle').textContent = `Recorded transfers · ${year} · ${barangay}`;
@@ -319,17 +343,10 @@
     });
     const pensionSeniorIds = new Set(pensions.map(row => Number(row.senior_citizen)));
     document.getElementById('barangaySummaryRows').innerHTML = rows.length ? rows.map(row => {
-      const pensionCount = activeSeniors.filter(senior => senior.barangay_name === row.name && pensionSeniorIds.has(Number(senior.id))).length;
-      return `<tr><td>${esc(row.name)}</td><td>${deathCounts.get(row.name) || 0}</td><td>${transferCounts.get(row.name) || 0}</td><td>${newMemberCounts.get(row.name) || 0}</td><td>—</td><td>${pensionCount}</td><td>—</td></tr>`;
+      const pensionByBarangay = activeSeniors.filter(senior => senior.barangay_name === row.name && pensionSeniorIds.has(Number(senior.id))).length;
+      return `<tr><td>${esc(row.name)}</td><td>${deathCounts.get(row.name) || 0}</td><td>${transferCounts.get(row.name) || 0}</td><td>${newMemberCounts.get(row.name) || 0}</td><td>—</td><td>${pensionByBarangay}</td><td>—</td></tr>`;
     }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--gray-500)">No barangays available.</td></tr>';
-
-    document.getElementById('bookletChartSubtitle').textContent = `Monthly totals · ${year} · ${barangay}`;
-    document.getElementById('bookletMonthChart').innerHTML = '<div class="empty-chart" style="width:100%;height:auto">No monthly booklet-summary endpoint is available yet.</div>';
-    document.getElementById('bookletSummaryRows').innerHTML = '';
-    document.getElementById('bookletSummaryEmpty').textContent = 'Monthly booklet summary API is not available yet.';
-    document.getElementById('bookletSummaryEmpty').style.display = 'flex';
-  }
-  function exportAnalytics() {
+  }  function exportAnalytics() {
     const {activeSeniors, deaths, transfers, seniorsForNewMembers, pensions} = selectedRecords();
     const pensionSeniorIds = new Set(pensions.map(row => Number(row.senior_citizen)));
     const rows = [
@@ -341,7 +358,8 @@
       ['Seniors with pension history',activeSeniors.filter(row => pensionSeniorIds.has(Number(row.id))).length,'At least one pension record'],
       ['Resident population','Not available','No backend data'],
       ['Bedridden','Not available','No backend data'],
-      ['Booklet summaries','Not available','Monthly summary endpoint not available'],
+      ['Full booklets returned',analyticsData.bookletReturns.filter(row => (!document.getElementById('analyticsYear').value || yearOf(row.date_returned) === document.getElementById('analyticsYear').value) && (!document.getElementById('analyticsBarangay').value || row.barangay_name === document.getElementById('analyticsBarangay').value)).length,document.getElementById('analyticsYear').value || 'All years'],
+      ['Seniors who returned a booklet',new Set(analyticsData.bookletReturns.filter(row => (!document.getElementById('analyticsYear').value || yearOf(row.date_returned) === document.getElementById('analyticsYear').value) && (!document.getElementById('analyticsBarangay').value || row.barangay_name === document.getElementById('analyticsBarangay').value)).map(row => Number(row.senior_citizen))).size,document.getElementById('analyticsYear').value || 'All years'],
     ];
     const csv = rows.map(row => row.map(value => `"${String(value).replace(/"/g,'""')}"`).join(',')).join('\n');
     const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});

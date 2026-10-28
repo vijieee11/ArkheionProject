@@ -387,3 +387,30 @@ class AuditLog(models.Model):
     class Meta:
         db_table  = 'audit_logs'
         ordering  = ['-timestamp']
+
+
+class BookletReturn(models.Model):
+    STATUS_FULL = "full"
+    STATUS_CHOICES = [(STATUS_FULL, "Full")]
+
+    senior_citizen = models.ForeignKey(
+        SeniorCitizen, on_delete=models.PROTECT, related_name="booklet_returns"
+    )
+    date_returned = models.DateField()
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default=STATUS_FULL)
+    note = models.CharField(max_length=300, blank=True)
+    recorded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="recorded_booklet_returns",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "booklet_returns"
+        ordering = ["-date_returned", "senior_citizen__last_name"]
+
+    def __str__(self):
+        return f"Full booklet returned for {self.senior_citizen} on {self.date_returned}"

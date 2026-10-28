@@ -6,7 +6,7 @@ renderSidebar('reports');
     masterlist: { title: 'Senior Citizen Masterlist', file: 'senior-masterlist', headers: ['OSCA ID','Last name','First name','Middle name','Suffix','Barangay','Age','Sex','Civil status','Registration status'] },
     pension: { title: 'Pension Payroll', file: 'pension-payroll', headers: ['Period','OSCA ID','Senior citizen','Barangay','Amount (PHP)','Claim status','Date claimed','Claimed by'] },
     grocery: { title: 'Grocery Distribution List', file: 'grocery-distribution-list', headers: ['Period','Distribution date','Barangay','OSCA ID','Senior citizen','Claim status','Date claimed','Claimed by','Representative'] },
-    booklet: { title: 'Physical Booklet Monthly Summary', file: 'physical-booklet-summary', headers: ['Month','Barangay','Medicine entries','Grocery entries','Note','Submitted by','Last updated'] },
+    booklet: { title: 'Full Booklets Returned to OSCA', file: 'full-booklet-returns', headers: ['Date returned','OSCA ID','Senior citizen','Barangay','Status','Recorded by','Note'] },
   };
   const monthInput = document.getElementById('reportMonth');
   const now = new Date();
@@ -76,13 +76,11 @@ renderSidebar('reports');
     const selectedMonth = monthInput.value;
     const scopeLabel = `${monthName(selectedMonth)} · ${barangay || 'All barangays'}`;
     if (key === 'booklet') {
-      let summaries = [];
-      try { const parsed = JSON.parse(localStorage.getItem('ark_booklet_summaries') || '[]'); summaries = Array.isArray(parsed) ? parsed : []; } catch (_) {}
-      const filtered = summaries.filter(row => (!selectedMonth || row.month === selectedMonth) && matchesBarangay({barangay:row.barangay}, barangay));
-      const rows = filtered.map(row => [monthName(row.month),row.barangay,Number(row.medicineEntries)||0,Number(row.groceryEntries)||0,row.note||'',row.submittedBy||'',row.updatedAt||row.submittedAt||'']);
-      return {definition, rows, scopeLabel, sourceNote:'Source: monthly booklet summaries saved in this browser only; this is not a centralized backend report.'};
-    }
-    if (key === 'masterlist') {
+      const returns = asArray(await ArkheionAPI.get('/api/booklet-returns/'));
+      const filtered = returns.filter(row => (!selectedMonth || String(row.date_returned).startsWith(selectedMonth)) && (!barangay || row.barangay_name === barangay));
+      const rows = filtered.map(row => [row.date_returned,row.senior_osca_id,row.senior_name,row.barangay_name,'Full',row.recorded_by_name||'',row.note||'']);
+      return {definition, rows, scopeLabel, sourceNote:'Source: completed physical booklets recorded as returned to the OSCA office.'};
+    }    if (key === 'masterlist') {
       const seniors = asArray(await ArkheionAPI.get('/api/seniors/'));
       const rows = seniors.filter(row => row.is_active && matchesBarangay({barangay:row.barangay_name}, barangay)).map(row => [row.osca_id,row.last_name,row.first_name,row.middle_name,row.suffix,row.barangay_name,row.age,row.sex === 'M' ? 'Male' : row.sex === 'F' ? 'Female' : '',row.civil_status,row.registration_status]);
       rows.sort((a,b) => String(a[5]).localeCompare(String(b[5])) || String(a[1]).localeCompare(String(b[1])) || String(a[2]).localeCompare(String(b[2])));

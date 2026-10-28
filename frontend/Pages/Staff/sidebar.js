@@ -57,8 +57,10 @@ function renderSidebar(activePage) {
       { id: 'deaths',    label: 'Death records', icon: 'ti-heart-x',       href: 'deaths.html' },
     ]},
     { section: 'Services', items: [
-      { id: 'booklet-summary', label: 'Booklet summary', icon: 'ti-notes', href: 'booklet-summary.html' },
       { id: 'pension',  label: 'Pension',   icon: 'ti-cash',          href: 'pension.html' },
+      ...(role === 'regular_staff' && (localStorage.getItem('ark_barangay') || '').trim().toLowerCase() === 'ising'
+        ? [{ id: 'booklet-summary', label: 'Booklet returns', icon: 'ti-notes', href: 'booklet-summary.html' }]
+        : []),
     ]},
     { section: 'Documents', items: [
       { id: 'upload', label: 'Upload docs',    icon: 'ti-upload',   href: 'upload.html' },

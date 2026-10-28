@@ -4,6 +4,7 @@ import zipfile
 from rest_framework import serializers
 from .models import (
     Barangay,
+    BookletReturn,
     DeathRecord,
     Document,
     FamilyMember,
@@ -384,3 +385,43 @@ class GroceryClaimReportSerializer(serializers.ModelSerializer):
     def get_senior_name(self, obj):
         senior = obj.senior_citizen
         return f"{senior.first_name} {senior.last_name}".strip()
+
+
+class BookletReturnSerializer(serializers.ModelSerializer):
+    senior_osca_id = serializers.CharField(source="senior_citizen.osca_id", read_only=True)
+    senior_name = serializers.SerializerMethodField()
+    barangay_name = serializers.CharField(source="senior_citizen.barangay.name", read_only=True)
+    recorded_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = BookletReturn
+        fields = [
+            "id", "senior_citizen", "senior_osca_id", "senior_name", "barangay_name",
+            "date_returned", "status", "note", "recorded_by_name", "created_at",
+        ]
+        read_only_fields = ["id", "status", "recorded_by_name", "created_at"]
+
+    def get_senior_name(self, obj):
+        senior = obj.senior_citizen
+        return " ".join(value for value in [senior.first_name, senior.middle_name, senior.last_name, senior.suffix] if value).strip()
+
+    def get_recorded_by_name(self, obj):
+        user = obj.recorded_by
+        if not user:
+            return "Unknown staff"
+        return user.get_full_name().strip() or user.get_username()
+
+    def validate(self, attrs):
+        request = self.context.get("request")
+        senior = attrs.get("senior_citizen")
+        if request and request.user.role == "regular_staff":
+            profile = getattr(request.user, "staff_profile", None)
+            if not profile:
+                raise serializers.ValidationError("This staff account has no assigned barangay.")
+            if senior and senior.barangay_id != profile.barangay_id:
+                raise serializers.ValidationError({"senior_citizen": "You can record booklet returns only for seniors in your assigned barangay."})
+        return attrs
+
+    def create(self, validated_data):
+        validated_data["status"] = BookletReturn.STATUS_FULL
+        return super().create(validated_data)

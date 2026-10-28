@@ -1,6 +1,6 @@
 # Register your models here.
 from django.contrib import admin
-from .models import Barangay, DeathRecord, Document, ResidenceTransferRecord, StaffProfile, StaffRegistrationRequest
+from .models import Barangay, BookletReturn, DeathRecord, Document, ResidenceTransferRecord, StaffProfile, StaffRegistrationRequest
 
 
 @admin.register(Barangay)
@@ -49,3 +49,11 @@ class ResidenceTransferRecordAdmin(admin.ModelAdmin):
     readonly_fields = ("from_barangay", "recorded_by", "created_at")
 
 
+
+
+@admin.register(BookletReturn)
+class BookletReturnAdmin(admin.ModelAdmin):
+    list_display = ("date_returned", "senior_citizen", "status", "recorded_by", "created_at")
+    list_filter = ("date_returned", "status")
+    search_fields = ("senior_citizen__osca_id", "senior_citizen__first_name", "senior_citizen__last_name", "note")
+    readonly_fields = ("created_at",)
