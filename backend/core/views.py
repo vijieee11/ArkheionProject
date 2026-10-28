@@ -14,6 +14,9 @@ from django.utils import timezone
 from rest_framework import generics
 from rest_framework.generics import ListAPIView, ListCreateAPIView
 from rest_framework.permissions import AllowAny, BasePermission, IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -55,6 +58,24 @@ def record_action(request, action, module, record=None, description=""):
         ip_address=request.META.get("REMOTE_ADDR"),
     )
 
+class AuditedTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        request = self.context.get("request")
+        if getattr(self.user, "role", None) in {"head_staff", "regular_staff"}:
+            AuditLog.objects.create(
+                user=self.user,
+                action="login",
+                module="auth",
+                description="Staff user signed in successfully.",
+                ip_address=request.META.get("REMOTE_ADDR") if request else None,
+            )
+        return data
+
+
+class AuditedTokenObtainPairView(TokenObtainPairView):
+    serializer_class = AuditedTokenObtainPairSerializer
+
 class BarangayListAPIView(ListAPIView):
     serializer_class = BarangaySerializer
     permission_classes = [AllowAny]
@@ -63,6 +84,84 @@ class BarangayListAPIView(ListAPIView):
 
 def is_registration_reviewer(user):
     return user.is_authenticated and (user.is_superuser or getattr(user, "role", None) in {"head_staff", "admin"})
+
+
+class HeadStaffOnly(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and (request.user.is_superuser or request.user.role == "head_staff")
+
+
+class AuditLogPagination(PageNumberPagination):
+    page_size = 25
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+
+class AuditLogListAPIView(APIView):
+    permission_classes = [HeadStaffOnly]
+    pagination_class = AuditLogPagination
+
+    def get(self, request):
+        entries = AuditLog.objects.select_related("user").order_by("-timestamp", "-id")
+        action = request.query_params.get("action", "").strip().lower()
+        username = request.query_params.get("user", "").strip()
+        date = request.query_params.get("date", "").strip()
+        search = request.query_params.get("search", "").strip()
+        valid_actions = {choice[0] for choice in AuditLog.ACTION_CHOICES}
+        if action and action in valid_actions:
+            entries = entries.filter(action=action)
+        if username:
+            entries = entries.filter(user__username=username)
+        if date:
+            entries = entries.filter(timestamp__date=date)
+        if search:
+            entries = entries.filter(
+                Q(user__username__icontains=search)
+                | Q(user__first_name__icontains=search)
+                | Q(user__last_name__icontains=search)
+                | Q(module__icontains=search)
+                | Q(description__icontains=search)
+            )
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(entries, request, view=self)
+        rows = [{
+            "id": entry.pk,
+            "timestamp": entry.timestamp,
+            "username": entry.user.get_username() if entry.user else "Deleted user",
+            "staff_name": (entry.user.get_full_name().strip() or entry.user.get_username()) if entry.user else "Deleted user",
+            "action": entry.action,
+            "module": entry.module,
+            "record_id": entry.record_id,
+            "description": entry.description,
+            "ip_address": entry.ip_address or "",
+        } for entry in page]
+        return paginator.get_paginated_response(rows)
+
+
+class StaffDirectoryAPIView(ListAPIView):
+    permission_classes = [HeadStaffOnly]
+
+    def get(self, request):
+        User = get_user_model()
+        users = User.objects.filter(role__in=["head_staff", "regular_staff"]).select_related(
+            "staff_profile__barangay"
+        ).order_by("last_name", "first_name", "username")
+        rows = []
+        for user in users:
+            profile = getattr(user, "staff_profile", None)
+            rows.append({
+                "id": user.pk,
+                "username": user.username,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "email": user.email,
+                "role": user.role,
+                "is_active": user.is_active,
+                "date_joined": user.date_joined,
+                "last_login": user.last_login,
+                "barangay": {"id": profile.barangay_id, "name": profile.barangay.name} if profile else None,
+            })
+        return Response(rows)
 
 
 class StaffRegistrationAPIView(APIView):

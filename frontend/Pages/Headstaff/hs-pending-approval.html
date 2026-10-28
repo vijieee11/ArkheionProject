@@ -57,38 +57,37 @@
     <span class="topbar-title">Pending Approvals</span>
     <div class="topbar-actions" style="margin-left:auto;">
       <button class="btn btn-ghost btn-sm" onclick="location.href='audit.html'"><i class="ti ti-shield-check"></i> Audit log</button>
-      <button class="btn btn-navy btn-sm" onclick="location.href='headstaff.html'"><i class="ti ti-plus"></i> Add staff</button>
-      <div class="topbar-avatar" style="background:var(--gold);color:var(--navy);">HS</div>
+            <div class="topbar-avatar" style="background:var(--gold);color:var(--navy);">HS</div>
     </div>
   </div>
 
   <div class="content">
     <div>
       <h1 style="font-family:var(--font-display);font-size:20px;font-weight:600;color:var(--gray-900)">Record actions waiting for your sign-off</h1>
-      <p style="font-size:13px;color:var(--gray-600);margin-top:3px">OSCA Carmen — 5 actions need review before they touch member records</p>
+      <p style="font-size:13px;color:var(--gray-600);margin-top:3px">Live queue from staff registrations, death reports, and document reviews</p>
     </div>
 
     <!-- Key stats -->
     <div class="stats-grid stats-4">
       <div class="stat-card">
         <div class="stat-label"><i class="ti ti-inbox-in"></i> Pending approvals</div>
-        <div class="stat-value" style="color:#e74c3c;">5</div>
+        <div class="stat-value" style="color:#e74c3c;" id="stat-pending">—</div>
         <div class="stat-sub">Awaiting your review</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label"><i class="ti ti-trash"></i> Delete requests</div>
-        <div class="stat-value">2</div>
-        <div class="stat-sub">Part of this week's queue</div>
+        <div class="stat-label"><i class="ti ti-user-plus"></i> Staff account requests</div>
+        <div class="stat-value" id="stat-staff">—</div>
+        <div class="stat-sub">Awaiting OSCA review</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label"><i class="ti ti-edit"></i> Benefit corrections</div>
-        <div class="stat-value">2</div>
-        <div class="stat-sub">Part of this week's queue</div>
+        <div class="stat-label"><i class="ti ti-file-check"></i> Documents awaiting review</div>
+        <div class="stat-value" id="stat-documents">—</div>
+        <div class="stat-sub">Uploaded documents not yet reviewed</div>
       </div>
       <div class="stat-card teal">
-        <div class="stat-label"><i class="ti ti-circle-check"></i> Approved today</div>
-        <div class="stat-value">4</div>
-        <div class="stat-sub">Processed today</div>
+        <div class="stat-label"><i class="ti ti-heart-x"></i> Death reports awaiting review</div>
+        <div class="stat-value" id="stat-deaths">—</div>
+        <div class="stat-sub">Head Staff verification required</div>
       </div>
     </div>
 
@@ -96,8 +95,8 @@
     <div class="card">
       <div class="card-header">
         <div>
-          <div class="card-title">All record actions</div>
-          <div class="card-subtitle">Sorted by date submitted, oldest first</div>
+          <div class="card-title">Pending backend requests</div>
+          <div class="card-subtitle">Actions below are saved through the corresponding OSCA API.</div>
         </div>
         <div class="topbar-search" style="max-width:280px;">
           <i class="ti ti-search"></i>
@@ -106,11 +105,10 @@
       </div>
 
       <div class="tabs">
-        <div class="tab active" onclick="filterApprovals('All', this)">All (5)</div>
-        <div class="tab" onclick="filterApprovals('Delete record', this)">Delete record</div>
-        <div class="tab" onclick="filterApprovals('Benefit correction', this)">Benefit correction</div>
-        <div class="tab" onclick="filterApprovals('New member record', this)">New member records</div>
-        <div class="tab" onclick="filterApprovals('Staff deactivation', this)">Staff deactivation</div>
+        <div class="tab active" onclick="filterApprovals('All', this)">All</div>
+        <div class="tab" onclick="filterApprovals('Staff account', this)">Staff accounts</div>
+        <div class="tab" onclick="filterApprovals('Death report', this)">Death reports</div>
+        <div class="tab" onclick="filterApprovals('Document', this)">Documents</div>
       </div>
       <div class="alert" id="approvalsNoResults" style="display:none;margin:0 16px 12px;padding:10px 14px;font-size:12.5px;color:var(--gray-500);background:var(--gray-50,#f8fafc);border-radius:8px;">
         No requests match your search.
@@ -120,107 +118,11 @@
         <thead>
           <tr><th>Request</th><th>Type</th><th>Requested by</th><th>Submitted</th><th>Status</th><th>Actions</th></tr>
         </thead>
-        <tbody id="approvalsRows">
-          <tr data-id="REQ-2026-0801" data-title="Delete duplicate entry — Perlita Domingo" data-type="Delete record"
-              data-by="Regular Staff 1" data-submitted="Jul 24, 2026" data-status="Awaiting review"
-              data-desc="Duplicate member record. Flagged because two OSCA IDs exist for the same senior citizen — this is the older, unused entry.">
-            <td>
-              <div class="td-bold">Delete duplicate entry — Perlita Domingo</div>
-              <div class="td-muted" style="font-size:11.5px;margin-top:2px;">REQ-2026-0801 · Duplicate member record</div>
-            </td>
-            <td><span class="badge badge-miss">Delete record</span></td>
-            <td class="td-muted">Regular Staff 1</td>
-            <td class="td-muted">Jul 24, 2026</td>
-            <td><span class="badge badge-pend">Awaiting review</span></td>
-            <td>
-              <div class="action-btns">
-                <button class="pill-btn pill-approve" onclick="resolveApproval(this, 'approve')">Approve</button>
-                <button class="pill-btn pill-reject" onclick="resolveApproval(this, 'reject')">Reject</button>
-                <button class="action-icon-btn" title="View details" onclick="openRequestModal(this)"><i class="ti ti-eye"></i></button>
-              </div>
-            </td>
-          </tr>
-          <tr data-id="REQ-2026-0802" data-title="Fix pension status — Herminio Salcedo" data-type="Benefit correction"
-              data-by="Regular Staff 3" data-submitted="Jul 25, 2026" data-status="Awaiting review"
-              data-desc="Pension status was mismarked 'inactive' in the system. Staff verified with the member that the pension is still active and receiving disbursements.">
-            <td>
-              <div class="td-bold">Fix pension status — Herminio Salcedo</div>
-              <div class="td-muted" style="font-size:11.5px;margin-top:2px;">REQ-2026-0802 · Pension status was mismarked "inactive"</div>
-            </td>
-            <td><span class="badge badge-ok">Benefit correction</span></td>
-            <td class="td-muted">Regular Staff 3</td>
-            <td class="td-muted">Jul 25, 2026</td>
-            <td><span class="badge badge-pend">Awaiting review</span></td>
-            <td>
-              <div class="action-btns">
-                <button class="pill-btn pill-approve" onclick="resolveApproval(this, 'approve')">Approve</button>
-                <button class="pill-btn pill-reject" onclick="resolveApproval(this, 'reject')">Reject</button>
-                <button class="action-icon-btn" title="View details" onclick="openRequestModal(this)"><i class="ti ti-eye"></i></button>
-              </div>
-            </td>
-          </tr>
-          <tr data-id="REQ-2026-0803" data-title="Deactivate account — Regular Staff 4" data-type="Staff deactivation"
-              data-by="System (auto-flagged)" data-submitted="Jul 25, 2026" data-status="Awaiting review"
-              data-desc="No login activity for 90+ days. System auto-flagged this account for deactivation review under the inactivity policy.">
-            <td>
-              <div class="td-bold">Deactivate account — Regular Staff 4</div>
-              <div class="td-muted" style="font-size:11.5px;margin-top:2px;">REQ-2026-0803 · No login activity for 90+ days</div>
-            </td>
-            <td><span class="badge badge-inact">Staff deactivation</span></td>
-            <td class="td-muted">System (auto-flagged)</td>
-            <td class="td-muted">Jul 25, 2026</td>
-            <td><span class="badge badge-pend">Awaiting review</span></td>
-            <td>
-              <div class="action-btns">
-                <button class="pill-btn pill-approve" onclick="resolveApproval(this, 'approve')">Approve</button>
-                <button class="pill-btn pill-reject" onclick="resolveApproval(this, 'reject')">Reject</button>
-                <button class="action-icon-btn" title="View details" onclick="openRequestModal(this)"><i class="ti ti-eye"></i></button>
-              </div>
-            </td>
-          </tr>
-          <tr data-id="REQ-2026-0804" data-title="Delete duplicate entry — Rosario Fabian" data-type="Delete record"
-              data-by="Regular Staff 2" data-submitted="Jul 26, 2026" data-status="Awaiting review"
-              data-desc="Duplicate OSCA ID record. Two entries were created for the same member during batch import — this one has incomplete data.">
-            <td>
-              <div class="td-bold">Delete duplicate entry — Rosario Fabian</div>
-              <div class="td-muted" style="font-size:11.5px;margin-top:2px;">REQ-2026-0804 · Duplicate OSCA ID record</div>
-            </td>
-            <td><span class="badge badge-miss">Delete record</span></td>
-            <td class="td-muted">Regular Staff 2</td>
-            <td class="td-muted">Jul 26, 2026</td>
-            <td><span class="badge badge-pend">Awaiting review</span></td>
-            <td>
-              <div class="action-btns">
-                <button class="pill-btn pill-approve" onclick="resolveApproval(this, 'approve')">Approve</button>
-                <button class="pill-btn pill-reject" onclick="resolveApproval(this, 'reject')">Reject</button>
-                <button class="action-icon-btn" title="View details" onclick="openRequestModal(this)"><i class="ti ti-eye"></i></button>
-              </div>
-            </td>
-          </tr>
-          <tr data-id="REQ-2026-0805" data-title="Fix grocery benefit status — Teodora Ibarra" data-type="Benefit correction"
-              data-by="Regular Staff 1" data-submitted="Jul 27, 2026" data-status="Awaiting review"
-              data-desc="Benefit marked 'released' but not yet claimed. Member has not visited to claim the grocery benefit; staff requests the status be reverted to available.">
-            <td>
-              <div class="td-bold">Fix grocery benefit status — Teodora Ibarra</div>
-              <div class="td-muted" style="font-size:11.5px;margin-top:2px;">REQ-2026-0805 · Benefit marked "released" but not yet claimed</div>
-            </td>
-            <td><span class="badge badge-ok">Benefit correction</span></td>
-            <td class="td-muted">Regular Staff 1</td>
-            <td class="td-muted">Jul 27, 2026</td>
-            <td><span class="badge badge-pend">Awaiting review</span></td>
-            <td>
-              <div class="action-btns">
-                <button class="pill-btn pill-approve" onclick="resolveApproval(this, 'approve')">Approve</button>
-                <button class="pill-btn pill-reject" onclick="resolveApproval(this, 'reject')">Reject</button>
-                <button class="action-icon-btn" title="View details" onclick="openRequestModal(this)"><i class="ti ti-eye"></i></button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
+        <tbody id="approvalsRows"><tr><td colspan="6" style="text-align:center;padding:24px">Loading pending requests…</td></tr></tbody>
       </table>
       <div style="display:flex;justify-content:space-between;padding:10px 16px;font-size:11px;color:var(--gray-500);border-top:.5px solid var(--gray-200);">
-        <span id="approvalsCount">Showing 5 of 5 pending record actions</span>
-        <span>Oldest submitted 3 days ago</span>
+        <span id="approvalsCount">Loading pending requests…</span>
+        <button class="btn btn-ghost btn-sm" onclick="loadApprovals()"><i class="ti ti-refresh"></i> Refresh</button>
       </div>
     </div>
   </div>
@@ -248,187 +150,77 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<script src="../api.js"></script>
 <script>
-  const BASE_APPROVED_TODAY = 4;
-
-  if (typeof renderHeadStaffSidebar === 'function') {
-    renderHeadStaffSidebar('approvals');
-  }
-
-  function escapeHTML(value) {
-    return String(value ?? '').replace(/[&<>"']/g, char => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    })[char]);
-  }
-
-  function renderSubmittedRecords() {
-    const submissions = JSON.parse(localStorage.getItem('ark_record_submissions') || '[]');
-    const tbody = document.getElementById('approvalsRows');
-    submissions.forEach(record => {
-      if (tbody.querySelector(`[data-id="${CSS.escape(record.id)}"]`)) return;
-      const submitted = new Date(record.submittedAt);
-      const submittedLabel = Number.isNaN(submitted.getTime()) ? '—' : submitted.toLocaleDateString();
-      const details = [
-        `OSCA ID: ${record.oscaId || '—'}`,
-        `Barangay: ${record.barangay || '—'}`,
-        `Age: ${record.age || '—'}`,
-        `Sex: ${record.sex || '—'}`,
-        `Association membership: ${record.membershipStatus || 'Non-member'}`,
-        `Date of birth: ${record.dateOfBirth || '—'}`,
-        `Civil status: ${record.civilStatus || '—'}`,
-        `Address: ${record.address || '—'}`,
-        `Place of birth: ${record.placeOfBirth || '—'}`,
-      ].join(' · ');
-      const status = record.status || 'Awaiting review';
-      const resolved = status !== 'Awaiting review';
-      const statusClass = status === 'Approved' ? 'badge-ok' : status === 'Rejected' ? 'badge-miss' : 'badge-pend';
-      const row = document.createElement('tr');
-      row.dataset.id = record.id;
-      row.dataset.title = record.title || `New member registration — ${record.name || ''}`;
-      row.dataset.type = 'New member record';
-      row.dataset.by = record.submittedBy || 'Barangay Staff';
-      row.dataset.barangay = record.barangay || '';
-      row.dataset.submitted = submittedLabel;
-      row.dataset.status = status;
-      row.dataset.desc = details;
-      row.dataset.resolved = String(resolved);
-      row.innerHTML = `
-        <td><div class="td-bold">${escapeHTML(row.dataset.title)}</div>
-          <div class="td-muted" style="font-size:11.5px;margin-top:2px;">${escapeHTML(record.id)} · ${escapeHTML(record.barangay || 'Barangay not set')}</div></td>
-        <td><span class="badge badge-ok">New member record</span></td>
-        <td class="td-muted">${escapeHTML(row.dataset.by)}</td>
-        <td class="td-muted">${escapeHTML(submittedLabel)}</td>
-        <td><span class="badge ${statusClass}">${escapeHTML(status)}</span></td>
-        <td><div class="action-btns">${resolved ? '<span class="rm-resolved-note">Resolved</span>' : `
-          <button class="pill-btn pill-approve" onclick="resolveApproval(this, 'approve')">Approve</button>
-          <button class="pill-btn pill-reject" onclick="resolveApproval(this, 'reject')">Reject</button>`}
-          <button class="action-icon-btn" title="View details" onclick="openRequestModal(this)"><i class="ti ti-eye"></i></button>
-        </div></td>`;
-      tbody.prepend(row);
-    });
-    updateApprovalStats();
-    applyApprovalFilters();
-  }
-
-  function openRequestModal(btn) {
-    const row = btn.closest('tr');
-    document.getElementById('rmTitle').textContent = row.dataset.title;
-    document.getElementById('rmId').textContent = row.dataset.id + ' · ' + row.dataset.type;
-    document.getElementById('rmType').textContent = row.dataset.type;
-    document.getElementById('rmBy').textContent = row.dataset.by;
-    document.getElementById('rmSubmitted').textContent = row.dataset.submitted;
-    document.getElementById('rmStatus').textContent = row.dataset.status;
-    document.getElementById('rmDesc').textContent = row.dataset.desc;
-
-    const footer = document.getElementById('rmFooter');
-    footer.innerHTML = '';
-
-    if (row.dataset.resolved === 'true') {
-      const note = document.createElement('div');
-      note.className = 'rm-resolved-note';
-      note.textContent = 'This request has already been resolved.';
-      footer.appendChild(note);
-    } else {
-      const approveBtn = document.createElement('button');
-      approveBtn.className = 'pill-btn pill-approve';
-      approveBtn.textContent = 'Approve';
-      approveBtn.onclick = () => { resolveApproval(row.querySelector('.pill-approve'), 'approve'); closeRequestModal(); };
-      footer.appendChild(approveBtn);
-
-      const rejectBtn = document.createElement('button');
-      rejectBtn.className = 'pill-btn pill-reject';
-      rejectBtn.textContent = 'Reject';
-      rejectBtn.onclick = () => { resolveApproval(row.querySelector('.pill-reject'), 'reject'); closeRequestModal(); };
-      footer.appendChild(rejectBtn);
-    }
-
-    document.getElementById('rmOverlay').classList.add('open');
-  }
-
-  function closeRequestModal() {
-    document.getElementById('rmOverlay').classList.remove('open');
-  }
-
-  function resolveApproval(triggerBtn, action) {
-    const row = triggerBtn.closest('tr');
-    if (!row || row.dataset.resolved === 'true') return;
-
-    const id = row.dataset.id;
-    const statusText = action === 'approve' ? 'Approved' : 'Rejected';
-    const badgeClass = action === 'approve' ? 'badge-ok' : 'badge-miss';
-    const toastMsg = `Request ${id} ${action === 'approve' ? 'approved' : 'rejected'}`;
-
-    const statusCell = row.children[4];
-    statusCell.innerHTML = '<span class="badge ' + badgeClass + '">' + statusText + '</span>';
-
-    row.dataset.status = statusText;
-    row.dataset.resolved = 'true';
-
-    if (row.dataset.type === 'New member record') {
-      const submissions = JSON.parse(localStorage.getItem('ark_record_submissions') || '[]');
-      const submission = submissions.find(item => item.id === id);
-      if (submission) {
-        submission.status = statusText;
-        submission.reviewedAt = new Date().toISOString();
-        submissions.splice(submissions.indexOf(submission), 1, submission);
-        localStorage.setItem('ark_record_submissions', JSON.stringify(submissions));
-      }
-    }
-
-    row.querySelectorAll('.pill-btn').forEach(b => { b.disabled = true; });
-
-    showToast(toastMsg, action === 'reject' ? 'error' : undefined);
-    updateApprovalStats();
-  }
-
-  function updateApprovalStats() {
-    const rows = document.querySelectorAll('.approvals-table tbody tr');
-    let pending = 0, approvedNow = 0;
-    rows.forEach(r => {
-      if (r.dataset.resolved !== 'true') pending++;
-      else if (r.dataset.status === 'Approved') approvedNow++;
-    });
-
-    const cards = document.querySelectorAll('.stats-grid .stat-card');
-    cards[0].querySelector('.stat-value').textContent = pending;
-    cards[3].querySelector('.stat-value').textContent = BASE_APPROVED_TODAY + approvedNow;
-  }
-
+  if (typeof renderHeadStaffSidebar === 'function') renderHeadStaffSidebar('approvals');
+  const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  const asArray = value => Array.isArray(value) ? value : Array.isArray(value?.results) ? value.results : [];
+  let approvalItems = [];
   let currentTypeFilter = 'All';
 
-  function filterApprovals(type, tabEl) {
-    document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
-    tabEl.classList.add('active');
-    currentTypeFilter = type;
-    applyApprovalFilters();
+  function showToast(message, kind) {
+    const toast=document.getElementById('toast');toast.textContent=message;toast.className=`toast ${kind||'success'} show`;setTimeout(()=>toast.classList.remove('show'),2800);
+  }
+  function formatDate(value) { if(!value)return '—';const date=new Date(value);return Number.isNaN(date.getTime())?'—':date.toLocaleString([], {dateStyle:'medium',timeStyle:'short'}); }
+
+  async function loadApprovals() {
+    const tbody=document.getElementById('approvalsRows');tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:24px">Loading pending requests…</td></tr>';
+    try {
+      const [profile,staffResult,deathResult,documentResult]=await Promise.all([
+        ArkheionAPI.getCurrentUser(),
+        ArkheionAPI.get('/api/staff-registration/requests/?status=pending'),
+        ArkheionAPI.get('/api/deaths/'),
+        ArkheionAPI.get('/api/documents/'),
+      ]);
+      if(profile.role!=='head_staff') throw new Error('Only Head Staff can review these requests.');
+      const staff=asArray(staffResult).map(item=>({kind:'staff',id:item.id,title:`Staff account request — ${item.first_name} ${item.last_name}`,type:'Staff account',by:item.username,barangay:item.requested_barangay?.name||'—',date:item.created_at,details:`Email: ${item.email||'—'} · Contact: ${item.contact_number||'—'} · Requested barangay: ${item.requested_barangay?.name||'—'}`,raw:item}));
+      const deaths=asArray(deathResult).filter(item=>item.review_status==='pending').map(item=>({kind:'death',id:item.id,title:`Death report — ${item.senior_name}`,type:'Death report',by:item.recorded_by_name||'Staff',barangay:item.barangay_name||'—',date:item.created_at,details:`OSCA ID: ${item.senior_osca_id} · Date of death: ${item.date_of_death} · ${item.notes||''}`,raw:item}));
+      const documents=asArray(documentResult).filter(item=>item.review_status==='pending').map(item=>({kind:'document',id:item.id,title:`Document review — ${item.file_name}`,type:'Document',by:item.senior_name||'Senior record',barangay:'—',date:item.created_at||item.upload_date,details:`Document type: ${item.document_type} · AI suggestion: ${item.nlp_classification||'None'} · Confidence: ${item.nlp_confidence==null?'—':`${Math.round(Number(item.nlp_confidence)*100)}%`}`,raw:item}));
+      approvalItems=[...staff,...deaths,...documents].sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
+      document.getElementById('stat-pending').textContent=approvalItems.length;
+      document.getElementById('stat-staff').textContent=staff.length;
+      document.getElementById('stat-documents').textContent=documents.length;
+      document.getElementById('stat-deaths').textContent=deaths.length;
+      renderApprovals();
+    } catch(error) {
+      tbody.innerHTML=`<tr><td colspan="6" class="empty-state">${escapeHTML(error.message||'Could not load pending approvals.')}</td></tr>`;
+      document.getElementById('approvalsCount').textContent='Could not load pending requests.';
+    }
   }
 
-  function applyApprovalFilters() {
-    const query = document.getElementById('approvalsSearch').value.trim().toLowerCase();
-    const rows = document.querySelectorAll('.approvals-table tbody tr');
-    let visibleCount = 0;
-
-    rows.forEach(row => {
-      const typeMatch = currentTypeFilter === 'All' || row.dataset.type === currentTypeFilter;
-      const searchMatch = !query
-        || row.dataset.title.toLowerCase().includes(query)
-        || row.dataset.by.toLowerCase().includes(query)
-        || (row.dataset.barangay || '').toLowerCase().includes(query)
-        || row.dataset.id.toLowerCase().includes(query);
-      const match = typeMatch && searchMatch;
-      row.style.display = match ? '' : 'none';
-      if (match) visibleCount++;
-    });
-
-    document.getElementById('approvalsCount').textContent =
-      'Showing ' + visibleCount + ' of ' + rows.length + ' pending record actions';
-    document.getElementById('approvalsNoResults').style.display = visibleCount === 0 ? 'block' : 'none';
+  function renderApprovals() {
+    const query=document.getElementById('approvalsSearch').value.trim().toLowerCase();
+    const rows=approvalItems.filter(item=>(currentTypeFilter==='All'||item.type===currentTypeFilter)&&`${item.title} ${item.by} ${item.barangay} ${item.id}`.toLowerCase().includes(query));
+    const tbody=document.getElementById('approvalsRows');
+    tbody.innerHTML=rows.length?rows.map(item=>{
+      const actions=item.kind==='death'?`<button class="pill-btn pill-approve" onclick="resolveApproval(${item.id},'death','verify')">Verify</button><button class="pill-btn pill-reject" onclick="resolveApproval(${item.id},'death','return')">Return</button>`:`<button class="pill-btn pill-approve" onclick="resolveApproval(${item.id},'${item.kind}','approve')">${item.kind==='staff'?'Approve & activate':'Verify'}</button><button class="pill-btn pill-reject" onclick="resolveApproval(${item.id},'${item.kind}','reject')">Reject</button>`;
+      return `<tr><td><div class="td-bold">${escapeHTML(item.title)}</div><div class="td-muted" style="font-size:11.5px;margin-top:2px">ID ${item.id} · ${escapeHTML(item.barangay)}</div></td><td><span class="badge badge-pend">${escapeHTML(item.type)}</span></td><td class="td-muted">${escapeHTML(item.by)}</td><td class="td-muted">${escapeHTML(formatDate(item.date))}</td><td><span class="badge badge-pend">Pending</span></td><td><div class="action-btns">${actions}<button class="action-icon-btn" title="View details" onclick="openRequestModal(${item.id},'${item.kind}')"><i class="ti ti-eye"></i></button></div></td></tr>`;
+    }).join(''):'<tr><td colspan="6" class="empty-state">No pending backend requests match this filter.</td></tr>';
+    document.getElementById('approvalsCount').textContent=`Showing ${rows.length} of ${approvalItems.length} pending requests`;
+    document.getElementById('approvalsNoResults').style.display=rows.length?'none':'block';
   }
 
-  renderSubmittedRecords();
-  window.addEventListener('storage', event => {
-    if (event.key === 'ark_record_submissions') renderSubmittedRecords();
-  });
+  function filterApprovals(type,tab) { document.querySelectorAll('.tabs .tab').forEach(item=>item.classList.remove('active'));tab.classList.add('active');currentTypeFilter=type;renderApprovals(); }
+  function openRequestModal(id,kind) {
+    const item=approvalItems.find(row=>row.id===id&&row.kind===kind);if(!item)return;
+    document.getElementById('rmTitle').textContent=item.title;document.getElementById('rmId').textContent=`${item.type} · ${item.id}`;document.getElementById('rmType').textContent=item.type;document.getElementById('rmBy').textContent=item.by;document.getElementById('rmSubmitted').textContent=formatDate(item.date);document.getElementById('rmStatus').textContent='Pending';document.getElementById('rmDesc').textContent=item.details;
+    document.getElementById('rmFooter').innerHTML='';document.getElementById('rmOverlay').classList.add('open');
+  }
+  function closeRequestModal(){document.getElementById('rmOverlay').classList.remove('open');}
+
+  async function resolveApproval(id,kind,decision) {
+    const item=approvalItems.find(row=>row.id===id&&row.kind===kind);if(!item)return;
+    let payload={};let path='';
+    if(kind==='staff') {payload={decision:decision==='approve'?'approve':'reject'};if(decision==='approve')payload.barangay=Number(item.raw.requested_barangay.id);path=`/api/staff-registration/requests/${id}/review/`;}
+    else if(kind==='death') {payload={decision};if(decision==='return'){const note=window.prompt('Why is this death report being returned?');if(note===null)return;if(!note.trim()){showToast('A correction note is required.','error');return}payload.review_note=note.trim()}path=`/api/deaths/${id}/review/`;}
+    else {payload={decision:decision==='approve'?'verify':'reject'};path=`/api/documents/${id}/review/`;}
+    const verb=kind==='death'?(decision==='verify'?'verify':'return'):(decision==='approve'?'approve':'reject');
+    if(!window.confirm(`Are you sure you want to ${verb} this ${item.type.toLowerCase()}?`))return;
+    try { if(kind==='staff')await ArkheionAPI.post(path,payload);else await ArkheionAPI.patch(path,payload);const message=kind==='death'?(decision==='verify'?'Death report verified.':'Death report returned for correction.'):kind==='staff'?(decision==='approve'?'Staff account approved and activated.':'Staff request rejected.'):decision==='approve'?'Document verified.':'Document rejected.';showToast(message);await loadApprovals(); }
+    catch(error){showToast(error.message||'Could not save the review decision.','error');}
+  }
+
+  loadApprovals();
 </script>
 </body>
 </html>

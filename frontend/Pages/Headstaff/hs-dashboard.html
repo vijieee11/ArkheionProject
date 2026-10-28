@@ -111,9 +111,9 @@
 
     <!-- OSCA overview -->
     <div class="stats-grid stats-4">
-      <div class="stat-card" style="cursor:pointer" onclick="location.href='../Staff/members.html'">
+      <div class="stat-card" style="cursor:pointer" onclick="location.href='member-records.html'">
         <div class="stat-label"><i class="ti ti-users"></i> Registered seniors</div>
-        <div class="stat-value">1,284</div>
+        <div class="stat-value" id="registeredSeniorCount">—</div>
         <div class="stat-sub">Member roster</div>
       </div>
       <div class="stat-card coral" style="cursor:pointer" onclick="location.href='deaths.html?status=review'">
@@ -167,9 +167,9 @@
         <div class="card-header">
           <div>
             <div class="card-title">Recent review activity</div>
-            <div class="card-subtitle">Headstaff decisions for the audit trail</div>
+            <div class="card-subtitle">Recent backend-recorded system actions</div>
           </div>
-          <span style="font-size:11px;color:var(--navy-light);cursor:pointer" onclick="location.href='deaths.html'">Open death records →</span>
+          <span style="font-size:11px;color:var(--navy-light);cursor:pointer" onclick="location.href='audit.html'">Open audit log →</span>
         </div>
         <div id="deathReviewActivity"></div>
       </div>
@@ -177,124 +177,72 @@
   </div>
 </div>
 
+<script src="../api.js"></script>
 <script>
   renderHeadStaffSidebar('hs-dashboard');
 
-  const DEATH_STORAGE_KEY = 'ark_death_records';
-  const AUDIT_STORAGE_KEY = 'ark_death_audit';
   const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const dateNow = new Date();
-  document.getElementById('dashboardToday').textContent = dateNow.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
-  document.getElementById('dashboardYear').textContent = `Calendar year ${dateNow.getFullYear()}`;
+  const safeText = value => String(value ?? '').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  const asArray = value => Array.isArray(value) ? value : Array.isArray(value?.results) ? value.results : [];
+  let dashboardDeaths = [];
+  let notifications = [];
+  const dashboardYear = new Date().getFullYear();
+  document.getElementById('dashboardToday').textContent = new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('dashboardYear').textContent = `Calendar year ${dashboardYear}`;
 
-  function readArray(key) {
-    try { const data=JSON.parse(localStorage.getItem(key)||'[]'); return Array.isArray(data)?data:[]; }
-    catch { return []; }
-  }
-  function safeText(value) {
-    return String(value ?? '').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-  }
   function renderDeathDashboard() {
-    const records=readArray(DEATH_STORAGE_KEY);
-    const year=String(new Date().getFullYear());
-    const actionable=records.filter(record=>record.status!=='Verified');
-    const verifiedThisYear=records.filter(record=>record.status==='Verified'&&(record.dateOfDeath||'').startsWith(year));
-    const pensionFollowUps=records.filter(record=>record.pensionStatus==='Pensioner');
-    document.getElementById('deathReportsPending').textContent=actionable.length;
-    document.getElementById('verifiedDeathsYear').textContent=verifiedThisYear.length;
-    document.getElementById('pensionFollowUps').textContent=pensionFollowUps.length;
-
-    const chart=document.getElementById('monthlyDeathsChart');
-    const counts=MONTH_NAMES.map((_,index)=>({
-      pending:records.filter(record=>record.status!=='Verified'&&(record.dateOfDeath||'').startsWith(year)&&Number((record.dateOfDeath||'').slice(5,7))===index+1).length,
-      verified:verifiedThisYear.filter(record=>Number((record.dateOfDeath||'').slice(5,7))===index+1).length,
+    const records = dashboardDeaths;
+    const pending = records.filter(record => record.review_status === 'pending');
+    const verified = records.filter(record => record.review_status === 'verified' && String(record.date_of_death||'').startsWith(String(dashboardYear)));
+    const pensionFollowUps = records.filter(record => record.pension_status === 'Pensioner');
+    document.getElementById('deathReportsPending').textContent = pending.length;
+    document.getElementById('verifiedDeathsYear').textContent = verified.length;
+    document.getElementById('pensionFollowUps').textContent = pensionFollowUps.length;
+    document.getElementById('registeredSeniorCount').textContent = document.getElementById('registeredSeniorCount').dataset.count || '0';
+    const counts = MONTH_NAMES.map((_, index) => ({
+      pending: records.filter(record => record.review_status === 'pending' && String(record.date_of_death||'').startsWith(String(dashboardYear)) && Number(String(record.date_of_death||'').slice(5,7)) === index+1).length,
+      verified: verified.filter(record => Number(String(record.date_of_death||'').slice(5,7)) === index+1).length,
     }));
-    const max=Math.max(1,...counts.map(item=>item.pending+item.verified));
-    document.getElementById('monthlyDeathSubtitle').textContent=`Death reports for ${year} · ${records.length} total reports across all years`;
-    chart.innerHTML=counts.map((item,index)=>{
-      const pendingHeight=item.pending/max*100, verifiedHeight=item.verified/max*100;
-      return `<div class="dash-month-col" title="${MONTH_NAMES[index]}: ${item.pending} for review, ${item.verified} verified"><span style="font-size:10px;color:var(--gray-600)">${item.pending+item.verified||''}</span><div class="dash-month-track"><div class="dash-month-pending" style="height:${pendingHeight}%"></div><div class="dash-month-verified" style="height:${verifiedHeight}%"></div></div><span class="dash-month-label">${MONTH_NAMES[index].slice(0,3)}</span></div>`;
-    }).join('');
-
-    const actionList=document.getElementById('deathActionList');
-    const recentActionable=actionable.slice().sort((a,b)=>new Date(b.recordedAt||0)-new Date(a.recordedAt||0)).slice(0,5);
-    actionList.innerHTML=recentActionable.length?recentActionable.map(record=>`
-      <div class="req-row" style="cursor:pointer" onclick="location.href='deaths.html'">
-        <div class="req-icon" style="background:${record.status==='Needs correction'?'var(--amber-100)':'var(--coral-50)'}"><i class="ti ti-heart-x" style="color:${record.status==='Needs correction'?'var(--gold-dark)':'var(--coral-600)'}"></i></div>
-        <div style="flex:1;min-width:0"><p style="font-size:12.5px;font-weight:500;color:var(--gray-900)">${safeText(record.name||'Death report')} · ${safeText(record.oscaId||'')}</p><p style="font-size:11px;color:var(--gray-500)">${safeText(record.barangay||'')} · ${safeText(record.status||'For review')}${record.pensionStatus==='Pensioner'?' · Pension follow-up':''}</p></div>
-        <span class="badge ${record.status==='Needs correction'?'badge-urgent':'badge-pend'}">${safeText(record.status||'For review')}</span>
-      </div>`).join(''):'<div class="dash-empty">No death reports need review right now.</div>';
-
-    const activity=readArray(AUDIT_STORAGE_KEY).slice(0,5);
-    const activityEl=document.getElementById('deathReviewActivity');
-    activityEl.innerHTML=activity.length?activity.map(entry=>`
-      <div class="dash-activity-row"><span style="color:var(--gray-500)">${safeText(new Date(entry.at).toLocaleDateString())}</span><span><strong>${safeText(entry.oscaId||'')}</strong> · ${safeText(entry.name||'')}</span><span class="badge ${entry.action==='Verified'?'badge-ok':'badge-urgent'}">${safeText(entry.action)}</span></div>`).join(''):'<div class="dash-empty">No Headstaff death reviews yet. Reviewed reports will appear here.</div>';
+    const max = Math.max(1,...counts.map(item=>item.pending+item.verified));
+    document.getElementById('monthlyDeathSubtitle').textContent = `Death reports for ${dashboardYear} · ${records.length} total reports across all years`;
+    document.getElementById('monthlyDeathsChart').innerHTML = counts.map((item,index)=>`<div class="dash-month-col" title="${MONTH_NAMES[index]}: ${item.pending} for review, ${item.verified} verified"><span style="font-size:10px;color:var(--gray-600)">${item.pending+item.verified||''}</span><div class="dash-month-track"><div class="dash-month-pending" style="height:${item.pending/max*100}%"></div><div class="dash-month-verified" style="height:${item.verified/max*100}%"></div></div><span class="dash-month-label">${MONTH_NAMES[index].slice(0,3)}</span></div>`).join('');
+    const actionList = document.getElementById('deathActionList');
+    const actionable = records.filter(record => ['pending','needs_correction'].includes(record.review_status)).slice(0,5);
+    actionList.innerHTML = actionable.length ? actionable.map(record=>`<div class="req-row" style="cursor:pointer" onclick="location.href='deaths.html'"><div class="req-icon" style="background:${record.review_status==='needs_correction'?'var(--amber-100)':'var(--coral-50)'}"><i class="ti ti-heart-x"></i></div><div style="flex:1;min-width:0"><p style="font-size:12.5px;font-weight:500;color:var(--gray-900)">${safeText(record.senior_name||'Death report')} · ${safeText(record.senior_osca_id||'')}</p><p style="font-size:11px;color:var(--gray-500)">${safeText(record.barangay_name||'')} · ${record.review_status==='pending'?'Awaiting review':'Needs correction'}${record.pension_status==='Pensioner'?' · Pension follow-up':''}</p></div><span class="badge ${record.review_status==='needs_correction'?'badge-urgent':'badge-pend'}">${record.review_status==='pending'?'Pending':'Correction'}</span></div>`).join('') : '<div class="dash-empty">No death reports need review right now.</div>';
   }
-  renderDeathDashboard();
-  window.addEventListener('storage',event=>{if(event.key===DEATH_STORAGE_KEY||event.key===AUDIT_STORAGE_KEY)renderDeathDashboard();});
 
-  /* ---------------- Notifications ----------------
-     Content is pulled straight from this dashboard's real data
-     (pending approvals + staff activity) and filtered by the
-     categories the Head Staff has enabled in Settings.
-  */
-  const notifications = [
-    {
-      id: 'req-delete-record',
-      category: 'requests',
-      icon: 'ti-trash',
-      iconBg: 'var(--coral-50)',
-      iconColor: 'var(--coral-600)',
-      title: 'Delete record request',
-      desc: 'Regular Staff 1 — Duplicate entry for Felipe Torres',
-      time: 'Awaiting review',
-      goto: 'hs-pending-approval.html'
-    },
-    {
-      id: 'req-benefit-correction',
-      category: 'requests',
-      icon: 'ti-edit',
-      iconBg: 'var(--amber-100)',
-      iconColor: 'var(--gold-dark)',
-      title: 'Benefit status correction',
-      desc: 'Regular Staff 2 — Pension marked claimed in error',
-      time: 'Awaiting review',
-      goto: 'hs-pending-approval.html'
-    },
-    {
-      id: 'approval-staff-deactivation',
-      category: 'approvals',
-      icon: 'ti-user-off',
-      iconBg: 'var(--coral-50)',
-      iconColor: 'var(--coral-600)',
-      title: 'Staff deactivation request',
-      desc: 'System — Regular Staff 2 inactive for 30+ days',
-      time: 'Awaiting your approval',
-      goto: 'hs-pending-approval.html'
-    },
-    {
-      id: 'audit-no-login',
-      category: 'audit',
-      icon: 'ti-alert-triangle',
-      iconBg: 'var(--amber-100)',
-      iconColor: 'var(--gold-dark)',
-      title: 'Staff has never logged in',
-      desc: 'Regular Staff 2 (osca_staff2) — account created but unused',
-      time: 'Security check',
-      goto: 'staff-mgmt.html'
-    },
-    {
-      id: 'audit-backlog',
-      category: 'audit',
-      icon: 'ti-map-pin',
-      iconBg: 'var(--teal-50)',
-      iconColor: 'var(--navy)',
-      title: 'High incomplete-requirements backlog',
-      desc: 'Brgy. Tubod — 31% of records missing requirements',
-      time: 'System flag',
-      goto: '../Staff/members.html'
-    },
-  ];
+  function renderRecentActivity(logs) {
+    const activityEl = document.getElementById('deathReviewActivity');
+    activityEl.innerHTML = logs.length ? logs.slice(0,5).map(entry=>`<div class="dash-activity-row"><span style="color:var(--gray-500)">${safeText(new Date(entry.timestamp).toLocaleString())}</span><span><strong>${safeText(entry.staff_name||entry.username)}</strong> · ${safeText(entry.description)}</span><span class="badge ${entry.action==='approve'?'badge-ok':'badge-pend'}">${safeText(entry.action)}</span></div>`).join('') : '<div class="dash-empty">No backend-recorded activity yet.</div>';
+  }
+
+  async function loadDashboard() {
+    try {
+      const [seniorsResult, deathsResult, auditResult, staffRequestsResult, documentsResult] = await Promise.all([
+        ArkheionAPI.get('/api/seniors/'), ArkheionAPI.get('/api/deaths/'),
+        ArkheionAPI.get('/api/audit-logs/?page_size=10'),
+        ArkheionAPI.get('/api/staff-registration/requests/?status=pending'),
+        ArkheionAPI.get('/api/documents/'),
+      ]);
+      document.getElementById('registeredSeniorCount').dataset.count = asArray(seniorsResult).length;
+      dashboardDeaths = asArray(deathsResult);
+      renderDeathDashboard();
+      renderRecentActivity(asArray(auditResult));
+      const pendingDeaths = dashboardDeaths.filter(record=>record.review_status==='pending');
+      const pendingDocuments = asArray(documentsResult).filter(document=>document.review_status==='pending');
+      const pendingStaff = asArray(staffRequestsResult);
+      notifications = [
+        ...pendingStaff.map(item=>({id:`staff-${item.id}`,category:'requests',icon:'ti-user-plus',iconBg:'var(--teal-50)',iconColor:'var(--navy)',title:'Staff account request',desc:`${item.first_name} ${item.last_name} · ${item.requested_barangay.name}`,time:'Awaiting review',goto:'staff_request.html'})),
+        ...pendingDeaths.map(item=>({id:`death-${item.id}`,category:'approvals',icon:'ti-heart-x',iconBg:'var(--coral-50)',iconColor:'var(--coral-600)',title:'Death report to review',desc:`${item.senior_name} · ${item.barangay_name}`,time:'Awaiting review',goto:'deaths.html'})),
+        ...pendingDocuments.map(item=>({id:`document-${item.id}`,category:'approvals',icon:'ti-file-check',iconBg:'var(--amber-100)',iconColor:'var(--gold-dark)',title:'Document review',desc:`${item.file_name} · ${item.senior_name}`,time:'Awaiting review',goto:'hs-pending-approval.html'})),
+        ...asArray(auditResult).slice(0,3).map(entry=>({id:`activity-${entry.id}`,category:'audit',icon:'ti-shield-check',iconBg:'var(--teal-50)',iconColor:'var(--navy)',title:`${entry.action} · ${entry.module}`,desc:`${entry.staff_name||entry.username} — ${entry.description}`,time:new Date(entry.timestamp).toLocaleString(),goto:'audit.html'})),
+      ];
+      renderNotifDropdown();
+    } catch (error) {
+      document.getElementById('deathActionList').innerHTML = `<div class="dash-empty">Could not load dashboard records: ${safeText(error.message||'API unavailable')}</div>`;
+      document.getElementById('deathReviewActivity').innerHTML = '<div class="dash-empty">Could not load recent activity.</div>';
+    }
+  }
 
   function readNotifSettings() {
     return {
@@ -328,8 +276,8 @@
         <div class="notif-item ${unread ? 'unread' : ''}" onclick="openNotif('${n.id}')">
           <div class="notif-item-icon" style="background:${n.iconBg};color:${n.iconColor};"><i class="ti ${n.icon}"></i></div>
           <div class="notif-item-text">
-            <div><strong>${n.title}</strong> — ${n.desc}</div>
-            <div class="notif-item-time">${n.time}</div>
+            <div><strong>${safeText(n.title)}</strong> — ${safeText(n.desc)}</div>
+            <div class="notif-item-time">${safeText(n.time)}</div>
           </div>
         </div>`;
       }).join('');
@@ -371,11 +319,11 @@
     }
   });
 
-  renderNotifDropdown();
+  loadDashboard();
 
   // Re-sync on bfcache restore (Back/Forward), same as the Staff Dashboard.
   window.addEventListener('pageshow', function () {
-    renderNotifDropdown();
+    loadDashboard();
   });
 </script>
 </body>

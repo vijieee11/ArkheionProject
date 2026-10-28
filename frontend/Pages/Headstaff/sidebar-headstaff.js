@@ -20,7 +20,7 @@ function renderHeadStaffSidebar(activePage) {
     {
       section: 'Requests',
       items: [
-        { id: 'approvals', label: 'Pending approvals', icon: 'ti-checklist',   href: 'hs-pending-approval.html', badge: '5' },
+        { id: 'approvals', label: 'Pending approvals', icon: 'ti-checklist',   href: 'hs-pending-approval.html' },
         { id: 'requests',  label: 'Staff requests',    icon: 'ti-inbox',       href: 'staff_request.html' },
       ]
     },

@@ -44,7 +44,27 @@ function getStaffIdentity() {
 }
 
 function renderSidebar(activePage) {
-  const role     = localStorage.getItem('ark_role') || 'regular_staff';
+  const role = localStorage.getItem('ark_role') || 'regular_staff';
+  const currentPath = window.location.pathname.toLowerCase();
+  if (role === 'head_staff' && currentPath.includes('/staff/')) {
+    const headStaffTargets = {
+      dashboard: '../Headstaff/hs-dashboard.html',
+      members: '../Headstaff/member-records.html',
+      deaths: '../Headstaff/deaths.html',
+      pension: '../Headstaff/analytics.html',
+      upload: '../Headstaff/hs-pending-approval.html',
+      search: '../Headstaff/member-records.html',
+      map: '../Headstaff/member-records.html',
+      reports: '../Headstaff/hs-reports.html',
+      genaccounts: '../Headstaff/staff-mgmt.html',
+      settings: '../Headstaff/settings.html',
+      grocery: '../Headstaff/hs-reports.html',
+      medicine: '../Headstaff/hs-reports.html',
+      'booklet-summary': '../Headstaff/hs-dashboard.html',
+    };
+    window.location.replace(new URL(headStaffTargets[activePage] || '../Headstaff/hs-dashboard.html', window.location.href).href);
+    return;
+  }
   const rawUsername = localStorage.getItem('ark_username') || 'Staff';
   const displayName = formatStaffName(rawUsername, role);
   const initials = role === 'head_staff' ? 'HS' : 'S';

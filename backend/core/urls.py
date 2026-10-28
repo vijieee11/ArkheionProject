@@ -5,6 +5,8 @@ from .views import (
     ChangePasswordAPIView,
     CurrentUserAPIView,
     AnalyticsAPIView,
+    AuditLogListAPIView,
+    StaffDirectoryAPIView,
     DeathRecordListCreateAPIView,
     DeathRecordDetailAPIView,
     DeathRecordReviewAPIView,
@@ -24,6 +26,8 @@ from .views import (
 )
 
 urlpatterns = [
+    path("audit-logs/", AuditLogListAPIView.as_view(), name="audit-log-list"),
+    path("staff/", StaffDirectoryAPIView.as_view(), name="staff-directory"),
     path("staff-registration/", StaffRegistrationAPIView.as_view(), name="staff-registration"),
     path("staff-registration/requests/", StaffRegistrationReviewAPIView.as_view(), name="staff-registration-requests"),
     path("staff-registration/requests/<int:pk>/review/", StaffRegistrationReviewAPIView.as_view(), name="staff-registration-review"),

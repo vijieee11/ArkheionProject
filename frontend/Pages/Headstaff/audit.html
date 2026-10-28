@@ -43,22 +43,20 @@
         </div>
         <div class="card-actions">
           <select id="filter-action" class="filter-select" onchange="renderTable()">
-            <option>All actions</option>
-            <option>Login/Logout</option>
-            <option>Create</option>
-            <option>Edit</option>
-            <option>Delete</option>
-            <option>Upload</option>
-            <option>Search</option>
-            <option>Approve</option>
+            <option value="">All actions</option>
+            <option value="login">Login</option>
+            <option value="logout">Logout</option>
+            <option value="create">Create</option>
+            <option value="edit">Edit</option>
+            <option value="delete">Delete</option>
+            <option value="upload">Upload</option>
+            <option value="search">Search</option>
+            <option value="approve">Approve</option>
           </select>
           <select id="filter-staff" class="filter-select" onchange="renderTable()">
-            <option>All staff</option>
-            <option>osca_head</option>
-            <option>osca_staff1</option>
-            <option>osca_staff2</option>
+            <option value="">All staff</option>
           </select>
-          <input type="date" id="filter-date" class="filter-select" value="2026-07-27" onchange="renderTable()">
+          <input type="date" id="filter-date" class="filter-select" onchange="loadLogs(1)">
         </div>
       </div>
       <table class="audit-table">
@@ -76,131 +74,94 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<script src="../api.js"></script>
 <script>
   renderHeadStaffSidebar('audit');
 
-  // Sample audit entries — in production these come from the backend, already paginated.
-  const logs = [
-    { date: '2026-07-26', time: '8:47 AM',  staff: 'osca_staff2', action: 'Login/Logout', badgeClass: 'b-login',   module: 'System',    desc: 'Regular Staff 2 logged out',                                            ip: '192.168.1.3' },
-    { date: '2026-07-26', time: '9:02 AM',  staff: 'osca_head',   action: 'Login/Logout', badgeClass: 'b-login',   module: 'System',    desc: 'Head Staff logged in successfully',                                    ip: '192.168.1.1' },
-    { date: '2026-07-27', time: '9:10 AM',  staff: 'osca_staff1', action: 'Login/Logout', badgeClass: 'b-login',   module: 'System',    desc: 'Regular Staff 1 logged in successfully',                               ip: '192.168.1.2' },
-    { date: '2026-07-27', time: '9:15 AM',  staff: 'osca_staff1', action: 'Create',       badgeClass: 'b-create',  module: 'Members',   desc: 'Registered new member: Rosario Mendoza (2025-012)',                    ip: '192.168.1.2' },
-    { date: '2026-07-27', time: '9:22 AM',  staff: 'osca_head',   action: 'Create',       badgeClass: 'b-create',  module: 'Members',   desc: 'Registered new member: Felipe Torres (2023-055)',                      ip: '192.168.1.1' },
-    { date: '2026-07-27', time: '9:30 AM',  staff: 'osca_staff1', action: 'Upload',       badgeClass: 'b-upload',  module: 'Documents', desc: 'Uploaded PSA birth certificate for Juan dela Cruz (2024-001)',         ip: '192.168.1.2' },
-    { date: '2026-07-27', time: '9:41 AM',  staff: 'osca_staff2', action: 'Upload',       badgeClass: 'b-upload',  module: 'Documents', desc: 'Uploaded PhilSys ID for Maria Santos (2023-087)',                      ip: '192.168.1.3' },
-    { date: '2026-07-27', time: '10:00 AM', staff: 'osca_head',   action: 'Edit',         badgeClass: 'b-edit',    module: 'Pension',   desc: 'Marked pension as claimed: Pedro Ramos (2024-033) — July 2026',        ip: '192.168.1.1' },
-    { date: '2026-07-27', time: '10:12 AM', staff: 'osca_staff1', action: 'Edit',         badgeClass: 'b-edit',    module: 'Grocery',   desc: 'Marked grocery as received: Lourdes Garcia (2022-114)',                ip: '192.168.1.2' },
-    { date: '2026-07-27', time: '10:30 AM', staff: 'osca_staff2', action: 'Delete',       badgeClass: 'b-delete',  module: 'Members',   desc: 'Requested deletion of duplicate entry for Felipe Torres',              ip: '192.168.1.3' },
-    { date: '2026-07-28', time: '10:45 AM', staff: 'osca_staff1', action: 'Search',       badgeClass: 'b-search',  module: 'Records',   desc: 'Searched records: "Juan dela Cruz"',                                    ip: '192.168.1.2' },
-    { date: '2026-07-28', time: '10:58 AM', staff: 'osca_head',   action: 'Search',       badgeClass: 'b-search',  module: 'Records',   desc: 'Searched records: "Brgy 4"',                                            ip: '192.168.1.1' },
-    { date: '2026-07-28', time: '11:20 AM', staff: 'osca_head',   action: 'Approve',      badgeClass: 'b-approve', module: 'Members',   desc: 'Approved registration of Maria Santos (2023-087) — documents verified', ip: '192.168.1.1' },
-    { date: '2026-07-30', time: '11:32 AM', staff: 'osca_head',   action: 'Approve',      badgeClass: 'b-approve', module: 'Pension',   desc: 'Approved benefit status correction for Regular Staff 2',               ip: '192.168.1.1' },
-    { date: '2026-07-30', time: '11:45 AM', staff: 'osca_staff2', action: 'Login/Logout', badgeClass: 'b-login',   module: 'System',    desc: 'Regular Staff 2 logged in (first login — password change required)',   ip: '192.168.1.3' },
-  ];
-
+  const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const actionLabels = {login:'Login',logout:'Logout',create:'Create',edit:'Edit',delete:'Delete',upload:'Upload',search:'Search',approve:'Approve'};
   let currentPage = 1;
-  const pageSize = 6;
+  let totalCount = 0;
+  const pageSize = 25;
 
-  function getFiltered() {
-    const action = document.getElementById('filter-action').value;
-    const staff = document.getElementById('filter-staff').value;
-    const dateVal = document.getElementById('filter-date').value;
-
-    return logs.filter(l => {
-      const matchesAction = action === 'All actions' || l.action === action;
-      const matchesStaff = staff === 'All staff' || l.staff === staff;
-      const matchesDate = !dateVal || l.date === dateVal;
-      return matchesAction && matchesStaff && matchesDate;
-    });
+  async function loadStaffOptions() {
+    try {
+      const staff = await ArkheionAPI.get('/api/staff/');
+      const select = document.getElementById('filter-staff');
+      (Array.isArray(staff) ? staff : []).forEach(person => {
+        const option = new Option(person.username, person.username);
+        select.add(option);
+      });
+    } catch (_) { /* Audit list still works without the optional staff filter choices. */ }
   }
 
-  function renderTable() {
-    currentPage = 1;
-    renderPage();
+  function selectedLogFilters() {
+    return {
+      action: document.getElementById('filter-action').value,
+      user: document.getElementById('filter-staff').value,
+      date: document.getElementById('filter-date').value,
+    };
   }
 
-  function renderPage() {
-    const filtered = getFiltered();
-    const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-    currentPage = Math.min(currentPage, totalPages);
-
-    const start = (currentPage - 1) * pageSize;
-    const pageRows = filtered.slice(start, start + pageSize);
-
-    const dateVal = document.getElementById('filter-date').value;
-    document.getElementById('log-date-sub').textContent = dateVal
-      ? new Date(dateVal + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-      : 'All dates';
-
-    if (pageRows.length === 0) {
-      document.getElementById('audit-rows').innerHTML = `
-        <tr><td colspan="6" style="text-align:center;color:var(--gray-400);padding:30px;">No log entries match these filters.</td></tr>`;
-    } else {
-      document.getElementById('audit-rows').innerHTML = pageRows.map(l => `
-        <tr>
-          <td class="td-muted" style="white-space:nowrap">Jul 27 — ${l.time}</td>
-          <td class="td-bold">${l.staff}</td>
-          <td><span class="audit-badge ${l.badgeClass}">${l.action === 'Login/Logout' ? 'Login' : l.action}</span></td>
-          <td class="td-muted">${l.module}</td>
-          <td class="td-muted">${l.desc}</td>
-          <td class="td-muted">${l.ip}</td>
-        </tr>`).join('');
+  async function loadLogs(page = 1) {
+    currentPage = page;
+    const params = new URLSearchParams({page:String(page), page_size:String(pageSize)});
+    Object.entries(selectedLogFilters()).forEach(([key,value]) => { if (value) params.set(key,value); });
+    const tbody = document.getElementById('audit-rows');
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:28px">Loading audit entries…</td></tr>';
+    try {
+      const response = await ArkheionAPI.get(`/api/audit-logs/?${params.toString()}`);
+      const rows = Array.isArray(response.results) ? response.results : [];
+      totalCount = Number(response.count || 0);
+      document.getElementById('log-date-sub').textContent = selectedLogFilters().date || 'All dates';
+      tbody.innerHTML = rows.length ? rows.map(entry => {
+        const date = new Date(entry.timestamp);
+        const badgeClass = entry.action === 'delete' ? 'b-delete' : entry.action === 'edit' ? 'b-edit' : entry.action === 'upload' ? 'b-upload' : entry.action === 'approve' ? 'b-approve' : entry.action === 'search' ? 'b-search' : entry.action === 'create' ? 'b-create' : 'b-login';
+        return `<tr><td class="td-muted" style="white-space:nowrap">${escapeHtml(Number.isNaN(date.getTime()) ? entry.timestamp : date.toLocaleString())}</td><td class="td-bold">${escapeHtml(entry.staff_name)}<br><small>${escapeHtml(entry.username)}</small></td><td><span class="audit-badge ${badgeClass}">${escapeHtml(actionLabels[entry.action] || entry.action)}</span></td><td class="td-muted">${escapeHtml(entry.module)}</td><td class="td-muted">${escapeHtml(entry.description)}</td><td class="td-muted">${escapeHtml(entry.ip_address || '—')}</td></tr>`;
+      }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--gray-500);padding:28px">No recorded activity matches these filters.</td></tr>';
+      document.getElementById('log-count').textContent = `Showing ${rows.length ? (page - 1) * pageSize + 1 : 0}–${(page - 1) * pageSize + rows.length} of ${totalCount} recorded entries`;
+      renderPagination(Math.max(1,Math.ceil(totalCount/pageSize)));
+    } catch (error) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--coral-900);padding:28px">${escapeHtml(error.message || 'Could not load the audit log.')}</td></tr>`;
+      document.getElementById('log-count').textContent = 'Audit log unavailable.';
+      document.getElementById('pagination').replaceChildren();
     }
-
-    document.getElementById('log-count').textContent =
-      `Showing ${pageRows.length} of ${filtered.length} log entries${dateVal ? ' today' : ''}`;
-
-    renderPagination(totalPages);
   }
 
   function renderPagination(totalPages) {
-    let html = `<button class="btn btn-ghost btn-sm" ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1})"><i class="ti ti-chevron-left"></i></button>`;
-    for (let p = 1; p <= totalPages; p++) {
-      html += `<button class="btn ${p === currentPage ? 'btn-navy' : 'btn-ghost'} btn-sm" onclick="goToPage(${p})">${p}</button>`;
-    }
-    html += `<button class="btn btn-ghost btn-sm" ${currentPage === totalPages ? 'disabled' : ''} onclick="goToPage(${currentPage + 1})"><i class="ti ti-chevron-right"></i></button>`;
-    document.getElementById('pagination').innerHTML = html;
+    const host = document.getElementById('pagination');
+    host.innerHTML = `<button class="btn btn-ghost btn-sm" ${currentPage<=1?'disabled':''} onclick="loadLogs(${currentPage-1})">‹</button><span style="padding:6px 9px;font-size:12px">Page ${currentPage} of ${totalPages}</span><button class="btn btn-ghost btn-sm" ${currentPage>=totalPages?'disabled':''} onclick="loadLogs(${currentPage+1})">›</button>`;
   }
 
-  function goToPage(p) {
-    currentPage = p;
-    renderPage();
-  }
-
+  function renderTable() { loadLogs(1); }
   function showToast(msg, type = 'success') {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = `toast ${type}`;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2500);
+    const toast = document.getElementById('toast'); toast.textContent = msg; toast.className = `toast ${type} show`;
+    setTimeout(() => toast.classList.remove('show'), 2500);
   }
 
-  function exportLog() {
-    const filtered = getFiltered();
-    if (!filtered.length) {
-      showToast('No log entries to export.', 'error');
-      return;
-    }
-    const headers = ['Timestamp', 'Staff', 'Action', 'Module', 'Description', 'IP Address'];
-    const csvRows = filtered.map(l => [
-      `${l.date} ${l.time}`, l.staff, l.action, l.module, l.desc, l.ip
-    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
-    const csv = [headers.join(','), ...csvRows].join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `audit-log-${document.getElementById('filter-date').value || 'all'}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-
-    showToast(`Exported ${filtered.length} log entr${filtered.length === 1 ? 'y' : 'ies'}.`);
+  async function exportLog() {
+    const filters = selectedLogFilters();
+    const rows = [];
+    try {
+      let page = 1;
+      while (true) {
+        const params = new URLSearchParams({page:String(page),page_size:'100'});
+        Object.entries(filters).forEach(([key,value]) => { if(value) params.set(key,value); });
+        const response = await ArkheionAPI.get(`/api/audit-logs/?${params.toString()}`);
+        rows.push(...(Array.isArray(response.results) ? response.results : []));
+        if (!response.next) break;
+        page++;
+      }
+      if (!rows.length) { showToast('No log entries to export.','error'); return; }
+      const headers = ['Timestamp','Staff','Username','Action','Module','Record ID','Description','IP Address'];
+      const csvRows = rows.map(entry => [entry.timestamp,entry.staff_name,entry.username,actionLabels[entry.action]||entry.action,entry.module,entry.record_id,entry.description,entry.ip_address].map(value=>`"${String(value ?? '').replace(/"/g,'""')}"`).join(','));
+      const url=URL.createObjectURL(new Blob([[headers.join(','),...csvRows].join('\n')],{type:'text/csv;charset=utf-8;'}));
+      const link=document.createElement('a');link.href=url;link.download=`audit-log-${filters.date||'all'}.csv`;link.click();URL.revokeObjectURL(url);
+      showToast(`Exported ${rows.length} log entr${rows.length===1?'y':'ies'}.`);
+    } catch(error) { showToast(error.message||'Could not export the audit log.','error'); }
   }
 
-  renderPage();
+  Promise.all([loadStaffOptions(),loadLogs()]);
 </script>
 </body>
 </html>

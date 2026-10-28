@@ -66,7 +66,7 @@
   <div class="content">
     <div class="alert alert-amber">
       <i class="ti ti-stamp"></i>
-      Official compiled reports for submission to <strong>DSWD, NCSC, or the LGU</strong>. Each export requires your sign-off as Head Staff and is logged in the audit trail. For quick day-to-day printouts, staff can use the regular Reports page.
+      Official compiled reports for submission to <strong>DSWD, NCSC, or the LGU</strong>. The official sign-off and submission-history workflow is not connected to the backend yet. Do not treat this page as a completed official export.
     </div>
 
     <div class="grid-auto">
@@ -185,7 +185,7 @@
       </div>
       <div class="alert alert-teal">
         <i class="ti ti-info-circle"></i>
-        Signing this report confirms you have reviewed its contents. This action will be recorded in the audit log with your name and timestamp.
+        Official report signing and delivery are not available yet. No report will be submitted or emailed from this demo control.
       </div>
     </div>
     <div class="modal-footer">
@@ -205,22 +205,7 @@
     'LGU Carmen': 'osca@carmen.gov.ph',
   };
 
-  // Sample submission history spanning a few months — in production this
-  // comes from the backend, already filtered/paginated server-side.
-  const history = [
-    { report: 'NCSC Annex A list — June 2026',        signedBy: 'Head Staff', date: '2026-07-02', recipient: 'NCSC',       status: 'Submitted' },
-    { report: 'Official pension payroll — June 2026', signedBy: 'Head Staff', date: '2026-07-01', recipient: 'DSWD',       status: 'Submitted' },
-    { report: 'Official masterlist — H1 2026',        signedBy: 'Head Staff', date: '2026-07-15', recipient: 'LGU Carmen', status: 'Submitted' },
-    { report: 'Quarterly analytics summary — Q2 2026',signedBy: 'Head Staff', date: '2026-07-20', recipient: 'LGU Carmen', status: 'Submitted' },
-    { report: 'NCSC Annex A list — supplemental',     signedBy: 'Head Staff', date: '2026-07-22', recipient: 'NCSC',       status: 'Submitted' },
-    { report: 'Official pension payroll — adjustment',signedBy: 'Head Staff', date: '2026-07-10', recipient: 'DSWD',       status: 'Submitted' },
-    { report: 'Official masterlist — Q2 2026',        signedBy: 'Head Staff', date: '2026-06-30', recipient: 'LGU Carmen', status: 'Submitted' },
-    { report: 'NCSC Annex A list — May 2026',         signedBy: 'Head Staff', date: '2026-06-03', recipient: 'NCSC',       status: 'Submitted' },
-    { report: 'Official pension payroll — May 2026',  signedBy: 'Head Staff', date: '2026-06-01', recipient: 'DSWD',       status: 'Submitted' },
-    { report: 'NCSC Annex A list — April 2026',       signedBy: 'Head Staff', date: '2026-05-04', recipient: 'NCSC',       status: 'Submitted' },
-    { report: 'Official pension payroll — April 2026',signedBy: 'Head Staff', date: '2026-05-01', recipient: 'DSWD',       status: 'Submitted' },
-    { report: 'Official masterlist — Q1 2026',        signedBy: 'Head Staff', date: '2026-05-15', recipient: 'LGU Carmen', status: 'Submitted' },
-  ];
+  const history = []; // No report sign-offs are stored by the backend yet.
 
   let currentMonth = 'July 2026';
 
@@ -292,9 +277,9 @@
     const sendEmail = document.getElementById('sign-email-toggle').checked;
     closeModal('modal-sign');
     if (sendEmail && email) {
-      showToast(`"${name}" signed, exported, and emailed to ${email}.`);
+      showToast('Report sign-off and email delivery are not connected; nothing was submitted.', 'error');
     } else {
-      showToast(`"${name}" signed and exported successfully.`);
+      showToast('Report sign-off and export are not connected; no report was saved.', 'error');
     }
   }
 

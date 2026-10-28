@@ -59,7 +59,7 @@
   <div class="content">
     <div class="alert alert-amber">
       <i class="ti ti-lock"></i>
-      New staff create their own account request from the sign-in page. OSCA Admin verifies the applicant and barangay in <strong>Staff Requests</strong> before activating access. This staff directory currently contains sample display data.
+      New staff create their own account request from the sign-in page. OSCA Admin verifies the applicant and barangay in <strong>Staff Requests</strong> before activating access. This directory shows staff accounts currently saved in the OSCA database.
     </div>
 
     <!-- Stats -->
@@ -80,9 +80,9 @@
         <div class="stat-sub">Deactivated accounts</div>
       </div>
       <div class="stat-card amber">
-        <div class="stat-label"><i class="ti ti-shield-lock"></i> Admins</div>
-        <div class="stat-value" id="stat-admin">1</div>
-        <div class="stat-sub">Full system access</div>
+        <div class="stat-label"><i class="ti ti-map-pin"></i> Barangays represented</div>
+        <div class="stat-value" id="stat-barangays">—</div>
+        <div class="stat-sub">Assigned staff locations</div>
       </div>
     </div>
 
@@ -130,10 +130,8 @@
           </div>
           <select class="filter-select" id="filter-role" onchange="applyFilters()">
             <option value="">All roles</option>
-            <option value="Admin">Admin</option>
             <option value="Head Staff">Head Staff</option>
             <option value="Regular Staff">Regular Staff</option>
-            <option value="Viewer">Viewer</option>
           </select>
           <select class="filter-select" id="filter-status" onchange="applyFilters()">
             <option value="">All statuses</option>
@@ -144,7 +142,7 @@
       </div>
       <table class="approvals-table">
         <thead>
-          <tr><th>Name</th><th>Username / email</th><th>Role</th><th>Status</th><th>Date created</th><th>Last login</th><th>Actions</th></tr>
+          <tr><th>Name</th><th>Username / email</th><th>Role</th><th>Barangay</th><th>Status</th><th>Date created</th><th>Last login</th></tr>
         </thead>
         <tbody id="staff-tbody"></tbody>
       </table>
@@ -237,198 +235,22 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<script src="../api.js"></script>
 <script>
   renderHeadStaffSidebar('staffmgmt');
-
-  const staff = [
-    { name:'Maria Fernandez',  username:'mfernandez',   role:'Admin',          status:'Active',   created:'Jan 15, 2026', lastLogin:'Jul 27, 2026 — 9:02 AM' },
-    { name:'Head Staff',       username:'osca_head',    role:'Head Staff',     status:'Active',   created:'Jul 1, 2025',  lastLogin:'Jul 27, 2026 — 9:02 AM' },
-    { name:'Wyndell Joshua A. Camacho',  username:'osca_staff1',  role:'Regular Staff',  status:'Active',   created:'Jul 1, 2026',  lastLogin:'Jul 26, 2026 — 2:15 PM' },
-    { name:'Clent VJ C. Lumanda',  username:'osca_staff2',  role:'Regular Staff',  status:'Active',   created:'Jul 20, 2026', lastLogin:'Never' },
-    { name:'Regular Staff 3',  username:'osca_staff3',  role:'Regular Staff',  status:'Inactive', created:'Mar 1, 2025',  lastLogin:'May 15, 2026 — 4:40 PM' },
-  ];
-
-  const roleBadge = { 'Admin':'badge-admin', 'Head Staff':'badge-hs', 'Regular Staff':'badge-rs', 'Viewer':'badge-inact' };
-  const statusBadge = { 'Active':'badge-ok', 'Inactive':'badge-status-inactive' };
-
-  function renderStaffTable(list) {
-    const tbody = document.getElementById('staff-tbody');
-    tbody.innerHTML = list.map((s, i) => `
-      <tr class="${s.status === 'Inactive' ? 'row-inactive' : ''}">
-        <td class="td-bold">${s.name}</td>
-        <td class="td-muted">${s.username}</td>
-        <td><span class="badge ${roleBadge[s.role]}">${s.role}</span></td>
-        <td><span class="badge ${statusBadge[s.status]}">${s.status}</span></td>
-        <td class="td-muted">${s.created}</td>
-        <td class="td-muted">${s.lastLogin}</td>
-        <td>
-          <div style="display:flex;gap:6px;">
-            <button class="btn btn-ghost btn-sm btn-icon" title="Edit" onclick="openEditModal('${s.username}')"><i class="ti ti-edit"></i></button>
-            <button class="btn btn-ghost btn-sm btn-icon" title="Reset password" onclick="openResetModal('${s.username}')"><i class="ti ti-key"></i></button>
-            ${s.status === 'Active'
-              ? `<button class="btn btn-coral btn-sm btn-icon" title="Deactivate" onclick="confirmDeactivate('${s.username}')"><i class="ti ti-user-off"></i></button>`
-              : `<button class="btn btn-approve btn-sm btn-icon" title="Activate" onclick="confirmActivate('${s.username}')"><i class="ti ti-user-check"></i></button>`}
-          </div>
-        </td>
-      </tr>
-    `).join('');
-    document.getElementById('staff-count-label').textContent = `Showing ${list.length} of ${staff.length} staff accounts`;
+  const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  let staff=[];
+  const roleNames={head_staff:'Head Staff',regular_staff:'Regular Staff'};
+  function fmtDate(value){if(!value)return 'Never';const date=new Date(value);return Number.isNaN(date.getTime())?'—':date.toLocaleString([], {dateStyle:'medium',timeStyle:'short'});}
+  async function loadStaff(){
+    const tbody=document.getElementById('staff-tbody');tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px">Loading staff accounts…</td></tr>';
+    try{const profile=await ArkheionAPI.getCurrentUser();if(profile.role!=='head_staff')throw new Error('Only Head Staff can view the staff directory.');const result=await ArkheionAPI.get('/api/staff/');staff=Array.isArray(result)?result:[];updateStats();applyFilters();}
+    catch(error){tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--coral-900);padding:24px">${escapeHtml(error.message||'Could not load staff directory.')}</td></tr>`;document.getElementById('staff-count-label').textContent='Staff directory unavailable.';}
   }
-
-  // FIX: keeps the stat cards (Active / Inactive) in sync after a status change,
-  // instead of leaving them hardcoded to the original counts.
-  function updateStatCounts() {
-    document.getElementById('stat-total').textContent = staff.length;
-    document.getElementById('stat-active').textContent = staff.filter(s => s.status === 'Active').length;
-    document.getElementById('stat-inactive').textContent = staff.filter(s => s.status === 'Inactive').length;
-    document.getElementById('stat-admin').textContent = staff.filter(s => s.role === 'Admin').length;
-  }
-
-  function applyFilters() {
-    const q = document.getElementById('staff-search').value.toLowerCase().trim();
-    const role = document.getElementById('filter-role').value;
-    const status = document.getElementById('filter-status').value;
-    const filtered = staff.filter(s => {
-      const matchesQ = !q || s.name.toLowerCase().includes(q) || s.username.toLowerCase().includes(q);
-      const matchesRole = !role || s.role === role;
-      const matchesStatus = !status || s.status === status;
-      return matchesQ && matchesRole && matchesStatus;
-    });
-    renderStaffTable(filtered);
-  }
-
-  function clearFieldError(inputId, errId) {
-    document.getElementById(inputId).classList.remove('field-error');
-    document.getElementById(errId).classList.remove('show');
-  }
-  function setFieldError(inputId, errId) {
-    document.getElementById(inputId).classList.add('field-error');
-    document.getElementById(errId).classList.add('show');
-  }
-  // ---------- Edit staff ----------
-  let pendingEditUsername = null;
-
-  function openEditModal(username) {
-    const s = staff.find(x => x.username === username);
-    if (!s) return;
-    pendingEditUsername = username;
-    document.getElementById('edit-name').value = s.name;
-    document.getElementById('edit-username').value = s.username;
-    document.getElementById('edit-role').value = s.role;
-    document.getElementById('edit-status').value = s.status;
-    clearFieldError('edit-name','err-edit-name');
-    clearFieldError('edit-username','err-edit-username');
-    openModal('modal-edit-staff');
-  }
-
-  function submitEditStaff() {
-    const s = staff.find(x => x.username === pendingEditUsername);
-    if (!s) { closeModal('modal-edit-staff'); return; }
-
-    const name = document.getElementById('edit-name').value.trim();
-    const username = document.getElementById('edit-username').value.trim();
-    const role = document.getElementById('edit-role').value;
-    const status = document.getElementById('edit-status').value;
-
-    let valid = true;
-    clearFieldError('edit-name','err-edit-name');
-    clearFieldError('edit-username','err-edit-username');
-
-    if (!name) { setFieldError('edit-name','err-edit-name'); valid = false; }
-    if (!username) { setFieldError('edit-username','err-edit-username'); valid = false; }
-    else if (staff.some(x => x.username.toLowerCase() === username.toLowerCase() && x !== s)) {
-      setFieldError('edit-username','err-edit-username'); valid = false;
-    }
-    if (!valid) return;
-
-    s.name = name;
-    s.username = username;
-    s.role = role;
-    s.status = status;
-
-    pendingEditUsername = null;
-    closeModal('modal-edit-staff');
-    showToast('Staff account updated successfully!');
-    applyFilters();
-    updateStatCounts();
-  }
-
-  // ---------- Reset password ----------
-  let pendingResetUsername = null;
-
-  function openResetModal(username) {
-    const s = staff.find(x => x.username === username);
-    if (!s) return;
-    pendingResetUsername = username;
-    document.getElementById('reset-password').value = '';
-    clearFieldError('reset-password','err-reset-password');
-    document.getElementById('reset-pw-alert').innerHTML =
-      `<i class="ti ti-alert-triangle"></i>This will reset the password for <strong>${s.name}</strong> (${s.username}). They will be required to change it on next login.`;
-    openModal('modal-reset-pw');
-  }
-
-  function submitResetPassword() {
-    const password = document.getElementById('reset-password').value;
-    clearFieldError('reset-password','err-reset-password');
-    if (!password) { setFieldError('reset-password','err-reset-password'); return; }
-
-    const s = staff.find(x => x.username === pendingResetUsername);
-    pendingResetUsername = null;
-    closeModal('modal-reset-pw');
-    showToast(s ? `Password reset for ${s.name}.` : 'Password reset successfully!');
-  }
-
-  // ---------- Activate / deactivate ----------
-  // FIX: track the pending target by username (unique) instead of display
-  // name, so two staff who happen to share a name can't get mixed up.
-  let pendingAction = null;
-  let pendingUsername = null;
-
-  function confirmDeactivate(username) {
-    pendingAction = 'deactivate';
-    pendingUsername = username;
-    const s = staff.find(x => x.username === username);
-    document.getElementById('confirm-status-title').textContent = 'Deactivate account';
-    document.getElementById('confirm-status-message').textContent =
-      `Are you sure you want to deactivate ${s.name}'s account? They will no longer be able to log in, but their history stays in the audit log.`;
-    const btn = document.getElementById('confirm-status-btn');
-    btn.className = 'btn btn-coral';
-    btn.innerHTML = '<i class="ti ti-user-off"></i> Deactivate';
-    openModal('modal-confirm-status');
-  }
-
-  function confirmActivate(username) {
-    pendingAction = 'activate';
-    pendingUsername = username;
-    const s = staff.find(x => x.username === username);
-    document.getElementById('confirm-status-title').textContent = 'Activate account';
-    document.getElementById('confirm-status-message').textContent =
-      `Reactivate ${s.name}'s account? They will be able to log in again.`;
-    const btn = document.getElementById('confirm-status-btn');
-    btn.className = 'btn btn-navy';
-    btn.innerHTML = '<i class="ti ti-user-check"></i> Activate';
-    openModal('modal-confirm-status');
-  }
-
-  // FIX: this used to just close the modal and pop a toast — the underlying
-  // `staff` array was never touched, so the row and stat cards never
-  // actually changed. Now it mutates the record and re-renders.
-  function executeStatusChange() {
-    closeModal('modal-confirm-status');
-    const s = staff.find(x => x.username === pendingUsername);
-    if (s) {
-      s.status = pendingAction === 'deactivate' ? 'Inactive' : 'Active';
-      showToast(pendingAction === 'deactivate'
-        ? `${s.name}'s account has been deactivated.`
-        : `${s.name}'s account has been activated.`);
-    }
-    pendingAction = null;
-    pendingUsername = null;
-    applyFilters();
-    updateStatCounts();
-  }
-
-  renderStaffTable(staff);
+  function updateStats(){document.getElementById('stat-total').textContent=staff.length;document.getElementById('stat-active').textContent=staff.filter(item=>item.is_active).length;document.getElementById('stat-inactive').textContent=staff.filter(item=>!item.is_active).length;document.getElementById('stat-barangays').textContent=new Set(staff.map(item=>item.barangay?.id).filter(Boolean)).size;}
+  function applyFilters(){const query=document.getElementById('staff-search').value.trim().toLowerCase(),role=document.getElementById('filter-role').value,status=document.getElementById('filter-status').value;const filtered=staff.filter(item=>{const name=`${item.first_name||''} ${item.last_name||''}`.trim();return(!query||`${name} ${item.username} ${item.email||''} ${item.barangay?.name||''}`.toLowerCase().includes(query))&&(!role||roleNames[item.role]===role)&&(!status||(item.is_active?'Active':'Inactive')===status)});renderStaffTable(filtered);}
+  function renderStaffTable(list){const tbody=document.getElementById('staff-tbody');tbody.innerHTML=list.length?list.map(item=>{const name=`${item.first_name||''} ${item.last_name||''}`.trim()||item.username;const role=roleNames[item.role]||item.role;const active=item.is_active;return `<tr class="${active?'':'row-inactive'}"><td class="td-bold">${escapeHtml(name)}</td><td class="td-muted">${escapeHtml(item.username)}${item.email?`<br>${escapeHtml(item.email)}`:''}</td><td><span class="badge ${item.role==='head_staff'?'badge-hs':'badge-rs'}">${escapeHtml(role)}</span></td><td class="td-muted">${escapeHtml(item.barangay?.name||'—')}</td><td><span class="badge ${active?'badge-ok':'badge-status-inactive'}">${active?'Active':'Inactive'}</span></td><td class="td-muted">${escapeHtml(fmtDate(item.date_joined))}</td><td class="td-muted">${escapeHtml(fmtDate(item.last_login))}</td></tr>`}).join(''):'<tr><td colspan="7" style="text-align:center;color:var(--gray-500);padding:24px">No staff accounts match these filters.</td></tr>';document.getElementById('staff-count-label').textContent=`Showing ${list.length} of ${staff.length} staff accounts`;}
+  loadStaff();
 </script>
 </body>
 </html>
