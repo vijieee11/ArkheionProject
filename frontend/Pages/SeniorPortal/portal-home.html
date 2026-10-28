@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="../styles.css">
   <style>
     .portal-menu-btn { display:none; }
-
+    .chat-messages { flex:1 1 0; height:auto; max-height:none; min-height:260px; overflow-y:auto; }
     @media (max-width: 768px) {
       .portal-nav { flex-wrap:wrap; padding:12px 16px; height:auto; min-height:50px; position:relative; }
       .portal-navlinks { display:none; width:100%; flex-direction:column; gap:0; order:3; background:var(--navy); position:relative; z-index:60; }
@@ -71,16 +71,15 @@
 <div class="portal-hero">
   <div>
     <h2>Welcome back, <span id="portal-greeting-name">Senior citizen</span> 👋</h2>
-    <p>OSCA ID: <span id="portal-osca-id">2024-001</span> &nbsp;·&nbsp; <span id="portal-barangay">Barangay not set</span> &nbsp;·&nbsp; Member portal</p>
+    <p>OSCA ID: <span id="portal-osca-id">—</span> &nbsp;·&nbsp; <span id="portal-barangay">Barangay not set</span> &nbsp;·&nbsp; Member portal</p>
   </div>
   <div class="portal-status">
     <p>Registration status</p>
-    <span class="badge badge-miss">Missing document</span>
+    <span class="badge badge-proc" id="portal-reg-status">Loading…</span>
   </div>
 </div>
 
 <div class="portal-content">
-  <div class="alert alert-coral" style="font-size:12px;line-height:1.5"><i class="ti ti-info-circle"></i><span>Demo portal: personal and pension examples shown here are not live OSCA records. Confirm current claim dates and eligibility with OSCA Carmen.</span></div>
   <div>
     <p class="section-heading">Your services</p>
     <p class="section-sub">Check your personal pension details and reminders for booklet-based assistance.</p>
@@ -95,10 +94,10 @@
           </div>
         </div>
         <div class="svc-body">
-          <div class="svc-row"><span class="svc-label">Status</span><span class="badge badge-proc">Unclaimed</span></div>
-          <div class="svc-row"><span class="svc-label">Amount</span><span class="svc-value">₱500.00</span></div>
-          <div class="svc-row"><span class="svc-label">Claim period</span><span class="svc-value">July 1–31, 2026</span></div>
-          <div class="svc-row"><span class="svc-label">Last claimed</span><span class="svc-value">June 5, 2026</span></div>
+          <div class="svc-row"><span class="svc-label">Status</span><span class="badge badge-proc" id="pension-status">Loading…</span></div>
+          <div class="svc-row"><span class="svc-label">Amount</span><span class="svc-value" id="pension-amount">—</span></div>
+          <div class="svc-row"><span class="svc-label">Claim period</span><span class="svc-value" id="pension-period">—</span></div>
+          <div class="svc-row"><span class="svc-label">Last claimed</span><span class="svc-value" id="pension-last-claimed">—</span></div>
         </div>
         <button class="svc-btn" style="background:var(--amber-600);color:var(--amber-100);" onclick="location.href='portal-services.html'">
           <i class="ti ti-eye"></i> View pension details
@@ -116,43 +115,38 @@
       </div>
       <div style="padding:14px 16px;">
         <div class="req-item">
-          <div class="req-check ok"><i class="ti ti-check"></i></div>
           <div>
             <p style="font-size:13px;font-weight:500;color:var(--gray-900)">Birth certificate (PSA)</p>
             <p style="font-size:11px;color:var(--gray-400)">Authenticated by Philippine Statistics Authority</p>
           </div>
         </div>
         <div class="req-item">
-          <div class="req-check miss"><i class="ti ti-x"></i></div>
           <div>
-            <p class="req-miss" style="font-size:13px;">Valid government ID — missing</p>
+            <p style="font-size:13px;font-weight:500;color:var(--gray-900)">Valid government ID</p>
             <p style="font-size:11px;color:var(--gray-400)">PhilSys, passport, driver's license, etc.</p>
           </div>
         </div>
         <div class="req-item">
-          <div class="req-check ok"><i class="ti ti-check"></i></div>
           <div>
             <p style="font-size:13px;font-weight:500;color:var(--gray-900)">2x2 ID photo (5.08cm x 5.08cm)</p>
             <p style="font-size:11px;color:var(--gray-400)">Recent photo, white background</p>
           </div>
         </div>
         <div class="req-item">
-          <div class="req-check ok"><i class="ti ti-check"></i></div>
           <div>
             <p style="font-size:13px;font-weight:500;color:var(--gray-900)">Full body photo (A4 bond paper)</p>
             <p style="font-size:11px;color:var(--gray-400)">Printed on A4 size paper</p>
           </div>
         </div>
         <div class="req-item">
-          <div class="req-check ok"><i class="ti ti-check"></i></div>
           <div>
             <p style="font-size:13px;font-weight:500;color:var(--gray-900)">LCE endorsement letter</p>
             <p style="font-size:11px;color:var(--gray-400)">Issued by Local Chief Executive</p>
           </div>
         </div>
         <div class="alert alert-coral" style="margin-top:12px;">
-          <i class="ti ti-alert-circle"></i>
-          Please bring a valid government ID (PhilSys, passport, or driver's license) to the OSCA Carmen office to complete your registration.
+          <i class="ti ti-info-circle"></i>
+          Kini ang lista sa mga kinahanglan. Ang OSCA staff ang mo-check kung kompleto na ang imong mga dokumento. Pangutana sa OSCA Carmen office kung unsa pa ang kulang.
         </div>
       </div>
     </div>
@@ -165,10 +159,6 @@
       </div>
       <div class="chat-messages" id="chatMessages">
         <div class="msg bot">Hello! I am your Arkheion assistant. How can I help you today? 😊</div>
-        <div class="msg usr">Asa makita akong medicine ug grocery record?</div>
-        <div class="msg bot">Ang imong release record naa sa <strong>physical booklet</strong>. Palihug dad-a ang booklet ug imong OSCA ID kung moadto sa OSCA. Tawagi ang opisina o pangutan-a ang barangay staff para sa schedule.</div>
-        <div class="msg usr">Unsa pa akong kulang?</div>
-        <div class="msg bot">Base sa imong rekord, kulang pa ang imong <strong>valid government ID</strong>. Pwede ka magdala og PhilSys card, passport, o driver's license para makompleto ang imong registration.</div>
       </div>
       <div class="quick-replies">
         <div class="qr" onclick="sendMsg('Pension status ko?')">Pension status</div>
@@ -185,7 +175,9 @@
   </div>
 </div>
 
+<script src="../api.js"></script>
 <script>
+  // Fallback identity from the login session; portal-identity.js overwrites this with the live record.
   function loadPortalIdentity() {
     try {
       const profile=JSON.parse(localStorage.getItem('ark_senior_profile')||'{}');
@@ -202,20 +194,110 @@
     document.getElementById('portalNavLinks').classList.toggle('open');
   }
 
-  const responses = {
-    'pension':       'Ang imong pension para sa Hulyo 2026 is <strong>unclaimed pa</strong>. Claim period: July 1–31, 2026. Punta sa OSCA Carmen office para makuha ang ₱500.00 nga pension. Magdala og valid ID.',
-    'medicine':      'Ang medicine release record naa sa imong <strong>physical booklet</strong>. Dad-a kini ug imong OSCA ID sa OSCA. Para sa schedule, pangutana sa OSCA Carmen o sa imong barangay staff.',
-    'grocery':       'Ang grocery release record naa sa imong <strong>physical booklet</strong>. Para sa sunod nga schedule, pangutana sa OSCA Carmen o sa imong barangay staff.',
-    'booklet':       'Ang medicine ug grocery release entries isulat sa <strong>physical booklet</strong>. Dili kini ipakita isip individual transaction history sa portal. Dad-a ang booklet ug imong OSCA ID sa OSCA.',
-    'opisina':       'Ang OSCA Carmen office bukas <strong>Monday–Friday, 8:00 AM–5:00 PM</strong>. Naa sa Carmen Municipal Hall, Davao del Norte. Closed sa weekends ug public holidays.',
-    'oras':          'Ang OSCA Carmen office bukas <strong>Monday–Friday, 8:00 AM–5:00 PM</strong>. Closed sa weekends ug public holidays.',
-    'requirements':  'Para sa registration, kinahanglan nimo: ✅ Birth certificate (PSA), ❌ Valid government ID (kulang pa), ✅ 2x2 ID photo, ✅ Full body photo (A4), ✅ LCE endorsement letter.',
-    'kulang':        'Kulang pa ang imong <strong>valid government ID</strong>. Pwede ka magdala og PhilSys card, passport, driver\'s license, o bisan unsang government-issued ID.',
-    'staff':         'Sige, i-connect tika sa staff namo. Palihug tawagan ang OSCA Carmen office: <strong>(082) xxx-xxxx</strong>, o bisita sa opisina Monday–Friday, 8AM–5PM.',
-    'default':       'Pasensya, dili ko kasabtan ang imong pangutana. Pwede ka mag-click sa mga quick reply buttons sa ibabaw, o tawagan ang OSCA Carmen office: (082) xxx-xxxx para sa dugang tabang.'
-  };
+  function esc(value) {
+    return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function formatPeso(value) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) : '—';
+  }
+  function formatDate(value) {
+    if (!value) return '—';
+    const d = new Date(value + 'T00:00:00');
+    return isNaN(d) ? '—' : d.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
+  }
+  function setBadge(id, className, label) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = 'badge ' + className;
+    el.textContent = label;
+  }
 
-  loadPortalIdentity();
+  // Live data used by the dashboard cards and the chatbot.
+  const portalData = { loaded: false, pension: null, lastClaimed: null, registration: null };
+
+  async function loadPortalData() {
+    const api = window.ArkheionAPI;
+    try {
+      const user = await api.getCurrentUser();
+      const seniorId = user.senior_citizen && user.senior_citizen.id;
+
+      // Only the senior's own account can read the record and pension history.
+      if (user.role !== 'senior' || !seniorId) {
+        setBadge('portal-reg-status', 'badge-proc', 'Not available');
+        setBadge('pension-status', 'badge-proc', 'Not available');
+        portalData.loaded = true;
+        return;
+      }
+
+      const [senior, pensionData] = await Promise.all([
+        api.get(`/api/seniors/${seniorId}/`),
+        api.get(`/api/pensions/?senior=${seniorId}`),
+      ]);
+
+      const statusMap = {
+        complete:   ['badge-ok',   'Complete'],
+        pending:    ['badge-proc', 'Pending'],
+        incomplete: ['badge-miss', 'Incomplete'],
+      };
+      const [regClass, regLabel] = statusMap[senior.registration_status] || ['badge-proc', 'Pending'];
+      setBadge('portal-reg-status', regClass, regLabel);
+      portalData.registration = regLabel;
+
+      const records = Array.isArray(pensionData) ? pensionData : (pensionData.results || []);
+      const latest = records[0] || null;
+      const claimedDates = records.filter(r => r.claimed && r.date_claimed).map(r => r.date_claimed).sort();
+      const lastClaimed = claimedDates.length ? claimedDates[claimedDates.length - 1] : null;
+      portalData.pension = latest;
+      portalData.lastClaimed = lastClaimed;
+
+      if (latest) {
+        setBadge('pension-status', latest.claimed ? 'badge-ok' : 'badge-proc', latest.claimed ? 'Claimed' : 'Unclaimed');
+        document.getElementById('pension-amount').textContent = formatPeso(latest.amount);
+        document.getElementById('pension-period').textContent = latest.period || '—';
+      } else {
+        setBadge('pension-status', 'badge-proc', 'No record yet');
+      }
+      document.getElementById('pension-last-claimed').textContent = formatDate(lastClaimed);
+    } catch (error) {
+      console.warn('Could not load portal data:', error);
+      setBadge('portal-reg-status', 'badge-proc', 'Unavailable');
+      setBadge('pension-status', 'badge-proc', 'Unavailable');
+    }
+    portalData.loaded = true;
+  }
+
+  function pensionReply() {
+    const p = portalData.pension;
+    if (!portalData.loaded) return 'Gikuha pa nako ang imong pension record. Sulayi usab sa makadiyot.';
+    if (!p) return 'Wala pa koy makita nga pension record para nimo. Pangutana sa OSCA Carmen office para makumpirma.';
+    const period = esc(p.period || '—');
+    const amount = esc(formatPeso(p.amount));
+    if (p.claimed) {
+      return `Ang imong pension para sa <strong>${period}</strong> (${amount}) kay <strong>na-claim na</strong> kaniadtong ${esc(formatDate(p.date_claimed))}.`;
+    }
+    return `Ang imong pension para sa <strong>${period}</strong> (${amount}) kay <strong>unclaimed pa</strong>. Punta sa OSCA Carmen office para makuha kini. Magdala og valid ID.`;
+  }
+
+  const responses = [
+    { keys: ['pension'],       reply: () => pensionReply() },
+    { keys: ['medicine'],      reply: () => 'Ang medicine release record naa sa imong <strong>physical booklet</strong>. Dad-a kini ug imong OSCA ID sa OSCA. Para sa schedule, pangutana sa OSCA Carmen o sa imong barangay staff.' },
+    { keys: ['grocery'],       reply: () => 'Ang grocery release record naa sa imong <strong>physical booklet</strong>. Para sa sunod nga schedule, pangutana sa OSCA Carmen o sa imong barangay staff.' },
+    { keys: ['booklet'],       reply: () => 'Ang medicine ug grocery release entries isulat sa <strong>physical booklet</strong>. Dili kini ipakita isip individual transaction history sa portal. Dad-a ang booklet ug imong OSCA ID sa OSCA.' },
+    { keys: ['opisina', 'oras', 'office'], reply: () => 'Ang OSCA Carmen office bukas <strong>Monday–Friday, 8:00 AM–5:00 PM</strong>. Closed sa weekends ug public holidays.' },
+    { keys: ['requirements'], reply: () => 'Para sa registration, kinahanglan nimo: Birth certificate (PSA), valid government ID, 2x2 ID photo, full body photo (A4), ug LCE endorsement letter. Ang OSCA staff ang mo-check kung kompleto na ang imong mga dokumento.' },
+    { keys: ['kulang'],        reply: () => 'Dili nako ma-check dinhi kung unsa ang kulang sa imong mga dokumento. Pangutana sa OSCA Carmen office o sa imong barangay staff, ug dad-a ang imong OSCA ID.' },
+    { keys: ['staff'],         reply: () => 'Palihug tawagan ang OSCA Carmen office: <strong>(082) xxx-xxxx</strong>, o bisita sa opisina Monday–Friday, 8AM–5PM.' },
+  ];
+  const defaultReply = 'Pasensya, dili ko kasabtan ang imong pangutana. Pwede ka mag-click sa mga quick reply buttons sa ibabaw, o tawagan ang OSCA Carmen office: (082) xxx-xxxx para sa dugang tabang.';
+
+  function findReply(text) {
+    const lower = text.toLowerCase();
+    for (const item of responses) {
+      if (item.keys.some(key => lower.includes(key))) return item.reply();
+    }
+    return defaultReply;
+  }
 
   function sendMsg(text) {
     const input = document.getElementById('chatInput');
@@ -241,18 +323,15 @@
       typing.remove();
       const botDiv = document.createElement('div');
       botDiv.className = 'msg bot';
-      const lower = msg.toLowerCase();
-      let reply = responses.default;
-      for (const key in responses) {
-        if (lower.includes(key)) { reply = responses[key]; break; }
-      }
-      botDiv.innerHTML = reply;
+      botDiv.innerHTML = findReply(msg);
       msgs.appendChild(botDiv);
       msgs.scrollTop = msgs.scrollHeight;
     }, 1000);
   }
+
+  loadPortalIdentity();
+  loadPortalData();
 </script>
-<script src="../api.js"></script>
 <script src="portal-identity.js"></script>
 </body>
 </html>

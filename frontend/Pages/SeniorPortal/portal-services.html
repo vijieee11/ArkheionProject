@@ -8,6 +8,12 @@
   <style>
     .portal-menu-btn { display:none; }
 
+    .history-wrap { overflow-x:auto; }
+    .history-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .history-table th { text-align:left; font-weight:500; color:var(--gray-500); padding:8px 10px; border-bottom:1px solid rgba(0,0,0,.1); white-space:nowrap; }
+    .history-table td { padding:10px; border-bottom:1px solid rgba(0,0,0,.06); white-space:nowrap; }
+    .history-empty { font-size:13px; color:var(--gray-500); padding:12px 0; }
+
     @media (max-width: 768px) {
       .portal-nav { flex-wrap:wrap; padding:12px 16px; height:auto; min-height:50px; position:relative; }
       .portal-navlinks { display:none; width:100%; flex-direction:column; gap:0; order:3; background:var(--navy); position:relative; z-index:60; }
@@ -52,9 +58,10 @@
 </nav>
 
 <div class="portal-content">
-  <div class="alert alert-coral" style="font-size:12px;line-height:1.5"><i class="ti ti-info-circle"></i><span>Demo information only. Confirm your current pension status, claim period, and eligibility with OSCA Carmen.</span></div>
   <p class="section-heading">Services</p>
   <p class="section-sub">Pension details and guidance for booklet-based assistance.</p>
+
+  <div class="alert alert-coral" id="services-notice" style="display:none;font-size:12px;line-height:1.5"><i class="ti ti-info-circle"></i><span id="services-notice-text"></span></div>
 
   <div class="svc-grid">
     <div class="svc-card">
@@ -63,23 +70,122 @@
         <div class="svc-title">Social pension</div>
       </div>
       <div class="svc-body">
-        <div class="svc-row"><span class="svc-label">Status</span><span class="badge badge-proc">Unclaimed</span></div>
-        <div class="svc-row"><span class="svc-label">Amount</span><span class="svc-value">₱500.00</span></div>
-        <div class="svc-row"><span class="svc-label">Claim period</span><span class="svc-value">July 1–31, 2026</span></div>
-        <div class="svc-row"><span class="svc-label">Last claimed</span><span class="svc-value">June 5, 2026</span></div>
-        <p style="font-size:12px;color:var(--gray-500);margin-top:8px;">₱500 monthly pension under RA 9994. Must be claimed within the claim period — unclaimed pension does not roll over.</p>
+        <div class="svc-row"><span class="svc-label">Status</span><span class="badge badge-proc" id="pension-status">Loading…</span></div>
+        <div class="svc-row"><span class="svc-label">Amount</span><span class="svc-value" id="pension-amount">—</span></div>
+        <div class="svc-row"><span class="svc-label">Claim period</span><span class="svc-value" id="pension-period">—</span></div>
+        <div class="svc-row"><span class="svc-label">Last claimed</span><span class="svc-value" id="pension-last-claimed">—</span></div>
+        <p style="font-size:12px;color:var(--gray-500);margin-top:8px;">Monthly social pension under RA 9994. Must be claimed within the claim period — unclaimed pension does not roll over.</p>
+      </div>
+    </div>
+
+    <div class="svc-card" style="grid-column:1 / -1;">
+      <div class="svc-head">
+        <div class="svc-icon" style="background:var(--amber-100)"><i class="ti ti-history" style="color:var(--gold-dark)"></i></div>
+        <div class="svc-title">Pension history</div>
+      </div>
+      <div class="svc-body">
+        <div class="history-wrap" id="pension-history">
+          <p class="history-empty">Loading…</p>
+        </div>
       </div>
     </div>
 
   </div>
 </div>
 
+<script src="../api.js"></script>
 <script>
   function toggleMobileNav() {
     document.getElementById('portalNavLinks').classList.toggle('open');
   }
+
+  function esc(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function formatPeso(value) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) : '—';
+  }
+  function formatDate(value) {
+    if (!value) return '—';
+    const d = new Date(value + 'T00:00:00');
+    return isNaN(d) ? '—' : d.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
+  }
+  function setBadge(id, className, label) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = 'badge ' + className;
+    el.textContent = label;
+  }
+  function showNotice(text) {
+    document.getElementById('services-notice-text').textContent = text;
+    document.getElementById('services-notice').style.display = '';
+  }
+  function setHistoryMessage(text) {
+    document.getElementById('pension-history').innerHTML = `<p class="history-empty">${esc(text)}</p>`;
+  }
+
+  async function loadServices() {
+    const api = window.ArkheionAPI;
+    try {
+      const user = await api.getCurrentUser();
+      const seniorId = user.senior_citizen && user.senior_citizen.id;
+
+      // Only the senior's own account can read the pension history.
+      if (user.role !== 'senior' || !seniorId) {
+        setBadge('pension-status', 'badge-proc', 'Not available');
+        setHistoryMessage('Pension details are available only on the senior citizen account.');
+        return;
+      }
+
+      const data = await api.get(`/api/pensions/?senior=${seniorId}`);
+      const records = Array.isArray(data) ? data : (data.results || []);
+
+      if (!records.length) {
+        setBadge('pension-status', 'badge-proc', 'No record yet');
+        setHistoryMessage('Wala pay pension record. Pangutana sa OSCA Carmen office.');
+        showNotice('Confirm your current pension status, claim period, and eligibility with OSCA Carmen.');
+        return;
+      }
+
+      const latest = records[0];
+      setBadge('pension-status', latest.claimed ? 'badge-ok' : 'badge-proc', latest.claimed ? 'Claimed' : 'Unclaimed');
+      document.getElementById('pension-amount').textContent = formatPeso(latest.amount);
+      document.getElementById('pension-period').textContent = latest.period || '—';
+
+      const claimedDates = records.filter(r => r.claimed && r.date_claimed).map(r => r.date_claimed).sort();
+      document.getElementById('pension-last-claimed').textContent =
+        formatDate(claimedDates.length ? claimedDates[claimedDates.length - 1] : null);
+
+      const rows = records.map(r => {
+        const status = r.claimed
+          ? '<span class="badge badge-ok">Claimed</span>'
+          : '<span class="badge badge-proc">Unclaimed</span>';
+        const claimedBy = !r.claimed ? '—'
+          : (r.claimed_by === 'self' ? 'Self' : (r.representative || 'Representative'));
+        return `<tr>
+          <td>${esc(r.period)}</td>
+          <td>${esc(formatPeso(r.amount))}</td>
+          <td>${status}</td>
+          <td>${esc(formatDate(r.date_claimed))}</td>
+          <td>${esc(claimedBy)}</td>
+        </tr>`;
+      }).join('');
+
+      document.getElementById('pension-history').innerHTML = `
+        <table class="history-table">
+          <thead><tr><th>Period</th><th>Amount</th><th>Status</th><th>Date claimed</th><th>Claimed by</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    } catch (error) {
+      console.warn('Could not load pension details:', error);
+      setBadge('pension-status', 'badge-proc', 'Unavailable');
+      setHistoryMessage('Dili ma-load ang pension details karon. Sulayi usab sa makadiyot.');
+    }
+  }
+
+  loadServices();
 </script>
-<script src="../api.js"></script>
 <script src="portal-identity.js"></script>
 </body>
 </html>
