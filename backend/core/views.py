@@ -1060,3 +1060,103 @@ class ChangePasswordAPIView(APIView):
         request.user.must_change_password = False
         request.user.save(update_fields=["password", "must_change_password"])
         return Response({"detail": "Password changed successfully."})
+
+
+from django.db.models.functions import TruncMonth  # noqa: E402
+from .models import MedicineRelease  # noqa: E402
+from .serializers import MedicineReleaseSerializer  # noqa: E402
+
+
+def scoped_medicine_releases(user):
+    """Head Staff sees every barangay; Regular Staff sees only their own."""
+    releases = MedicineRelease.objects.select_related(
+        "senior_citizen", "senior_citizen__barangay", "recorded_by"
+    )
+    if user.role == "head_staff":
+        return releases
+    profile = getattr(user, "staff_profile", None)
+    return releases.filter(senior_citizen__barangay_id=profile.barangay_id) if profile else releases.none()
+
+
+def filter_medicine_releases(releases, params):
+    senior = params.get("senior")
+    month = params.get("month")
+    year = params.get("year")
+    barangay = params.get("barangay")
+    if senior and senior.isdigit():
+        releases = releases.filter(senior_citizen_id=int(senior))
+    if month:
+        parts = month.split("-")
+        if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():
+            releases = releases.filter(date_released__year=int(parts[0]), date_released__month=int(parts[1]))
+    elif year and year.isdigit():
+        releases = releases.filter(date_released__year=int(year))
+    if barangay and barangay.isdigit():
+        releases = releases.filter(senior_citizen__barangay_id=int(barangay))
+    return releases
+
+
+class MedicineReleaseListCreateAPIView(ListCreateAPIView):
+    serializer_class = MedicineReleaseSerializer
+    permission_classes = [IsAuthenticated, IsOSCAStaff]
+
+    def get_queryset(self):
+        releases = scoped_medicine_releases(self.request.user)
+        return filter_medicine_releases(releases, self.request.query_params).order_by(
+            "-date_released", "-id"
+        )
+
+    def perform_create(self, serializer):
+        release = serializer.save(recorded_by=self.request.user)
+        record_action(self.request, "create", "medicine", release, "Recorded a medicine release.")
+
+
+class MedicineSummaryAPIView(APIView):
+    """Monthly and yearly medicine release counts per barangay (no per-senior details)."""
+    permission_classes = [IsAuthenticated, IsOSCAStaff]
+
+    def get(self, request):
+        releases = filter_medicine_releases(
+            scoped_medicine_releases(request.user), request.query_params
+        )
+        monthly = (
+            releases.annotate(month=TruncMonth("date_released"))
+            .values("month", "senior_citizen__barangay__name")
+            .annotate(
+                release_count=Count("id"),
+                seniors_served=Count("senior_citizen", distinct=True),
+                total_quantity=Sum("quantity"),
+            )
+            .order_by("month", "senior_citizen__barangay__name")
+        )
+        yearly = (
+            releases.values("date_released__year")
+            .annotate(
+                release_count=Count("id"),
+                seniors_served=Count("senior_citizen", distinct=True),
+                total_quantity=Sum("quantity"),
+            )
+            .order_by("date_released__year")
+        )
+        return Response({
+            "scope": "all_barangays" if request.user.role == "head_staff" else "assigned_barangay",
+            "monthly": [
+                {
+                    "month": row["month"].strftime("%Y-%m"),
+                    "barangay": row["senior_citizen__barangay__name"],
+                    "release_count": row["release_count"],
+                    "seniors_served": row["seniors_served"],
+                    "total_quantity": row["total_quantity"] or 0,
+                }
+                for row in monthly
+            ],
+            "yearly": [
+                {
+                    "year": row["date_released__year"],
+                    "release_count": row["release_count"],
+                    "seniors_served": row["seniors_served"],
+                    "total_quantity": row["total_quantity"] or 0,
+                }
+                for row in yearly
+            ],
+        })

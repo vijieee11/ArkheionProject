@@ -425,3 +425,30 @@ class BookletReturn(models.Model):
 
     def __str__(self):
         return f"Full booklet returned for {self.senior_citizen} on {self.date_returned}"
+
+
+class MedicineRelease(models.Model):
+    """One medicine release to a senior. Stores item name and quantity only."""
+    senior_citizen = models.ForeignKey(
+        SeniorCitizen, on_delete=models.PROTECT, related_name="medicine_releases"
+    )
+    medicine_name = models.CharField(max_length=150)
+    quantity = models.PositiveIntegerField(default=1)
+    unit = models.CharField(max_length=20, blank=True)
+    date_released = models.DateField()
+    remarks = models.CharField(max_length=300, blank=True)
+    recorded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="recorded_medicine_releases",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "medicine_releases"
+        ordering = ["-date_released", "-id"]
+
+    def __str__(self):
+        return f"{self.medicine_name} x{self.quantity} to {self.senior_citizen} on {self.date_released}"

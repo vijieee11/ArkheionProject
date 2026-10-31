@@ -59,3 +59,11 @@ urlpatterns = [
     path("me/", CurrentUserAPIView.as_view(), name="current-user"),
     path("password/change/", ChangePasswordAPIView.as_view(), name="password-change"),
 ]
+
+
+from .views import MedicineReleaseListCreateAPIView, MedicineSummaryAPIView  # noqa: E402
+
+urlpatterns += [
+    path("medicine/releases/", MedicineReleaseListCreateAPIView.as_view(), name="medicine-release-list-create"),
+    path("medicine/summary/", MedicineSummaryAPIView.as_view(), name="medicine-summary"),
+]

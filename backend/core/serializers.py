@@ -494,3 +494,66 @@ class BookletReturnSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data["status"] = BookletReturn.STATUS_FULL
         return super().create(validated_data)
+
+
+from .models import MedicineRelease  # noqa: E402
+
+
+class MedicineReleaseSerializer(serializers.ModelSerializer):
+    senior_osca_id = serializers.CharField(source="senior_citizen.osca_id", read_only=True)
+    senior_name = serializers.SerializerMethodField()
+    barangay_name = serializers.CharField(
+        source="senior_citizen.barangay.name", read_only=True, allow_null=True
+    )
+    recorded_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MedicineRelease
+        fields = [
+            "id", "senior_citizen", "senior_osca_id", "senior_name", "barangay_name",
+            "medicine_name", "quantity", "unit", "date_released", "remarks",
+            "recorded_by_name", "created_at",
+        ]
+        read_only_fields = ["created_at"]
+
+    def get_senior_name(self, obj):
+        senior = obj.senior_citizen
+        return f"{senior.first_name} {senior.last_name}".strip()
+
+    def get_recorded_by_name(self, obj):
+        user = obj.recorded_by
+        if not user:
+            return "Unknown staff"
+        return user.get_full_name().strip() or user.get_username()
+
+    def validate_medicine_name(self, value):
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError("Enter the medicine name.")
+        return value
+
+    def validate_quantity(self, value):
+        if value < 1:
+            raise serializers.ValidationError("Quantity must be at least 1.")
+        return value
+
+    def validate_date_released(self, value):
+        from django.utils import timezone
+        if value > timezone.localdate():
+            raise serializers.ValidationError("Release date cannot be in the future.")
+        return value
+
+    def validate(self, attrs):
+        request = self.context.get("request")
+        senior = attrs.get("senior_citizen", getattr(self.instance, "senior_citizen", None))
+        if senior and hasattr(senior, "death_record") and senior.death_record.review_status == "verified":
+            raise serializers.ValidationError(
+                {"senior_citizen": "Medicine cannot be recorded for a senior with a verified death record."}
+            )
+        if senior and request and request.user.role == "regular_staff":
+            profile = getattr(request.user, "staff_profile", None)
+            if not profile or senior.barangay_id != profile.barangay_id:
+                raise serializers.ValidationError(
+                    {"senior_citizen": "You may only record releases for seniors in your assigned barangay."}
+                )
+        return attrs
