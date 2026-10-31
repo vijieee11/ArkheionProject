@@ -138,7 +138,12 @@ renderSidebar('reports');
   }
 
   async function initReports() {
-    try { await ArkheionAPI.populateBarangaySelects(); }
+    try {
+      const [account] = await Promise.all([ArkheionAPI.getCurrentUser(), ArkheionAPI.populateBarangaySelects()]);
+      if (account.role === 'regular_staff' && String(account.barangay?.name || '').trim().toLowerCase() !== 'ising') {
+        document.getElementById('groceryReportCard').hidden = true;
+      }
+    }
     catch (error) { showReportStatus(error.message || 'Could not load your staff account and barangays.','error'); }
   }
   initReports();

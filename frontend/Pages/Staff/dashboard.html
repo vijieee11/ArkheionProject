@@ -91,7 +91,7 @@
     <div style="display:flex;align-items:center;justify-content:space-between;">
       <div>
         <h1 style="font-family:var(--font-display);font-size:20px;font-weight:600;color:var(--gray-900)" id="pageGreeting">Good morning, Staff 👋</h1>
-        <p style="font-size:13px;color:var(--gray-600);margin-top:3px">OSCA Carmen — July 27, 2026</p>
+        <p style="font-size:13px;color:var(--gray-600);margin-top:3px" id="dashboardScope">Loading your assigned barangay…</p>
       </div>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-ghost" onclick="location.href='reports.html'"><i class="ti ti-download"></i> Export report</button>
@@ -102,23 +102,23 @@
     <div class="stats-grid stats-4">
       <div class="stat-card" style="cursor:pointer" onclick="location.href='members.html'">
         <div class="stat-label"><i class="ti ti-users"></i> Total members</div>
-        <div class="stat-value">1,284</div>
-        <div class="stat-sub">Carmen, Davao del Norte</div>
+        <div class="stat-value" id="totalMembers">—</div>
+        <div class="stat-sub" id="memberScope">Active member records</div>
       </div>
-      <div class="stat-card teal" style="cursor:pointer" onclick="location.href='grocery.html'">
+      <div class="stat-card teal" id="groceryDashboardCard">
         <div class="stat-label"><i class="ti ti-shopping-cart"></i> Groceries released</div>
-        <div class="stat-value">891</div>
-        <div class="stat-sub">393 pending this month</div>
+        <div class="stat-value" id="groceryClaimed">—</div>
+        <div class="stat-sub" id="grocerySub">Current month records</div>
       </div>
       <div class="stat-card amber" style="cursor:pointer" onclick="location.href='pension.html'">
         <div class="stat-label"><i class="ti ti-cash"></i> Pension claimed</div>
-        <div class="stat-value">754</div>
-        <div class="stat-sub">530 unclaimed this month</div>
+        <div class="stat-value" id="pensionClaimed">—</div>
+        <div class="stat-sub" id="pensionSub">Current month records</div>
       </div>
       <div class="stat-card coral" style="cursor:pointer" onclick="location.href='members.html'">
         <div class="stat-label"><i class="ti ti-alert-circle"></i> Incomplete reg.</div>
-        <div class="stat-value">47</div>
-        <div class="stat-sub">9 urgent cases</div>
+        <div class="stat-value" id="incompleteMembers">—</div>
+        <div class="stat-sub">Registration marked incomplete</div>
       </div>
     </div>
 
@@ -127,7 +127,7 @@
         <div class="card-header">
           <div>
             <div class="card-title">Recent applications</div>
-            <div class="card-subtitle">Registration, grocery, pension, medicine</div>
+            <div class="card-subtitle">Recently registered seniors visible to your account</div>
           </div>
           <select class="filter-select">
             <option>All processes</option>
@@ -141,26 +141,7 @@
           <thead>
             <tr><th>Name</th><th>OSCA ID</th><th>Brgy</th><th>Process</th><th>Status</th></tr>
           </thead>
-          <tbody>
-            <tr style="cursor:pointer" onclick="location.href='member-detail.html'">
-              <td class="td-bold">Juan dela Cruz</td><td class="td-muted">2024-001</td><td class="td-muted">Ising</td><td class="td-muted">Registration</td><td><span class="badge badge-ok">Complete</span></td>
-            </tr>
-            <tr style="cursor:pointer" onclick="location.href='grocery.html'">
-              <td class="td-bold">Maria Santos</td><td class="td-muted">2023-087</td><td class="td-muted">Anobongan</td><td class="td-muted">Grocery</td><td><span class="badge badge-ok">Released</span></td>
-            </tr>
-            <tr style="cursor:pointer" onclick="location.href='pension.html'">
-              <td class="td-bold">Pedro Ramos</td><td class="td-muted">2024-033</td><td class="td-muted">Tuganay</td><td class="td-muted">Pension</td><td><span class="badge badge-urgent">Urgent</span></td>
-            </tr>
-            <tr style="cursor:pointer" onclick="location.href='medicine.html'">
-              <td class="td-bold">Lourdes Garcia</td><td class="td-muted">2022-114</td><td class="td-muted">Tubod</td><td class="td-muted">Medicine</td><td><span class="badge badge-proc">Processing</span></td>
-            </tr>
-            <tr style="cursor:pointer" onclick="location.href='members.html'">
-              <td class="td-bold">Rosario Mendoza</td><td class="td-muted">2025-012</td><td class="td-muted">New Camiling</td><td class="td-muted">Registration</td><td><span class="badge badge-miss">Missing ID</span></td>
-            </tr>
-            <tr style="cursor:pointer" onclick="location.href='grocery.html'">
-              <td class="td-bold">Felipe Torres</td><td class="td-muted">2023-055</td><td class="td-muted">Cebulano</td><td class="td-muted">Grocery</td><td><span class="badge badge-pend">Pending</span></td>
-            </tr>
-          </tbody>
+          <tbody id="recentMembers"><tr><td colspan="5" class="td-muted">Loading member records…</td></tr></tbody>
         </table>
       </div>
 
@@ -171,28 +152,28 @@
             <div class="summary-icon" style="background:var(--teal-50)"><i class="ti ti-shopping-cart" style="color:var(--navy)"></i></div>
             <div style="flex:1">
               <div class="summary-label">Grocery distribution</div>
-              <div class="summary-val">891 / 1,284</div>
-              <div class="progress-bar"><div class="progress-fill fill-navy" style="width:69%"></div></div>
+              <div class="summary-val" id="grocerySummary">—</div>
+              <div class="progress-bar"><div class="progress-fill fill-navy" id="groceryProgress" style="width:0%"></div></div>
             </div>
-            <span style="font-size:12px;font-weight:500;color:var(--navy)">69%</span>
+            <span style="font-size:12px;font-weight:500;color:var(--navy)" id="groceryPercent">—</span>
           </div>
           <div class="summary-item">
             <div class="summary-icon" style="background:var(--amber-100)"><i class="ti ti-cash" style="color:var(--gold-dark)"></i></div>
             <div style="flex:1">
               <div class="summary-label">Pension claims</div>
-              <div class="summary-val">754 / 1,284</div>
-              <div class="progress-bar"><div class="progress-fill fill-amber" style="width:59%"></div></div>
+              <div class="summary-val" id="pensionSummary">—</div>
+              <div class="progress-bar"><div class="progress-fill fill-amber" id="pensionProgress" style="width:0%"></div></div>
             </div>
-            <span style="font-size:12px;font-weight:500;color:var(--amber-600)">59%</span>
+            <span style="font-size:12px;font-weight:500;color:var(--amber-600)" id="pensionPercent">—</span>
           </div>
           <div class="summary-item">
             <div class="summary-icon" style="background:var(--coral-50)"><i class="ti ti-pill" style="color:var(--coral-900)"></i></div>
             <div style="flex:1">
               <div class="summary-label">Medicine assistance</div>
-              <div class="summary-val">612 / 1,284</div>
-              <div class="progress-bar"><div class="progress-fill fill-coral" style="width:48%"></div></div>
+              <div class="summary-val">Not tracked</div>
+              <div class="progress-bar"><div class="progress-fill fill-coral" style="width:0%"></div></div>
             </div>
-            <span style="font-size:12px;font-weight:500;color:var(--coral-600)">48%</span>
+            <span style="font-size:12px;font-weight:500;color:var(--coral-600)">—</span>
           </div>
         </div>
 
@@ -203,17 +184,9 @@
           </div>
           <div class="map-box" style="height:160px;">
             <div class="map-grid"></div>
-            <i class="ti ti-map-pin map-pin pin-ok" style="top:18%;left:26%"></i>
-            <i class="ti ti-map-pin map-pin pin-ok" style="top:36%;left:50%"></i>
-            <i class="ti ti-map-pin map-pin pin-inc" style="top:55%;left:20%"></i>
-            <i class="ti ti-map-pin map-pin pin-ok" style="top:22%;left:65%"></i>
-            <i class="ti ti-map-pin map-pin pin-urg" style="top:62%;left:56%"></i>
-            <i class="ti ti-map-pin map-pin pin-ok" style="top:42%;left:74%"></i>
-            <i class="ti ti-map-pin map-pin pin-inc" style="top:70%;left:38%"></i>
-            <div class="map-legend">
-              <span style="color:var(--navy)">● Complete</span>
-              <span style="color:var(--amber-600)">● Incomplete</span>
-              <span style="color:var(--coral-600)">● Urgent</span>
+            <div style="position:absolute;inset:0;display:grid;place-content:center;text-align:center;padding:16px;color:var(--gray-600);font-size:12px">
+              <span id="mapMemberCount">Loading member locations…</span>
+              <a href="map.html" style="margin-top:8px;color:var(--navy-light)">Open member map →</a>
             </div>
           </div>
         </div>
@@ -223,155 +196,116 @@
     <div class="card" id="notificationsCard">
       <div class="card-header">
         <div class="card-title">Notifications & alerts</div>
-        <span class="badge badge-urgent">3 urgent</span>
+        <span class="badge badge-urgent" id="notificationCount">0 alerts</span>
       </div>
-      <div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;">
-        <div class="alert alert-coral">
-          <i class="ti ti-alert-circle"></i>
-          <div><strong>Maria Santos (2023-087)</strong> — Pension unclaimed for 2 months. Possible home visit needed.</div>
-        </div>
-        <div class="alert alert-amber">
-          <i class="ti ti-clock"></i>
-          <div><strong>9 members</strong> have incomplete registration requirements. <a href="members.html" style="color:var(--amber-600);text-decoration:underline;font-weight:500">View list →</a></div>
-        </div>
-        <div class="alert alert-teal">
-          <i class="ti ti-calendar"></i>
-          <div><strong>Next grocery distribution</strong> — Brgy. Salvacion on July 15, 2026. 8:00 AM at OSCA Carmen office.</div>
-        </div>
-      </div>
+      <div id="dashboardAlerts" style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;"><div class="td-muted">Loading current alerts…</div></div>
     </div>
   </div>
 </div>
 
+<script src="../api.js"></script>
 <script>
 renderSidebar('dashboard');
+const asArray = data => Array.isArray(data) ? data : (data && Array.isArray(data.results) ? data.results : []);
+const safeText = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let notifications = [];
+let unreadNotificationIds = new Set();
 
-// Personalize the greeting and avatar based on the logged-in account.
-const rawUsername = localStorage.getItem('ark_username') || 'Staff';
-const role = localStorage.getItem('ark_role') || 'regular_staff';
-let displayName = formatStaffName(rawUsername, role);
-const initials = role === 'head_staff' ? 'HS' : 'S';
-
-document.getElementById('topbarAvatar').textContent = initials;
-
-const hour = new Date().getHours();
-const timeGreeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-document.getElementById('pageGreeting').textContent = timeGreeting + ', ' + displayName + ' 👋';
-getStaffIdentity().then(account => {
-  displayName = formatStaffName(account.username, account.role, account.first_name, account.last_name);
-  document.getElementById('pageGreeting').textContent = timeGreeting + ', ' + displayName + ' 👋';
-}).catch(() => {});
-
-// --- Notification bell -----------------------------------------------------
-// Mirrors the "Notifications & alerts" card below — same three items, same
-// destinations. Marking as read here is per-session (not persisted server-side),
-// since there's no backend wired up yet for read/unread state.
-const notifications = [
-  {
-    id: 'n1', unread: true, icon: 'ti-alert-circle', tint: 'var(--coral-50)', iconColor: 'var(--coral-900)',
-    html: '<strong>Maria Santos</strong> (2023-087) — Pension unclaimed for 2 months.',
-    time: '2 months overdue', href: 'member-detail.html?id=2023-087'
-  },
-  {
-    id: 'n2', unread: true, icon: 'ti-clock', tint: 'var(--amber-100)', iconColor: 'var(--gold-dark)',
-    html: '<strong>9 members</strong> have incomplete registration requirements.',
-    time: 'Ongoing', href: 'members.html'
-  },
-  {
-    id: 'n3', unread: true, icon: 'ti-calendar', tint: 'var(--teal-50)', iconColor: 'var(--navy)',
-    html: '<strong>Next grocery distribution</strong> — Brgy 2 on July 15, 2026, 8:00 AM.',
-    time: 'Upcoming', href: 'grocery.html'
-  }
-];
-
-// Read/unread state is remembered in sessionStorage for as long as this tab
-// stays open — this is what makes "click a notification, come back" show it
-// as read.
-function getReadNotifIds() {
-  try { return JSON.parse(sessionStorage.getItem('ark_notifs_read') || '[]'); }
-  catch (e) { return []; }
+function monthKey(value) {
+  const date = String(value || '');
+  if (/^\d{4}-\d{2}/.test(date)) return date.slice(0, 7);
+  const match = date.match(/^([A-Za-z]+)\s+(\d{4})$/);
+  if (!match) return '';
+  const parsed = new Date(`${match[1]} 1, ${match[2]}`);
+  return Number.isNaN(parsed.getTime()) ? '' : `${parsed.getFullYear()}-${String(parsed.getMonth()+1).padStart(2,'0')}`;
 }
-function saveReadNotifIds(ids) {
-  sessionStorage.setItem('ark_notifs_read', JSON.stringify(ids));
+function paintMetric(id, value) { document.getElementById(id).textContent = Number(value || 0).toLocaleString(); }
+function progress(count, total) { return total ? Math.min(100, Math.round(count / total * 100)) : 0; }
+function setProgress(prefix, count, total) {
+  const pct = progress(count, total);
+  document.getElementById(`${prefix}Summary`).textContent = `${count.toLocaleString()} / ${total.toLocaleString()}`;
+  document.getElementById(`${prefix}Progress`).style.width = `${pct}%`;
+  document.getElementById(`${prefix}Percent`).textContent = `${pct}%`;
+}
+
+function renderRecentMembers(seniors) {
+  const rows = [...seniors].sort((a,b) => String(b.date_of_registration||'').localeCompare(String(a.date_of_registration||''))).slice(0,6);
+  document.getElementById('recentMembers').innerHTML = rows.length ? rows.map(row => {
+    const name = [row.first_name,row.middle_name,row.last_name,row.suffix].filter(Boolean).join(' ');
+    const label = row.registration_status === 'complete' ? 'Complete' : row.registration_status === 'incomplete' ? 'Incomplete' : 'Pending';
+    const badge = label === 'Complete' ? 'badge-ok' : label === 'Incomplete' ? 'badge-miss' : 'badge-pend';
+    return `<tr style="cursor:pointer" onclick="location.href='member-detail.html?id=${encodeURIComponent(row.osca_id)}'"><td class="td-bold">${safeText(name)}</td><td class="td-muted">${safeText(row.osca_id)}</td><td class="td-muted">${safeText(row.barangay_name||'—')}</td><td class="td-muted">Registration</td><td><span class="badge ${badge}">${label}</span></td></tr>`;
+  }).join('') : '<tr><td colspan="5" class="td-muted">No senior records are available for your barangay.</td></tr>';
+}
+
+function renderDashboardNotifications(seniors, pensions, claims, documents, deaths) {
+  const alerts = [];
+  const incomplete = seniors.filter(row => row.registration_status === 'incomplete');
+  const pendingDocs = documents.filter(row => row.review_status === 'pending');
+  const pendingDeaths = deaths.filter(row => row.review_status === 'pending');
+  if (incomplete.length) alerts.push({id:'incomplete', icon:'ti-clock', tint:'var(--amber-100)', color:'var(--gold-dark)', text:`<strong>${incomplete.length}</strong> senior record${incomplete.length===1?'':'s'} marked incomplete.`, time:'Registration', href:'members.html'});
+  if (pendingDocs.length) alerts.push({id:'documents', icon:'ti-file-check', tint:'var(--teal-50)', color:'var(--navy)', text:`<strong>${pendingDocs.length}</strong> uploaded document${pendingDocs.length===1?'':'s'} awaiting review.`, time:'Document review', href:'upload.html'});
+  if (pendingDeaths.length) alerts.push({id:'deaths', icon:'ti-heart-x', tint:'var(--coral-50)', color:'var(--coral-900)', text:`<strong>${pendingDeaths.length}</strong> death report${pendingDeaths.length===1?'':'s'} awaiting Head Staff review.`, time:'Death records', href:'deaths.html'});
+  const currentMonth = new Date().toISOString().slice(0,7);
+  const overdue = pensions.filter(row => !row.claimed && monthKey(row.period) && monthKey(row.period) < currentMonth);
+  if (overdue.length) alerts.push({id:'pension', icon:'ti-cash', tint:'var(--amber-100)', color:'var(--gold-dark)', text:`<strong>${overdue.length}</strong> unclaimed pension record${overdue.length===1?'':'s'} from an earlier period.`, time:'Pension records', href:'pension.html'});
+  notifications = alerts;
+  unreadNotificationIds = new Set(alerts.map(item=>item.id));
+  const badge = document.getElementById('notificationCount');
+  badge.textContent = `${alerts.length} alert${alerts.length===1?'':'s'}`;
+  document.getElementById('dashboardAlerts').innerHTML = alerts.length ? alerts.map(item => `<a class="alert ${item.id==='deaths'?'alert-coral':item.id==='incomplete'?'alert-amber':'alert-teal'}" href="${item.href}" style="text-decoration:none;color:inherit"><i class="ti ${item.icon}"></i><div>${item.text}<small style="display:block;opacity:.75;margin-top:3px">${item.time}</small></div></a>`).join('') : '<div class="td-muted">No current alerts from backend records.</div>';
+  renderNotifDropdown();
 }
 
 function renderNotifDropdown() {
   const list = document.getElementById('notifList');
-  if (!notifications.length) {
-    list.innerHTML = '<div class="notif-empty">You are all caught up.</div>';
-  } else {
-    list.innerHTML = notifications.map(n => `
-      <div class="notif-item ${n.unread ? 'unread' : ''}" onclick="openNotif('${n.id}')">
-        <div class="notif-item-icon" style="background:${n.tint};color:${n.iconColor};"><i class="ti ${n.icon}"></i></div>
-        <div class="notif-item-text">
-          <div>${n.html}</div>
-          <div class="notif-item-time">${n.time}</div>
-        </div>
-      </div>`).join('');
+  list.innerHTML = notifications.length ? notifications.map(item => `<a class="notif-item ${unreadNotificationIds.has(item.id)?'unread':''}" href="${item.href}" style="text-decoration:none"><div class="notif-item-icon" style="background:${item.tint};color:${item.color}"><i class="ti ${item.icon}"></i></div><div class="notif-item-text"><div>${item.text}</div><div class="notif-item-time">${item.time}</div></div></a>`).join('') : '<div class="notif-empty">No current alerts.</div>';
+  const unread = notifications.filter(item => unreadNotificationIds.has(item.id)).length;
+  const badge = document.getElementById('notifBadge'); badge.textContent = unread; badge.classList.toggle('zero', unread === 0);
+}
+function toggleNotifDropdown(evt) { evt.stopPropagation(); document.getElementById('notifDropdown').classList.toggle('open'); }
+function markAllNotifsRead(evt) { if(evt)evt.stopPropagation(); unreadNotificationIds.clear(); renderNotifDropdown(); }
+document.addEventListener('click', evt => { const wrap=document.querySelector('.notif-wrap'); if(wrap&&!wrap.contains(evt.target))document.getElementById('notifDropdown').classList.remove('open'); });
+
+async function loadDashboard() {
+  try {
+    const [account, seniorResponse, pensionResponse, grocerySummaryResponse, documentResponse, deathResponse] = await Promise.all([
+      ArkheionAPI.getCurrentUser(), ArkheionAPI.get('/api/seniors/'), ArkheionAPI.get('/api/pensions/'),
+      ArkheionAPI.get('/api/grocery/dashboard-summary/'), ArkheionAPI.get('/api/documents/'), ArkheionAPI.get('/api/deaths/'),
+    ]);
+    const seniors=asArray(seniorResponse), pensions=asArray(pensionResponse), grocerySummary=grocerySummaryResponse||{}, documents=asArray(documentResponse), deaths=asArray(deathResponse);
+    const active=seniors.filter(row=>row.is_active), incomplete=seniors.filter(row=>row.registration_status==='incomplete');
+    const now=new Date(), currentMonth=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    const monthPensions=pensions.filter(row=>monthKey(row.period)===currentMonth);
+    const claimedPensions=monthPensions.filter(row=>row.claimed).length, claimedGroceries=Number(grocerySummary.total_released)||0;
+    const name=formatStaffName(account.username,account.role,account.first_name,account.last_name);
+    const hour=now.getHours(), greeting=hour<12?'Good morning':hour<18?'Good afternoon':'Good evening';
+    document.getElementById('pageGreeting').textContent=`${greeting}, ${name} 👋`;
+    document.getElementById('topbarAvatar').textContent=(account.first_name||account.username||'S').slice(0,1).toUpperCase();
+    document.getElementById('dashboardScope').textContent=`${account.barangay?.name||'Assigned barangay'} · ${now.toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'})}`;
+    document.getElementById('memberScope').textContent=account.barangay?.name||'Members visible to your account';
+    const groceryCard=document.getElementById('groceryDashboardCard');
+    if(account.role==='regular_staff'&&String(account.barangay?.name||'').trim().toLowerCase()==='ising'){
+      groceryCard.style.cursor='pointer';groceryCard.setAttribute('role','link');groceryCard.tabIndex=0;
+      groceryCard.onclick=()=>location.href='grocery.html';
+      groceryCard.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();location.href='grocery.html';}};
+    }
+    paintMetric('totalMembers',active.length); paintMetric('groceryClaimed',claimedGroceries); paintMetric('pensionClaimed',claimedPensions); paintMetric('incompleteMembers',incomplete.length);
+    document.getElementById('grocerySub').textContent=`${Number(grocerySummary.total_pending)||0} pending across OSCA this month`;
+    document.getElementById('pensionSub').textContent=`${monthPensions.length-claimedPensions} unclaimed this month`;
+    setProgress('grocery',claimedGroceries,Number(grocerySummary.total_beneficiaries)||0); setProgress('pension',claimedPensions,active.length);
+    document.getElementById('mapMemberCount').textContent=`${active.filter(row=>row.latitude!=null&&row.longitude!=null).length} mapped members from live records`;
+    renderRecentMembers(seniors);
+    renderDashboardNotifications(seniors,pensions,[],documents,deaths);
+  } catch(error) {
+    document.getElementById('dashboardScope').textContent='Could not load current OSCA records.';
+    document.getElementById('recentMembers').innerHTML=`<tr><td colspan="5" class="td-muted">${safeText(error.message||'Check your server and sign-in, then refresh.')}</td></tr>`;
+    document.getElementById('dashboardAlerts').innerHTML='<div class="td-muted">Dashboard data is unavailable right now.</div>';
   }
-
-  const unreadCount = notifications.filter(n => n.unread).length;
-  const badge = document.getElementById('notifBadge');
-  badge.textContent = unreadCount;
-  badge.classList.toggle('zero', unreadCount === 0);
 }
-
-// Recomputes unread state from sessionStorage and re-renders. Called on
-// initial load AND on every 'pageshow' (see below) — this second call is
-// what fixes the "click a notification, hit browser Back, badge still says
-// 3" bug: when the browser restores this page from bfcache after Back, the
-// inline <script> does NOT re-run, so without this the DOM would just show
-// whatever it looked like at the moment the user navigated away (before the
-// click had a chance to update the badge). 'pageshow' fires in both the
-// normal-load case and the bfcache-restore case, so this keeps the bell in
-// sync either way.
-function initNotifications() {
-  const readIds = getReadNotifIds();
-  notifications.forEach(n => { n.unread = !readIds.includes(n.id); });
-  renderNotifDropdown();
-}
-
-function toggleNotifDropdown(evt) {
-  evt.stopPropagation();
-  document.getElementById('notifDropdown').classList.toggle('open');
-}
-
-function openNotif(id) {
-  const n = notifications.find(x => x.id === id);
-  if (!n) return;
-  n.unread = false;
-
-  const ids = getReadNotifIds();
-  if (!ids.includes(id)) {
-    ids.push(id);
-    saveReadNotifIds(ids);
-  }
-
-  location.href = n.href;
-}
-
-function markAllNotifsRead(evt) {
-  if (evt) evt.stopPropagation();
-  notifications.forEach(n => n.unread = false);
-  saveReadNotifIds(notifications.map(n => n.id));
-  renderNotifDropdown();
-}
-
-document.addEventListener('click', (evt) => {
-  const wrap = document.querySelector('.notif-wrap');
-  if (wrap && !wrap.contains(evt.target)) {
-    document.getElementById('notifDropdown').classList.remove('open');
-  }
-});
-
-// Initial paint
-initNotifications();
-
-// Re-sync every time this page becomes visible again — covers bfcache
-// restores from the browser's Back/Forward buttons.
-window.addEventListener('pageshow', function () {
-  initNotifications();
-});
+renderSidebar('dashboard');
+getStaffIdentity().catch(()=>{});
+loadDashboard();
 </script>
 </body>
 </html>

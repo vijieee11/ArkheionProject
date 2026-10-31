@@ -1,6 +1,6 @@
 # Register your models here.
 from django.contrib import admin
-from .models import Barangay, BookletReturn, DeathRecord, Document, ResidenceTransferRecord, StaffProfile, StaffRegistrationRequest
+from .models import Barangay, BookletReturn, DeathRecord, Document, GroceryClaim, GroceryDistribution, ResidenceTransferRecord, StaffProfile, StaffRegistrationRequest
 
 
 @admin.register(Barangay)
@@ -27,10 +27,10 @@ class StaffRegistrationRequestAdmin(admin.ModelAdmin):
 
 @admin.register(DeathRecord)
 class DeathRecordAdmin(admin.ModelAdmin):
-    list_display = ("senior_citizen", "date_of_death", "recorded_by", "created_at")
-    list_filter = ("date_of_death",)
+    list_display = ("senior_citizen", "date_of_death", "review_status", "recorded_by", "cancelled_by", "created_at")
+    list_filter = ("review_status", "date_of_death")
     search_fields = ("senior_citizen__osca_id", "senior_citizen__first_name", "senior_citizen__last_name")
-    readonly_fields = ("recorded_by", "created_at")
+    readonly_fields = ("recorded_by", "created_at", "cancellation_reason", "cancelled_by", "cancelled_at")
 
 
 @admin.register(Document)
@@ -57,3 +57,19 @@ class BookletReturnAdmin(admin.ModelAdmin):
     list_filter = ("date_returned", "status")
     search_fields = ("senior_citizen__osca_id", "senior_citizen__first_name", "senior_citizen__last_name", "note")
     readonly_fields = ("created_at",)
+
+
+@admin.register(GroceryDistribution)
+class GroceryDistributionAdmin(admin.ModelAdmin):
+    list_display = ("period", "barangay", "distribution_date", "distribution_time", "status", "total_beneficiaries", "total_released")
+    list_filter = ("barangay", "status", "distribution_date")
+    search_fields = ("period", "barangay")
+    readonly_fields = ("created_at",)
+
+
+@admin.register(GroceryClaim)
+class GroceryClaimAdmin(admin.ModelAdmin):
+    list_display = ("senior_citizen", "distribution", "claimed", "date_claimed", "claimed_by")
+    list_filter = ("claimed", "claimed_by", "distribution__barangay", "distribution__period")
+    search_fields = ("senior_citizen__osca_id", "senior_citizen__first_name", "senior_citizen__last_name")
+    readonly_fields = ("created_at", "updated_at")

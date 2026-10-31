@@ -9,6 +9,7 @@ from .models import (
     Document,
     FamilyMember,
     GroceryClaim,
+    GroceryDistribution,
     PensionRecord,
     ResidenceTransferRecord,
     SeniorCitizen,
@@ -241,15 +242,18 @@ class DeathRecordSerializer(serializers.ModelSerializer):
     recorded_by_name = serializers.CharField(source="recorded_by.username", read_only=True, allow_null=True)
     reviewed_by_name = serializers.CharField(source="reviewed_by.username", read_only=True, allow_null=True)
     pension_status = serializers.SerializerMethodField()
+    can_cancel = serializers.SerializerMethodField()
+    cancelled_by_name = serializers.CharField(source="cancelled_by.username", read_only=True, allow_null=True)
 
     class Meta:
         model = DeathRecord
         fields = [
             "id", "senior_citizen", "senior_name", "senior_osca_id", "senior_address", "barangay_name",
             "date_of_death", "notes", "review_status", "review_note", "reviewed_by_name", "reviewed_at",
+            "cancellation_reason", "cancelled_by_name", "cancelled_at", "can_cancel",
             "pension_status", "recorded_by_name", "created_at",
         ]
-        read_only_fields = ["review_status", "review_note", "reviewed_by_name", "reviewed_at", "recorded_by_name", "created_at"]
+        read_only_fields = ["review_status", "review_note", "reviewed_by_name", "reviewed_at", "recorded_by_name", "created_at", "cancellation_reason", "cancelled_by_name", "cancelled_at", "can_cancel"]
 
     def get_senior_name(self, obj):
         senior = obj.senior_citizen
@@ -257,6 +261,16 @@ class DeathRecordSerializer(serializers.ModelSerializer):
 
     def get_pension_status(self, obj):
         return "Pensioner" if obj.senior_citizen.pension_records.exists() else "No pension record"
+
+    def get_can_cancel(self, obj):
+        request = self.context.get("request")
+        return bool(
+            request
+            and request.user.is_authenticated
+            and request.user.role == "regular_staff"
+            and obj.recorded_by_id == request.user.id
+            and obj.review_status in {"pending", "needs_correction"}
+        )
 
     def validate_date_of_death(self, value):
         from django.utils import timezone
@@ -266,7 +280,7 @@ class DeathRecordSerializer(serializers.ModelSerializer):
 
     def validate_senior_citizen(self, senior):
         request = self.context.get("request")
-        if hasattr(senior, "death_record"):
+        if DeathRecord.objects.filter(senior_citizen=senior).exclude(review_status="cancelled").exists():
             raise serializers.ValidationError("A death record already exists for this senior.")
         if request and request.user.role == "regular_staff":
             profile = getattr(request.user, "staff_profile", None)
@@ -323,7 +337,7 @@ class ResidenceTransferRecordSerializer(serializers.ModelSerializer):
             raise drf_serializers.ValidationError({"senior_citizen": "This senior has no current barangay recorded."})
         if destination and senior and destination.pk == senior.barangay_id:
             raise drf_serializers.ValidationError({"to_barangay": "The destination is already the senior's barangay."})
-        if senior and hasattr(senior, "death_record") and senior.death_record.review_status == "verified":
+        if senior and senior.death_records.filter(review_status="verified").exists():
             raise drf_serializers.ValidationError({"senior_citizen": "A deceased senior cannot be transferred."})
         if request and request.user.role == "regular_staff":
             profile = getattr(request.user, "staff_profile", None)
@@ -359,7 +373,7 @@ class PensionRecordSerializer(serializers.ModelSerializer):
         if not request:
             return attrs
         senior = attrs.get("senior_citizen", getattr(self.instance, "senior_citizen", None))
-        if senior and hasattr(senior, "death_record") and senior.death_record.review_status == "verified":
+        if senior and senior.death_records.filter(review_status="verified").exists():
             raise serializers.ValidationError({"senior_citizen": "Pension records cannot be created for a senior with a recorded death."})
         if senior and request.user.role == "regular_staff":
             profile = getattr(request.user, "staff_profile", None)
@@ -385,6 +399,61 @@ class GroceryClaimReportSerializer(serializers.ModelSerializer):
     def get_senior_name(self, obj):
         senior = obj.senior_citizen
         return f"{senior.first_name} {senior.last_name}".strip()
+
+
+class GroceryDistributionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GroceryDistribution
+        fields = ["id", "distribution_date", "distribution_time", "barangay", "period", "total_beneficiaries", "total_released", "status", "created_at"]
+        read_only_fields = ["id", "total_beneficiaries", "total_released", "created_at"]
+
+    def validate_barangay(self, value):
+        request = self.context.get("request")
+        if request and request.user.role == "regular_staff":
+            profile = getattr(request.user, "staff_profile", None)
+            if not profile or profile.barangay.name != value:
+                raise serializers.ValidationError("You may schedule distributions only for your assigned barangay.")
+        return value
+
+
+class GroceryClaimWriteSerializer(serializers.ModelSerializer):
+    claimed_by = serializers.ChoiceField(choices=[("self", "Self"), ("representative", "Authorized representative"), ("barangay_official", "Barangay official")])
+
+    class Meta:
+        model = GroceryClaim
+        fields = ["id", "distribution", "senior_citizen", "claimed", "date_claimed", "claimed_by", "representative", "remarks"]
+        read_only_fields = ["id"]
+
+    def validate(self, attrs):
+        request = self.context.get("request")
+        distribution = attrs.get("distribution", getattr(self.instance, "distribution", None))
+        senior = attrs.get("senior_citizen", getattr(self.instance, "senior_citizen", None))
+        claimed = attrs.get("claimed", getattr(self.instance, "claimed", False))
+        claimed_by = attrs.get("claimed_by", getattr(self.instance, "claimed_by", "self"))
+        representative = attrs.get("representative", getattr(self.instance, "representative", ""))
+        date_claimed = attrs.get("date_claimed", getattr(self.instance, "date_claimed", None))
+
+        if senior and not senior.is_active:
+            raise serializers.ValidationError({"senior_citizen": "Inactive senior records cannot receive a new grocery claim."})
+        if distribution and distribution.status == "completed":
+            raise serializers.ValidationError({"distribution": "Claims cannot be changed after a distribution is completed."})
+        if distribution and senior and (not senior.barangay_id or distribution.barangay != senior.barangay.name):
+            raise serializers.ValidationError("The senior citizen must belong to the distribution barangay.")
+        if request and request.user.role == "regular_staff":
+            profile = getattr(request.user, "staff_profile", None)
+            if not profile:
+                raise serializers.ValidationError("This staff account has no assigned barangay.")
+            if not distribution or distribution.barangay != profile.barangay.name:
+                raise serializers.ValidationError({"distribution": "You may record claims only for your assigned barangay."})
+            if not senior or senior.barangay_id != profile.barangay_id:
+                raise serializers.ValidationError({"senior_citizen": "You may record claims only for seniors in your assigned barangay."})
+        if claimed and not date_claimed:
+            raise serializers.ValidationError({"date_claimed": "Enter the date the grocery was received."})
+        if claimed_by == "representative" and claimed and not representative.strip():
+            raise serializers.ValidationError({"representative": "Enter the authorized representative's name."})
+        if distribution and senior and GroceryClaim.objects.filter(distribution=distribution, senior_citizen=senior).exclude(pk=getattr(self.instance, "pk", None)).exists():
+            raise serializers.ValidationError("A grocery claim already exists for this senior and distribution.")
+        return attrs
 
 
 class BookletReturnSerializer(serializers.ModelSerializer):

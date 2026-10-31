@@ -187,11 +187,12 @@ class DeathRecord(models.Model):
         ("pending", "Pending review"),
         ("verified", "Verified"),
         ("needs_correction", "Needs correction"),
+        ("cancelled", "Cancelled"),
     ]
-    senior_citizen = models.OneToOneField(
+    senior_citizen = models.ForeignKey(
         SeniorCitizen,
         on_delete=models.PROTECT,
-        related_name="death_record",
+        related_name="death_records",
     )
     date_of_death = models.DateField()
     notes = models.TextField(blank=True)
@@ -211,6 +212,15 @@ class DeathRecord(models.Model):
         null=True,
         related_name="recorded_deaths",
     )
+    cancellation_reason = models.TextField(blank=True)
+    cancelled_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="cancelled_death_reports",
+    )
+    cancelled_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -323,6 +333,7 @@ class GroceryDistribution(models.Model):
         ('completed', 'Completed'),
     ]
     distribution_date   = models.DateField()
+    distribution_time   = models.TimeField(null=True, blank=True)
     barangay            = models.CharField(max_length=100)
     period              = models.CharField(max_length=20)
     total_beneficiaries = models.IntegerField(default=0)

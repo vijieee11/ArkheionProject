@@ -352,12 +352,17 @@
     document.getElementById('i-contact').textContent = '—';
     document.getElementById('i-address').textContent = m.address || '—';
 
-    // These service areas do not have matching records in the current API yet.
-    ['pension', 'medicine', 'grocery'].forEach(key => {
-      const el = document.getElementById('svc-' + key);
-      const data = { label: 'No linked record', cls: 'badge-proc' };
-      el.textContent = data.label;
-      el.className = 'badge ' + data.cls;
+    const pension = [...(m.pensionRecords || [])].sort((a,b)=>String(b.period||'').localeCompare(String(a.period||'')))[0];
+    const grocery = [...(m.groceryClaims || [])].sort((a,b)=>String(b.distribution_date||'').localeCompare(String(a.distribution_date||'')))[0];
+    const serviceStatus = {
+      pension: pension ? {label:pension.claimed?'Claimed':'Unclaimed',cls:pension.claimed?'badge-ok':'badge-pend'} : {label:'No record yet',cls:'badge-proc'},
+      grocery: grocery ? {label:grocery.claimed?'Claimed':'Unclaimed',cls:grocery.claimed?'badge-ok':'badge-pend'} : {label:'No record yet',cls:'badge-proc'},
+      medicine: {label:'Not tracked in system',cls:'badge-proc'},
+    };
+    Object.entries(serviceStatus).forEach(([key,data])=>{
+      const el=document.getElementById('svc-'+key);
+      el.textContent=data.label;
+      el.className='badge '+data.cls;
     });
   }
 
@@ -366,17 +371,22 @@
     const osca = params.get('id');
     currentOsca = osca || '';
     try {
-      const [seniorResponse, docResponse, barangayResponse] = await Promise.all([
-        ArkheionAPI.get('/api/seniors/'), ArkheionAPI.get('/api/documents/'), ArkheionAPI.get('/api/barangays/')
+      const [seniorResponse, docResponse, barangayResponse, pensionResponse, groceryResponse] = await Promise.all([
+        ArkheionAPI.get('/api/seniors/'), ArkheionAPI.get('/api/documents/'), ArkheionAPI.get('/api/barangays/'),
+        ArkheionAPI.get('/api/pensions/'), ArkheionAPI.get('/api/grocery/claims/')
       ]);
       const seniors = Array.isArray(seniorResponse) ? seniorResponse : (seniorResponse.results || []);
       const docs = Array.isArray(docResponse) ? docResponse : (docResponse.results || []);
       barangays = Array.isArray(barangayResponse) ? barangayResponse : (barangayResponse.results || []);
+      const pensions = Array.isArray(pensionResponse) ? pensionResponse : (pensionResponse.results || []);
+      const groceryClaims = Array.isArray(groceryResponse) ? groceryResponse : (groceryResponse.results || []);
       document.getElementById('em-brgy').replaceChildren(...barangays.map(item => new Option(item.name, item.name)));
       const senior = seniors.find(item => item.osca_id === osca);
       if (!senior) throw new Error('Member record not found or you do not have access.');
       currentMember = normalizeSenior(senior);
       currentMember.docs = docs.filter(doc => Number(doc.senior_citizen) === Number(senior.id));
+      currentMember.pensionRecords = pensions.filter(record => Number(record.senior_citizen) === Number(senior.id));
+      currentMember.groceryClaims = groceryClaims.filter(record => Number(record.senior_citizen) === Number(senior.id));
       renderMemberInfo(); renderDocsTable();
     } catch (error) {
       document.getElementById('m-name').textContent = 'Member unavailable';
@@ -449,7 +459,7 @@
     const patch = { first_name: parts.shift(), last_name: parts.pop() || '', middle_name: parts.join(' '), date_of_birth: birthdate, sex, civil_status: civil, barangay: selectedBarangay.id, address };
     try {
       const updated = await ArkheionAPI.patch(`/api/seniors/${currentMember.id}/`, patch);
-      currentMember = { ...normalizeSenior(updated), docs: currentMember.docs };
+      currentMember = { ...normalizeSenior(updated), docs: currentMember.docs, pensionRecords: currentMember.pensionRecords, groceryClaims: currentMember.groceryClaims };
       currentOsca = currentMember.osca_id;
       renderMemberInfo(); closeMdl('modal-edit-member'); showToast('Member information updated.');
     } catch (error) { showToast(error.message || 'Could not update member.', 'error'); }

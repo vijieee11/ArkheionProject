@@ -44,7 +44,6 @@
     }
     .tooltip:hover::before{opacity:1;visibility:visible;}
   </style>
-  <script>window.location.replace('booklet-summary.html?from=grocery');</script>
 </head>
 <body>
 <script src="sidebar.js"></script>
@@ -61,41 +60,35 @@
   <div class="content">
     <div class="stats-grid stats-3">
       <div class="stat-card teal">
-        <div class="stat-label"><i class="ti ti-circle-check"></i> Released this month</div>
-        <div class="stat-value" id="stat-released-count">891</div>
-        <div class="stat-sub" id="stat-released-sub">69% of 1,284 members</div>
+        <div class="stat-label"><i class="ti ti-circle-check"></i> Released</div>
+        <div class="stat-value" id="stat-released-count">—</div>
+        <div class="stat-sub" id="stat-released-sub">Loading distribution records…</div>
       </div>
       <div class="stat-card amber">
         <div class="stat-label"><i class="ti ti-clock"></i> Pending</div>
-        <div class="stat-value" id="stat-pending-count">393</div>
-        <div class="stat-sub" id="stat-pending-sub">31% not yet released</div>
+        <div class="stat-value" id="stat-pending-count">—</div>
+        <div class="stat-sub" id="stat-pending-sub">Loading distribution records…</div>
       </div>
       <div class="stat-card">
         <div class="stat-label"><i class="ti ti-calendar"></i> Next schedule</div>
-        <div class="stat-value" id="stat-next-date" style="font-size:18px;">Jul 15</div>
-        <div class="stat-sub" id="stat-next-sub">Tuganay — 8:00 AM at OSCA Carmen</div>
+        <div class="stat-value" id="stat-next-date" style="font-size:18px;">—</div>
+        <div class="stat-sub" id="stat-next-sub">No upcoming schedule loaded</div>
       </div>
     </div>
 
-    <div class="alert alert-coral">
-      <i class="ti ti-alert-circle"></i>
-      <strong>5 senior citizens</strong> have not claimed grocery for 2+ months. Possible home visit needed.
-      <a href="map.html" style="margin-left:8px;color:var(--coral-900);text-decoration:underline;font-weight:500">View on map →</a>
-    </div>
+    <div class="alert alert-teal" id="groceryNotice" hidden></div>
 
     <div class="card">
       <div class="card-header">
         <div>
-          <div class="card-title">Distribution list — July 2026</div>
+            <div class="card-title" id="distributionTitle">Grocery distribution</div>
           <div class="card-subtitle">Click "Mark received" to record a claim</div>
         </div>
         <div class="card-actions">
-          <select id="filter-brgy" class="filter-select" data-arkheion-barangay="filter" onchange="renderTable()">
-            <option>All barangays</option>
-          </select>
+          <select id="distribution-select" class="filter-select" aria-label="Choose distribution" onchange="selectDistribution()"><option value="">Loading schedules…</option></select>
+          <select id="filter-brgy" class="filter-select" aria-label="Assigned barangay" disabled><option>Loading barangay…</option></select>
           <select id="filter-status" class="filter-select" onchange="renderTable()">
-            <option>All status</option>
-            <option>Released</option><option>Pending</option><option>Urgent</option>
+            <option>All status</option><option>Released</option><option>Pending</option>
           </select>
         </div>
       </div>
@@ -127,9 +120,9 @@
       <div class="form-group">
         <label>Received by</label>
         <select id="mark-receivedby" onchange="toggleRepGroup()">
-          <option>Self</option>
-          <option>Authorized representative</option>
-          <option>Barangay official</option>
+          <option value="self">Self</option>
+          <option value="representative">Authorized representative</option>
+          <option value="barangay_official">Barangay official</option>
         </select>
       </div>
       <div class="form-group" id="rep-name-group" style="display:none;">
@@ -186,166 +179,142 @@
 <div class="toast" id="toast"></div>
 <script>
   renderSidebar('grocery');
-  ArkheionAPI.populateBarangaySelects().catch(error => showToast(error.message || 'Could not load barangays.', 'error'));
+  const asArray = value => Array.isArray(value) ? value : (value && Array.isArray(value.results) ? value.results : []);
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const localDateValue = date => `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+  const formatDate = value => { if(!value)return '—';const d=new Date(`${String(value).slice(0,10)}T00:00:00`);return Number.isNaN(d.getTime())?String(value):d.toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'numeric'}); };
+  let staffContext=null, seniors=[], distributions=[], claims=[], currentDistribution=null, currentRows=[];
 
-  // Distribution records — in production, fetch/patch these via the backend instead.
-  const records = [
-    { osca: '2024-001', name: 'Juan dela Cruz',   brgy: 'Ising',      status: 'released', dateReceived: 'Jul 5, 2026', receivedBy: 'Self' },
-    { osca: '2024-087', name: 'Maria Santos',     brgy: 'Anibongan',    status: 'pending',  dateReceived: null,          receivedBy: null },
-    { osca: '2024-033', name: 'Pedro Ramos',      brgy: 'Alejal',       status: 'urgent',   dateReceived: null,          receivedBy: null },
-    { osca: '2022-114', name: 'Lourdes Garcia',   brgy: 'Asuncion',     status: 'released', dateReceived: 'Jul 6, 2026', receivedBy: 'Daughter' },
-    { osca: '2025-012', name: 'Rosario Mendoza',  brgy: 'Tubod',        status: 'pending',  dateReceived: null,          receivedBy: null },
-  ];
-
-  let activeOsca = null; // which record the "Mark received" modal is currently open for
-
-  const statusMeta = {
-    released: { badge: 'badge-ok',     label: 'Released' },
-    pending:  { badge: 'badge-pend',   label: 'Pending' },
-    urgent:   { badge: 'badge-urgent', label: 'Urgent' },
-  };
+  function showToast(message, kind='success') { const toast=document.getElementById('toast');toast.textContent=message;toast.className=`toast ${kind==='error'?'error':''} show`;setTimeout(()=>toast.classList.remove('show'),2800); }
+  function showNotice(message, visible=true) { const box=document.getElementById('groceryNotice');box.textContent=message;box.hidden=!visible; }
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+  function toggleRepGroup() { document.getElementById('rep-name-group').style.display=document.getElementById('mark-receivedby').value==='representative'?'block':'none'; }
 
   function renderStats() {
-    const total = records.length;
-    const released = records.filter(r => r.status === 'released');
-    const pending = records.filter(r => r.status !== 'released');
-    document.getElementById('stat-released-count').textContent = released.length;
-    document.getElementById('stat-released-sub').textContent = `${Math.round(released.length / total * 100)}% of ${total} members`;
-    document.getElementById('stat-pending-count').textContent = pending.length;
-    document.getElementById('stat-pending-sub').textContent = `${Math.round(pending.length / total * 100)}% not yet released`;
+    const total=Number(currentDistribution?.total_beneficiaries||0);
+    const released=claims.filter(row=>row.claimed).length;
+    const pending=Math.max(0,total-released);
+    document.getElementById('stat-released-count').textContent=released.toLocaleString();
+    document.getElementById('stat-pending-count').textContent=pending.toLocaleString();
+    document.getElementById('stat-released-sub').textContent=total?`${Math.round(released/total*100)}% of ${total.toLocaleString()} listed seniors`:'No beneficiary total recorded';
+    document.getElementById('stat-pending-sub').textContent='Not yet marked as received';
+    document.getElementById('distributionTitle').textContent=currentDistribution?`Distribution — ${currentDistribution.period}`:'Grocery distribution';
+    const upcoming=distributions.filter(row=>row.distribution_date>=localDateValue(new Date())&&row.status!=='completed').sort((a,b)=>a.distribution_date.localeCompare(b.distribution_date))[0];
+    document.getElementById('stat-next-date').textContent=upcoming?formatDate(upcoming.distribution_date):'—';
+    document.getElementById('stat-next-sub').textContent=upcoming?`${upcoming.period} · ${upcoming.distribution_time?upcoming.distribution_time.slice(0,5):'Time not set'} · ${upcoming.barangay}`:'No upcoming distribution schedule';
   }
 
   function renderTable() {
-    const brgy = document.getElementById('filter-brgy').value;
-    const status = document.getElementById('filter-status').value;
-
-    const rows = records.filter(r => {
-      const matchesBrgy = brgy === 'All barangays' || r.brgy === brgy;
-      const matchesStatus = status === 'All status' || statusMeta[r.status].label === status;
-      return matchesBrgy && matchesStatus;
-    });
-
-    document.getElementById('grocery-rows').innerHTML = rows.map(r => {
-      const meta = statusMeta[r.status];
-      // Released members get a View action that opens their full record in
-      // member-detail.html; everyone else still needs to be marked received.
-      const action = r.status === 'released'
-        ? `<button class="btn btn-ghost btn-sm btn-icon tooltip" data-tooltip="View details" onclick="location.href='member-detail.html?id=${encodeURIComponent(r.osca)}'"><i class="ti ti-eye"></i></button>`
-        : `<button class="btn btn-navy btn-sm" onclick="openMarkModal('${r.osca}')"><i class="ti ti-check"></i> Mark</button>`;
-
-      return `
-        <tr>
-          <td class="td-muted">${r.osca}</td>
-          <td class="td-bold">${r.name}</td>
-          <td class="td-muted">${r.brgy}</td>
-          <td><span class="badge ${meta.badge}">${meta.label}</span></td>
-          <td class="td-muted">${r.dateReceived || '—'}</td>
-          <td class="td-muted">${r.receivedBy || '—'}</td>
-          <td>${action}</td>
-        </tr>`;
-    }).join('');
+    const tbody=document.getElementById('grocery-rows');
+    if(!currentDistribution){tbody.innerHTML='<tr><td colspan="7" class="td-muted" style="text-align:center;padding:26px">No distribution selected. Create a schedule to start recording claims.</td></tr>';currentRows=[];renderStats();return;}
+    const bySenior=new Map(claims.map(row=>[String(row.senior_citizen),row]));
+    const statusFilter=document.getElementById('filter-status').value;
+    currentRows=seniors.filter(row=>row.is_active).map(senior=>{
+      const claim=bySenior.get(String(senior.id));
+      return {senior,claim,status:claim?.claimed?'Released':'Pending'};
+    }).filter(row=>statusFilter==='All status'||row.status===statusFilter);
+    tbody.innerHTML=currentRows.length?currentRows.map(({senior,claim,status})=>{
+      const name=[senior.first_name,senior.middle_name,senior.last_name,senior.suffix].filter(Boolean).join(' ');
+      const date=claim?.claimed?formatDate(claim.date_claimed):'—';
+      const receivedBy=claim?.claimed?(claim.claimed_by==='self'?'Self':claim.claimed_by==='barangay_official'?'Barangay official':claim.representative||'Authorized representative'):'—';
+      const action=claim?.claimed?`<a class="btn btn-ghost btn-sm" href="member-detail.html?id=${encodeURIComponent(senior.osca_id)}">View</a>`:`<button class="btn btn-navy btn-sm" onclick="openMarkModal(${Number(senior.id)})"><i class="ti ti-check"></i> Mark received</button>`;
+      return `<tr><td class="td-muted">${esc(senior.osca_id)}</td><td class="td-bold">${esc(name)}</td><td class="td-muted">${esc(senior.barangay_name||'—')}</td><td><span class="badge ${status==='Released'?'badge-ok':'badge-pend'}">${status}</span></td><td class="td-muted">${date}</td><td class="td-muted">${esc(receivedBy)}</td><td>${action}</td></tr>`;
+    }).join(''):'<tr><td colspan="7" class="td-muted" style="text-align:center;padding:26px">No active senior records match this filter.</td></tr>';
+    renderStats();
   }
 
-  function toggleRepGroup() {
-    const v = document.getElementById('mark-receivedby').value;
-    document.getElementById('rep-name-group').style.display = v === 'Self' ? 'none' : 'block';
+  async function loadClaims() {
+    if(!currentDistribution){claims=[];renderTable();return;}
+    const data=await ArkheionAPI.get(`/api/grocery/claims/?distribution=${encodeURIComponent(currentDistribution.id)}`);
+    claims=asArray(data);renderTable();
+  }
+  async function selectDistribution() {
+    const id=document.getElementById('distribution-select').value;
+    currentDistribution=distributions.find(row=>String(row.id)===String(id))||null;
+    try { await loadClaims();showNotice(currentDistribution?'Claims are saved in the backend for this distribution.':'Create a distribution schedule before recording grocery claims.',!currentDistribution); }
+    catch(error){showNotice(error.message||'Could not load grocery claims.',true);showToast(error.message||'Could not load grocery claims.','error');}
   }
 
-  // Opens the modal pre-filled for a given OSCA ID, or for the first
-  // not-yet-released record when opened from the topbar's generic button.
-  function openMarkModal(osca) {
-    const target = osca || (records.find(r => r.status !== 'released') || {}).osca;
-    if (!target) {
-      showToast('Everyone on this list has already received their grocery.');
-      return;
-    }
-    const r = records.find(x => x.osca === target);
-    activeOsca = target;
-    document.getElementById('mark-name').value = `${r.name} — ${r.osca}`;
-    document.getElementById('mark-receivedby').value = 'Self';
-    document.getElementById('mark-rep-name').value = '';
-    document.getElementById('mark-remarks').value = '';
-    toggleRepGroup();
+  function openMarkModal(seniorId) {
+    const senior=seniors.find(row=>Number(row.id)===Number(seniorId));if(!senior||!currentDistribution)return;
+    const name=[senior.first_name,senior.middle_name,senior.last_name,senior.suffix].filter(Boolean).join(' ');
+    document.getElementById('mark-name').value=`${name} — ${senior.osca_id}`;
+    document.getElementById('mark-date').value=localDateValue(new Date());
+    document.getElementById('mark-receivedby').value='self';
+    document.getElementById('mark-rep-name').value='';document.getElementById('mark-remarks').value='';toggleRepGroup();
+    document.getElementById('modal-mark').dataset.seniorId=String(senior.id);
     openModal('modal-mark');
   }
 
-  function confirmMark() {
-    const r = records.find(x => x.osca === activeOsca);
-    if (!r) { closeModal('modal-mark'); return; }
-
-    const dateVal = document.getElementById('mark-date').value;
-    const receivedByChoice = document.getElementById('mark-receivedby').value;
-    const repName = document.getElementById('mark-rep-name').value.trim();
-
-    r.status = 'released';
-    r.dateReceived = dateVal
-      ? new Date(dateVal + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-      : 'Today';
-    r.receivedBy = receivedByChoice === 'Self' ? 'Self' : (repName || receivedByChoice);
-
-    closeModal('modal-mark');
-    renderStats();
-    renderTable();
-    showToast(`Grocery marked as received for ${r.name}.`);
+  async function confirmMark() {
+    const seniorId=Number(document.getElementById('modal-mark').dataset.seniorId);
+    const senior=seniors.find(row=>Number(row.id)===seniorId);if(!senior||!currentDistribution)return;
+    const claimedBy=document.getElementById('mark-receivedby').value;
+    const representative=document.getElementById('mark-rep-name').value.trim();
+    if(claimedBy==='representative'&&!representative){showToast('Enter the representative name.','error');return;}
+    const body={distribution:currentDistribution.id,senior_citizen:seniorId,claimed:true,date_claimed:document.getElementById('mark-date').value,claimed_by:claimedBy,representative,remarks:document.getElementById('mark-remarks').value.trim()};
+    const existing=claims.find(row=>Number(row.senior_citizen)===seniorId);
+    const button=document.querySelector('#modal-mark .modal-footer .btn-navy');button.disabled=true;
+    try {
+      if(existing) await ArkheionAPI.patch(`/api/grocery/claims/${existing.id}/`,body);
+      else await ArkheionAPI.post('/api/grocery/claims/',body);
+      closeModal('modal-mark');await loadClaims();showToast(`Grocery claim saved for ${[senior.first_name,senior.last_name].filter(Boolean).join(' ')}.`);
+    } catch(error){showToast(error.message||'Could not save the grocery claim.','error');}
+    finally{button.disabled=false;}
   }
 
-  // Reflects the newly saved schedule on the "Next schedule" stat card.
-  function saveSchedule() {
-    const brgy = document.getElementById('schedule-brgy').value;
-    const dateVal = document.getElementById('schedule-date').value;
-    const timeVal = document.getElementById('schedule-time').value;
-
-    if (!dateVal) {
-      showToast('Pick a distribution date first.');
-      return;
-    }
-
-    const dateLabel = new Date(dateVal + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const [h, m] = timeVal.split(':').map(Number);
-    const period = h >= 12 ? 'PM' : 'AM';
-    const hour12 = ((h % 12) || 12);
-    const timeLabel = `${hour12}:${String(m).padStart(2, '0')} ${period}`;
-
-    document.getElementById('stat-next-date').textContent = dateLabel;
-    document.getElementById('stat-next-sub').textContent = `${brgy} — ${timeLabel} at OSCA Carmen`;
-
-    closeModal('modal-schedule');
-    showToast('Schedule saved successfully!');
-  }
-
-  function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2500);
+  async function saveSchedule() {
+    const date=document.getElementById('schedule-date').value;
+    const time=document.getElementById('schedule-time').value;
+    const period=document.getElementById('schedule-period').value.trim();
+    if(!staffContext?.user?.barangay?.name){showToast('Your staff account has no assigned barangay.','error');return;}
+    if(!date||!period){showToast('Enter a distribution date and period.','error');return;}
+    const button=document.querySelector('#modal-schedule .modal-footer .btn-navy');button.disabled=true;
+    try {
+      const created=await ArkheionAPI.post('/api/grocery/distributions/',{barangay:staffContext.user.barangay.name,distribution_date:date,distribution_time:time||null,period,status:'scheduled'});
+      distributions=[created,...distributions];
+      const select=document.getElementById('distribution-select');select.add(new Option(`${created.period} — ${formatDate(created.distribution_date)}`,String(created.id),true,true));
+      currentDistribution=created;claims=[];closeModal('modal-schedule');await loadClaims();showNotice('Schedule saved. Active seniors in your assigned barangay are listed as pending until marked received.',true);showToast('Grocery distribution schedule saved.');
+    } catch(error){showToast(error.message||'Could not save the distribution schedule.','error');}
+    finally{button.disabled=false;}
   }
 
   function exportList() {
-    if (!records.length) {
-      showToast('Nothing to export.');
-      return;
-    }
-    const headers = ['OSCA ID', 'Name', 'Barangay', 'Status', 'Date Received', 'Received By'];
-    const csvRows = records.map(r => [
-      r.osca, r.name, r.brgy, statusMeta[r.status].label, r.dateReceived || '', r.receivedBy || ''
-    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
-    const csv = [headers.join(','), ...csvRows].join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `grocery-distribution-july-2026.csv`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-
-    showToast(`Exported ${records.length} record${records.length === 1 ? '' : 's'}.`);
+    if(!currentDistribution){showToast('Choose a distribution before exporting.','error');return;}
+    const rows=currentRows.map(({senior,claim,status})=>[senior.osca_id,[senior.first_name,senior.middle_name,senior.last_name,senior.suffix].filter(Boolean).join(' '),senior.barangay_name,status,claim?.date_claimed||'',claim?.claimed?(claim.claimed_by==='self'?'Self':claim.representative||'Authorized representative'):'']);
+    const csv=[['OSCA ID','Name','Barangay','Status','Date Received','Received By'],...rows].map(row=>row.map(value=>{let cell=String(value??'');if(/^[=+\-@\t\r]/.test(cell))cell=`'${cell}`;return `"${cell.replace(/"/g,'""')}"`;}).join(',')).join('\r\n');
+    const blob=new Blob(['\uFEFF',csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`grocery-${String(currentDistribution.period).replace(/[^a-z0-9-]+/gi,'-')}-${currentDistribution.barangay}.csv`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);showToast(`Exported ${rows.length} record${rows.length===1?'':'s'}.`);
   }
 
-  renderStats();
-  renderTable();
+  async function initGrocery() {
+    try {
+      staffContext=await ArkheionAPI.getStaffContext();
+      if(staffContext.user.role!=='regular_staff'||String(staffContext.user.barangay?.name||'').trim().toLowerCase()!=='ising'){
+        window.location.replace('dashboard.html');
+        return;
+      }
+      const barangay=staffContext.user.barangay.name;
+      const filter=document.getElementById('filter-brgy');filter.innerHTML='';filter.add(new Option(barangay,barangay));
+      const scheduleBarangay=document.getElementById('schedule-brgy');scheduleBarangay.innerHTML='';scheduleBarangay.add(new Option(barangay,barangay));
+      const now=new Date();document.getElementById('schedule-date').value=localDateValue(now);document.getElementById('schedule-period').value=now.toLocaleDateString('en-PH',{month:'long',year:'numeric'});
+      const [seniorResponse,distributionResponse]=await Promise.all([ArkheionAPI.get('/api/seniors/'),ArkheionAPI.get('/api/grocery/distributions/')]);
+      seniors=asArray(seniorResponse);distributions=asArray(distributionResponse);
+      const select=document.getElementById('distribution-select');select.innerHTML='';
+      distributions.forEach(row=>select.add(new Option(`${row.period} — ${formatDate(row.distribution_date)}`,String(row.id))));
+      const today=localDateValue(now);
+      currentDistribution=distributions.find(row=>row.distribution_date>=today&&row.status!=='completed')||distributions[0]||null;
+      if(currentDistribution)select.value=String(currentDistribution.id);
+      else select.add(new Option('No schedules yet','',true,true));
+      showNotice(currentDistribution?'Claims are saved in the backend for this distribution.':'No grocery distribution schedule yet. Create one to begin recording claims.',!currentDistribution);
+      await loadClaims();
+    } catch(error) {
+      showNotice(error.message||'Could not load grocery records. Check your server and staff account.',true);
+      document.getElementById('grocery-rows').innerHTML=`<tr><td colspan="7" class="td-muted" style="text-align:center;padding:26px">${esc(error.message||'Could not load grocery records.')}</td></tr>`;
+      showToast(error.message||'Could not load grocery records.','error');
+    }
+  }
+  initGrocery();
 </script>
 </body>
 </html>

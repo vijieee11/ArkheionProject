@@ -27,6 +27,7 @@ from .models import (
     DeathRecord,
     Document,
     GroceryClaim,
+    GroceryDistribution,
     PensionRecord,
     ResidenceTransferRecord,
     SeniorCitizen,
@@ -40,6 +41,8 @@ from .serializers import (
     DocumentSerializer,
     GenerateSeniorAccountsSerializer,
     GroceryClaimReportSerializer,
+    GroceryClaimWriteSerializer,
+    GroceryDistributionSerializer,
     PensionRecordSerializer,
     ResidenceTransferRecordSerializer,
     SeniorCitizenSerializer,
@@ -324,18 +327,120 @@ class IsOSCAStaff(BasePermission):
         return request.user.role in ["head_staff", "regular_staff"]
 
 
-class GroceryClaimListAPIView(ListAPIView):
+def is_ising_staff_user(user):
+    if getattr(user, "role", None) != "regular_staff":
+        return False
+    profile = getattr(user, "staff_profile", None)
+    return bool(profile and profile.barangay.name.strip().casefold() == "ising")
+
+
+class GroceryDashboardSummaryAPIView(APIView):
+    """Share aggregate grocery progress on every OSCA staff dashboard."""
+    permission_classes = [IsAuthenticated, IsOSCAStaff]
+
+    def get(self, request):
+        today = timezone.localdate()
+        distributions = GroceryDistribution.objects.filter(
+            distribution_date__year=today.year,
+            distribution_date__month=today.month,
+        )
+        totals = distributions.aggregate(beneficiaries=Sum("total_beneficiaries"))
+        released = GroceryClaim.objects.filter(
+            distribution__in=distributions,
+            claimed=True,
+        ).count()
+        beneficiaries = totals["beneficiaries"] or 0
+        return Response({
+            "period": today.strftime("%Y-%m"),
+            "distribution_count": distributions.count(),
+            "total_beneficiaries": beneficiaries,
+            "total_released": released,
+            "total_pending": max(beneficiaries - released, 0),
+        })
+
+
+class GroceryDistributionListCreateAPIView(ListCreateAPIView):
+    serializer_class = GroceryDistributionSerializer
+    permission_classes = [IsAuthenticated, IsOSCAStaff]
+
+    def get_queryset(self):
+        distributions = GroceryDistribution.objects.all().order_by("-distribution_date", "-id")
+        if self.request.user.role == "head_staff":
+            return distributions
+        profile = getattr(self.request.user, "staff_profile", None)
+        return distributions.filter(barangay=profile.barangay.name) if profile else distributions.none()
+
+    def create(self, request, *args, **kwargs):
+        if not is_ising_staff_user(request.user):
+            return Response({"detail": "Only the Ising barangay staff account may schedule grocery distributions."}, status=403)
+        return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        profile = getattr(self.request.user, "staff_profile", None)
+        total = SeniorCitizen.objects.filter(barangay_id=profile.barangay_id, is_active=True).count() if profile else 0
+        distribution = serializer.save(total_beneficiaries=total)
+        record_action(self.request, "create", "grocery_distribution", distribution, "Scheduled a grocery distribution.")
+
+
+class GroceryClaimListAPIView(ListCreateAPIView):
     serializer_class = GroceryClaimReportSerializer
     permission_classes = [IsAuthenticated, IsOSCAStaff]
 
     def get_queryset(self):
         claims = GroceryClaim.objects.select_related(
             "distribution", "senior_citizen", "senior_citizen__barangay"
-        ).order_by("distribution__distribution_date", "senior_citizen__last_name", "senior_citizen__first_name")
+        )
         if self.request.user.role == "head_staff":
-            return claims
+            queryset = claims
+        else:
+            profile = getattr(self.request.user, "staff_profile", None)
+            queryset = claims.filter(distribution__barangay=profile.barangay.name) if profile else claims.none()
+        distribution_id = self.request.query_params.get("distribution")
+        senior_id = self.request.query_params.get("senior")
+        if distribution_id and distribution_id.isdigit():
+            queryset = queryset.filter(distribution_id=int(distribution_id))
+        if senior_id and senior_id.isdigit():
+            queryset = queryset.filter(senior_citizen_id=int(senior_id))
+        return queryset.order_by("-distribution__distribution_date", "senior_citizen__last_name", "senior_citizen__first_name")
+
+    def get_serializer_class(self):
+        return GroceryClaimWriteSerializer if self.request.method == "POST" else GroceryClaimReportSerializer
+
+    def create(self, request, *args, **kwargs):
+        if not is_ising_staff_user(request.user):
+            return Response({"detail": "Only the Ising barangay staff account may record grocery claims."}, status=403)
+        return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        claim = serializer.save()
+        GroceryDistribution.objects.filter(pk=claim.distribution_id).update(
+            total_released=GroceryClaim.objects.filter(distribution_id=claim.distribution_id, claimed=True).count()
+        )
+        record_action(self.request, "create", "grocery_claim", claim, "Recorded a grocery claim.")
+
+
+class GroceryClaimDetailAPIView(generics.UpdateAPIView):
+    serializer_class = GroceryClaimWriteSerializer
+    permission_classes = [IsAuthenticated, IsOSCAStaff]
+    http_method_names = ["patch", "put", "options", "head"]
+
+    def get_queryset(self):
+        claims = GroceryClaim.objects.select_related("distribution", "senior_citizen", "senior_citizen__barangay")
+        if self.request.user.role != "regular_staff":
+            return claims.none()
         profile = getattr(self.request.user, "staff_profile", None)
         return claims.filter(distribution__barangay=profile.barangay.name) if profile else claims.none()
+
+    def update(self, request, *args, **kwargs):
+        if not is_ising_staff_user(request.user):
+            return Response({"detail": "Only the Ising barangay staff account may update grocery claims."}, status=403)
+        response = super().update(request, *args, **kwargs)
+        claim = self.get_object()
+        GroceryDistribution.objects.filter(pk=claim.distribution_id).update(
+            total_released=GroceryClaim.objects.filter(distribution_id=claim.distribution_id, claimed=True).count()
+        )
+        record_action(request, "edit", "grocery_claim", claim, "Updated a grocery claim.")
+        return response
 
 
 class IsIsingStaff(BasePermission):
@@ -747,13 +852,12 @@ class DeathRecordReviewAPIView(APIView):
         if decision == "return" and not note:
             raise ValidationError({"review_note": ["A correction note is required when returning a report."]})
 
-        record = get_object_or_404(
-            DeathRecord.objects.select_related("senior_citizen"), pk=pk
-        )
-        if record.review_status == "verified":
-            raise ValidationError({"detail": "This death report is already verified."})
-
         with transaction.atomic():
+            record = get_object_or_404(
+                DeathRecord.objects.select_for_update().select_related("senior_citizen"), pk=pk
+            )
+            if record.review_status in {"verified", "cancelled"}:
+                raise ValidationError({"detail": "This death report is already closed and cannot be reviewed."})
             record.review_status = "verified" if decision == "verify" else "needs_correction"
             record.review_note = note
             record.reviewed_by = request.user
@@ -772,6 +876,44 @@ class DeathRecordReviewAPIView(APIView):
                 "Verified death report and deactivated senior access." if decision == "verify" else "Returned death report for correction.",
             )
 
+        return Response(DeathRecordSerializer(record, context={"request": request}).data)
+
+
+class DeathRecordCancelAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsOSCAStaff]
+
+    def post(self, request, pk):
+        from rest_framework.exceptions import PermissionDenied, ValidationError
+
+        if request.user.role != "regular_staff":
+            raise PermissionDenied("Only the reporting barangay staff may cancel an unverified death report.")
+        profile = getattr(request.user, "staff_profile", None)
+        if not profile:
+            raise PermissionDenied("This staff account has no assigned barangay.")
+
+        reason = str(request.data.get("reason", "")).strip()
+        if not reason:
+            raise ValidationError({"reason": ["Enter why this death report is being cancelled."]})
+        if len(reason) > 1000:
+            raise ValidationError({"reason": ["Cancellation reason must be 1000 characters or fewer."]})
+
+        with transaction.atomic():
+            record = get_object_or_404(
+                DeathRecord.objects.select_for_update().select_related(
+                    "senior_citizen"
+                ),
+                pk=pk,
+                recorded_by=request.user,
+                senior_citizen__barangay_id=profile.barangay_id,
+            )
+            if record.review_status not in {"pending", "needs_correction"}:
+                raise ValidationError({"detail": "Only an unverified death report can be cancelled."})
+            record.review_status = "cancelled"
+            record.cancellation_reason = reason
+            record.cancelled_by = request.user
+            record.cancelled_at = timezone.now()
+            record.save(update_fields=["review_status", "cancellation_reason", "cancelled_by", "cancelled_at"])
+            record_action(request, "edit", "death_record_cancellation", record, "Cancelled an unverified death report.")
         return Response(DeathRecordSerializer(record, context={"request": request}).data)
 
 
@@ -810,7 +952,7 @@ class AnalyticsAPIView(APIView):
     def get(self, request):
         seniors = SeniorCitizen.objects.all()
         pensions = PensionRecord.objects.select_related("senior_citizen")
-        deaths = DeathRecord.objects.select_related("senior_citizen")
+        deaths = DeathRecord.objects.select_related("senior_citizen").exclude(review_status="cancelled")
         transfers = ResidenceTransferRecord.objects.all()
         if request.user.role == "regular_staff":
             profile = getattr(request.user, "staff_profile", None)

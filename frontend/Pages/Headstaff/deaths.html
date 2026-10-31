@@ -24,6 +24,7 @@
     .death-status-review{background:#ffedd5;color:#9a3412}
     .death-status-verified{background:#dcfce7;color:#166534}
     .death-status-correction{background:#fee2e2;color:#b91c1c}
+    .death-status-cancelled{background:#e2e8f0;color:#475569}
     .death-risk{background:#fee2e2;color:#b91c1c}
     .death-modal-backdrop{display:none;position:fixed;inset:0;z-index:1000;padding:20px;background:rgba(15,23,42,.48);align-items:center;justify-content:center}
     .death-modal-backdrop.open{display:flex}
@@ -78,7 +79,7 @@
           </select>
           <select id="deathYear" onchange="renderDeaths()"><option value="">All years</option></select>
           <select id="deathStatus" onchange="renderDeaths()">
-            <option value="">All statuses</option><option value="Needs action">Needs action</option><option>For review</option><option>Verified</option><option>Needs correction</option>
+            <option value="">All statuses</option><option value="Needs action">Needs action</option><option>For review</option><option>Verified</option><option>Needs correction</option><option>Cancelled</option>
           </select>
           <button class="btn btn-ghost btn-sm" onclick="exportDeaths()"><i class="ti ti-download"></i> Export CSV</button>
         </div>
@@ -134,10 +135,11 @@
   function statusClass(status) {
     if (status === 'Verified') return 'death-status-verified';
     if (status === 'Needs correction') return 'death-status-correction';
+    if (status === 'Cancelled') return 'death-status-cancelled';
     return 'death-status-review';
   }
   function statusLabel(status) {
-    return status === 'verified' ? 'Verified' : status === 'needs_correction' ? 'Needs correction' : 'For review';
+    return status === 'verified' ? 'Verified' : status === 'needs_correction' ? 'Needs correction' : status === 'cancelled' ? 'Cancelled' : 'For review';
   }
   async function loadDeathRecords() {
     const rows = document.getElementById('deathRows');
@@ -161,11 +163,12 @@
   function renderDeaths() {
     const records = deathRecords;
     const yearNow = String(new Date().getFullYear());
-    const pending = records.filter(record => record.review_status !== 'verified').length;
-    document.getElementById('totalDeaths').textContent = records.length;
-    document.getElementById('deathsThisYear').textContent = records.filter(record => (record.date_of_death || '').startsWith(yearNow)).length;
+    const activeReports = records.filter(record => record.review_status !== 'cancelled');
+    const pending = records.filter(record => ['pending','needs_correction'].includes(record.review_status)).length;
+    document.getElementById('totalDeaths').textContent = activeReports.length;
+    document.getElementById('deathsThisYear').textContent = activeReports.filter(record => (record.date_of_death || '').startsWith(yearNow)).length;
     document.getElementById('verifiedDeaths').textContent = records.filter(record => record.review_status === 'verified').length;
-    document.getElementById('pensionReviews').textContent = records.filter(record => record.pension_status === 'Pensioner').length;
+    document.getElementById('pensionReviews').textContent = activeReports.filter(record => record.pension_status === 'Pensioner').length;
     document.getElementById('reviewQueueBadge').textContent = `${pending} for review`;
     refreshYearFilter(records);
 
@@ -178,14 +181,16 @@
       const [recordYear, recordMonth] = (record.date_of_death || '').split('-');
       const matchesQuery = !query || (record.senior_name || '').toLowerCase().includes(query) || (record.senior_osca_id || '').toLowerCase().includes(query);
       const currentStatus = statusLabel(record.review_status);
-      const matchesStatus = !status || (status === 'Needs action' ? currentStatus !== 'Verified' : currentStatus === status);
+      const matchesStatus = !status || (status === 'Needs action' ? ['pending','needs_correction'].includes(record.review_status) : currentStatus === status);
       return matchesQuery && (!barangay || record.barangay_name === barangay) && (!month || month === recordMonth) && (!year || year === recordYear) && matchesStatus;
     });
     document.getElementById('deathRows').innerHTML = filtered.map(record => {
       const recordStatus = statusLabel(record.review_status);
       const actions = recordStatus === 'Verified'
         ? '<span style="color:var(--gray-500)">Reviewed</span>'
-        : `<div class="death-actions"><button class="death-review-btn death-verify" data-action="verify" data-id="${escapeHTML(record.id)}">Verify</button><button class="death-review-btn death-return" data-action="return" data-id="${escapeHTML(record.id)}">Return</button><button class="action-icon-btn" title="View details" data-action="details" data-id="${escapeHTML(record.id)}"><i class="ti ti-eye"></i></button></div>`;
+        : recordStatus === 'Cancelled'
+          ? `<button class="action-icon-btn" title="View cancellation details" data-action="details" data-id="${escapeHTML(record.id)}"><i class="ti ti-eye"></i></button>`
+          : `<div class="death-actions"><button class="death-review-btn death-verify" data-action="verify" data-id="${escapeHTML(record.id)}">Verify</button><button class="death-review-btn death-return" data-action="return" data-id="${escapeHTML(record.id)}">Return</button><button class="action-icon-btn" title="View details" data-action="details" data-id="${escapeHTML(record.id)}"><i class="ti ti-eye"></i></button></div>`;
       return `<tr><td>${escapeHTML(record.senior_osca_id)}</td><td class="td-bold">${escapeHTML(record.senior_name)}</td><td>${escapeHTML(record.barangay_name || '—')}</td><td>${escapeHTML(shortDate(record.date_of_death))}</td><td>${record.pension_status === 'Pensioner' ? '<span class="badge death-risk">Review pension</span>' : escapeHTML(record.pension_status || 'Unknown')}</td><td><span class="badge ${statusClass(recordStatus)}">${escapeHTML(recordStatus)}</span></td><td>${escapeHTML(record.recorded_by_name || '—')}</td><td>${actions}</td></tr>`;
     }).join('');
     document.getElementById('deathEmpty').style.display = filtered.length ? 'none' : 'block';
@@ -209,16 +214,21 @@
       ['Record status', statusLabel(record.review_status)], ['Reported by', record.recorded_by_name || '—'],
       ['Date reported', record.created_at ? new Date(record.created_at).toLocaleString() : '—'],
       ['Reviewed by', record.reviewed_by_name || '—'], ['Date reviewed', record.reviewed_at ? new Date(record.reviewed_at).toLocaleString() : '—'],
-      ['Last review note', record.review_note || '—']
+      ['Last review note', record.review_note || '—'],
+      ['Cancellation reason', record.cancellation_reason || '—'],
+      ['Cancelled by', record.cancelled_by_name || '—'],
+      ['Cancelled at', record.cancelled_at ? new Date(record.cancelled_at).toLocaleString() : '—']
     ];
     document.getElementById('deathDetails').innerHTML = details.map(([label,value]) => `<div class="death-detail"><span>${escapeHTML(label)}</span><span>${escapeHTML(value)}</span></div>`).join('') + `<div><div style="font-size:11px;color:var(--gray-500);margin-bottom:5px">Staff notes / source</div><div class="death-note">${escapeHTML(record.notes || 'No notes provided.')}</div></div>`;
     const actions = document.getElementById('deathModalActions');
     actions.innerHTML = '';
-    if (record.review_status !== 'verified') {
+    if (!['verified','cancelled'].includes(record.review_status)) {
       const returnBtn = document.createElement('button'); returnBtn.className = 'btn btn-ghost'; returnBtn.textContent = 'Return for correction'; returnBtn.onclick = () => reviewDeath('return'); actions.appendChild(returnBtn);
       const verifyBtn = document.createElement('button'); verifyBtn.className = 'btn btn-navy'; verifyBtn.innerHTML = '<i class="ti ti-circle-check"></i> Verify & deactivate'; verifyBtn.onclick = () => reviewDeath('verify'); actions.appendChild(verifyBtn);
-    } else {
+    } else if(record.review_status === 'verified') {
       const done = document.createElement('span'); done.className = 'badge death-status-verified'; done.textContent = 'Verified'; actions.appendChild(done);
+    } else {
+      const cancelled = document.createElement('span'); cancelled.className = 'badge death-status-cancelled'; cancelled.textContent = 'Cancelled'; actions.appendChild(cancelled);
     }
     const closeBtn = document.createElement('button'); closeBtn.className = 'btn btn-ghost'; closeBtn.textContent = 'Close'; closeBtn.onclick = closeDeathDetails; actions.appendChild(closeBtn);
     document.getElementById('deathModal').classList.add('open');
@@ -257,8 +267,8 @@
   });
   function exportDeaths() {
     const records = deathRecords;
-    const headers = ['OSCA ID','Name','Barangay','Date of death','Pension status','Record status','Reported by','Reviewed by','Review note'];
-    const rows = records.map(record => [record.senior_osca_id,record.senior_name,record.barangay_name,record.date_of_death,record.pension_status,statusLabel(record.review_status),record.recorded_by_name,record.reviewed_by_name,record.review_note].map(value => `"${String(value ?? '').replace(/"/g,'""')}"`).join(','));
+    const headers = ['OSCA ID','Name','Barangay','Date of death','Pension status','Record status','Reported by','Reviewed by','Review note','Cancellation reason','Cancelled by','Cancelled at'];
+    const rows = records.map(record => [record.senior_osca_id,record.senior_name,record.barangay_name,record.date_of_death,record.pension_status,statusLabel(record.review_status),record.recorded_by_name,record.reviewed_by_name,record.review_note,record.cancellation_reason,record.cancelled_by_name,record.cancelled_at].map(value => `"${String(value ?? '').replace(/"/g,'""')}"`).join(','));
     const blob = new Blob([headers.join(',')+'\n'+rows.join('\n')],{type:'text/csv;charset=utf-8;'});
     const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href=url; link.download='osca-death-review.csv'; link.click(); URL.revokeObjectURL(url);
   }

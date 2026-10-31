@@ -57,6 +57,7 @@
     .badge-death-review { background:#ffedd5; color:#9a3412; }
     .badge-death-verified { background:#dcfce7; color:#166534; }
     .badge-death-risk { background:#fee2e2; color:#b91c1c; }
+    .badge-death-cancelled { background:#e2e8f0; color:#475569; }
     .death-toast {
       position:fixed; right:20px; bottom:20px; z-index:1200; display:none;
       padding:12px 16px; border-radius:8px; color:white; background:#166534;
@@ -87,7 +88,7 @@
       <i class="ti ti-alert-triangle"></i>
       <div>
         <strong>Check details before saving.</strong>
-        Reports stay pending until Head Staff verifies them. The senior's portal remains active while the report is under review.
+        Reports stay pending until Head Staff verifies them. The senior's portal remains active while the report is under review. You may cancel your own unverified report if it was submitted by mistake.
       </div>
     </div>
 
@@ -303,7 +304,7 @@
       message.style.color = 'var(--coral-600)';
       return;
     }
-    if (deathRecords.some(record => Number(record.senior_citizen) === Number(member.id))) {
+    if (deathRecords.some(record => Number(record.senior_citizen) === Number(member.id) && record.review_status !== 'cancelled')) {
       selectedMember = null;
       message.textContent = 'A report already exists. If it needs correction, use Edit & resubmit in the table below.';
       message.style.color = 'var(--coral-600)';
@@ -377,6 +378,21 @@
         : '<i class="ti ti-device-floppy"></i> Submit for review';
     }
   }
+  async function cancelDeathReport(recordId) {
+    const record = deathRecords.find(item => Number(item.id) === Number(recordId));
+    if (!record || !record.can_cancel) return;
+    const reason = window.prompt('Why are you cancelling this death report?');
+    if (reason === null) return;
+    if (!reason.trim()) return showDeathToast('Enter a reason before cancelling the report.');
+    if (!window.confirm('Cancel this unverified death report? The senior will remain active, and the cancellation will be recorded.')) return;
+    try {
+      await ArkheionAPI.post(`/api/deaths/${record.id}/cancel/`, { reason: reason.trim() });
+      await loadDeathPage();
+      showDeathToast('Death report cancelled. The senior remains active.');
+    } catch (error) {
+      showDeathToast(error.message || 'Could not cancel the death report.');
+    }
+  }
   function updateYearFilter(records) {
     const select = document.getElementById('deathYear');
     const selected = select.value;
@@ -386,12 +402,13 @@
   }
   function renderDeaths() {
     const allRecords = deathRecords;
+    const countableRecords = allRecords.filter(record => record.review_status !== 'cancelled');
     updateYearFilter(allRecords);
     const currentYear = String(now.getFullYear());
     const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
-    document.getElementById('totalDeaths').textContent = allRecords.length;
-    document.getElementById('deathsThisYear').textContent = allRecords.filter(record => (record.date_of_death || '').startsWith(currentYear)).length;
-    document.getElementById('deathsThisMonth').textContent = allRecords.filter(record => (record.date_of_death || '').startsWith(`${currentYear}-${currentMonth}`)).length;
+    document.getElementById('totalDeaths').textContent = countableRecords.length;
+    document.getElementById('deathsThisYear').textContent = countableRecords.filter(record => (record.date_of_death || '').startsWith(currentYear)).length;
+    document.getElementById('deathsThisMonth').textContent = countableRecords.filter(record => (record.date_of_death || '').startsWith(`${currentYear}-${currentMonth}`)).length;
     const query = document.getElementById('deathSearch').value.trim().toLowerCase();
     const barangay = document.getElementById('deathBarangay').value;
     const month = document.getElementById('deathMonth').value;
@@ -402,16 +419,18 @@
         (!barangay || record.barangay_name === barangay) && (!month || recordMonth === month) && (!year || recordYear === year);
     });
     document.getElementById('deathRows').innerHTML = filtered.map(record => {
-      const statusLabel = record.review_status === 'verified' ? 'Verified' : record.review_status === 'needs_correction' ? 'Needs correction' : 'For review';
-      const statusClass = record.review_status === 'verified' ? 'badge-death-verified' : record.review_status === 'needs_correction' ? 'badge-death-risk' : 'badge-death-review';
-      const action = record.review_status === 'needs_correction'
-        ? `<button type="button" class="btn btn-ghost btn-sm" onclick="editDeathReport(${Number(record.id)})">Edit &amp; resubmit</button>`
-        : '—';
+      const statusLabel = record.review_status === 'verified' ? 'Verified' : record.review_status === 'needs_correction' ? 'Needs correction' : record.review_status === 'cancelled' ? 'Cancelled' : 'For review';
+      const statusClass = record.review_status === 'verified' ? 'badge-death-verified' : record.review_status === 'needs_correction' ? 'badge-death-risk' : record.review_status === 'cancelled' ? 'badge-death-cancelled' : 'badge-death-review';
+      const actions = [];
+      if (record.review_status === 'needs_correction') actions.push(`<button type="button" class="btn btn-ghost btn-sm" onclick="editDeathReport(${Number(record.id)})">Edit &amp; resubmit</button>`);
+      if (record.can_cancel) actions.push(`<button type="button" class="btn btn-ghost btn-sm" onclick="cancelDeathReport(${Number(record.id)})">Cancel report</button>`);
+      const action = actions.join(' ') || '—';
+      const reviewNote = record.review_status === 'cancelled' ? `Cancelled: ${record.cancellation_reason || 'No reason supplied'}` : (record.review_note || '—');
       return `<tr>
         <td>${escapeHTML(record.senior_osca_id)}</td><td class="td-bold">${escapeHTML(record.senior_name)}</td>
         <td>${escapeHTML(record.barangay_name || '—')}</td><td>${escapeHTML(formatDeathDate(record.date_of_death))}</td>
         <td><span class="badge ${statusClass}">${statusLabel}</span></td>
-        <td style="max-width:220px;white-space:normal">${escapeHTML(record.review_note || '—')}</td>
+        <td style="max-width:220px;white-space:normal">${escapeHTML(reviewNote)}</td>
         <td style="max-width:250px;white-space:normal">${escapeHTML(record.notes || '—')}</td>
         <td>${record.review_status === 'verified' ? '<span class="badge badge-death-risk">Deactivated</span>' : '<span class="badge badge-death-review">Active</span>'}</td>
         <td>${escapeHTML(record.recorded_by_name || '—')}</td><td>${action}</td></tr>`;
@@ -420,8 +439,8 @@
     document.getElementById('deathCount').textContent = `Showing ${filtered.length} of ${allRecords.length} death records`;
   }
   function exportDeaths() {
-    const headers = ['OSCA ID', 'Name', 'Barangay', 'Date of death', 'Review status', 'Review note', 'Notes', 'Portal account', 'Reported by'];
-    const csvRows = deathRecords.map(record => [record.senior_osca_id, record.senior_name, record.barangay_name, record.date_of_death, record.review_status, record.review_note, record.notes, record.review_status === 'verified' ? 'Deactivated' : 'Active', record.recorded_by_name]
+    const headers = ['OSCA ID', 'Name', 'Barangay', 'Date of death', 'Review status', 'Review note', 'Cancellation reason', 'Notes', 'Portal account', 'Reported by'];
+    const csvRows = deathRecords.map(record => [record.senior_osca_id, record.senior_name, record.barangay_name, record.date_of_death, record.review_status, record.review_note, record.cancellation_reason, record.notes, record.review_status === 'verified' ? 'Deactivated' : 'Active', record.recorded_by_name]
       .map(value => `"${String(value ?? '').replace(/"/g, '""')}"`).join(','));
     const blob = new Blob([headers.join(',') + '\n' + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
