@@ -105,10 +105,10 @@
         <div class="stat-value" id="totalMembers">—</div>
         <div class="stat-sub" id="memberScope">Active member records</div>
       </div>
-      <div class="stat-card teal" id="groceryDashboardCard">
-        <div class="stat-label"><i class="ti ti-shopping-cart"></i> Groceries released</div>
-        <div class="stat-value" id="groceryClaimed">—</div>
-        <div class="stat-sub" id="grocerySub">Current month records</div>
+      <div class="stat-card teal" id="medicineBookletDashboardCard">
+        <div class="stat-label"><i class="ti ti-notes"></i> Medicine booklets returned</div>
+        <div class="stat-value" id="bookletReturned">—</div>
+        <div class="stat-sub" id="bookletSub">Handled by Ising staff</div>
       </div>
       <div class="stat-card amber" style="cursor:pointer" onclick="location.href='pension.html'">
         <div class="stat-label"><i class="ti ti-cash"></i> Pension claimed</div>
@@ -132,9 +132,8 @@
           <select class="filter-select">
             <option>All processes</option>
             <option>Registration</option>
-            <option>Grocery</option>
             <option>Pension</option>
-            <option>Medicine</option>
+            <option>Medicine booklet</option>
           </select>
         </div>
         <table>
@@ -149,13 +148,12 @@
         <div class="card">
           <div class="card-header"><div class="card-title">This month's summary</div></div>
           <div class="summary-item">
-            <div class="summary-icon" style="background:var(--teal-50)"><i class="ti ti-shopping-cart" style="color:var(--navy)"></i></div>
+            <div class="summary-icon" style="background:var(--teal-50)"><i class="ti ti-notes" style="color:var(--navy)"></i></div>
             <div style="flex:1">
-              <div class="summary-label">Grocery distribution</div>
-              <div class="summary-val" id="grocerySummary">—</div>
-              <div class="progress-bar"><div class="progress-fill fill-navy" id="groceryProgress" style="width:0%"></div></div>
+              <div class="summary-label">Medicine booklet</div>
+              <div class="summary-val" id="bookletSummary">—</div>
+              <div style="font-size:11px;color:var(--gray-500)">Completed physical booklets returned to OSCA this month</div>
             </div>
-            <span style="font-size:12px;font-weight:500;color:var(--navy)" id="groceryPercent">—</span>
           </div>
           <div class="summary-item">
             <div class="summary-icon" style="background:var(--amber-100)"><i class="ti ti-cash" style="color:var(--gold-dark)"></i></div>
@@ -165,15 +163,6 @@
               <div class="progress-bar"><div class="progress-fill fill-amber" id="pensionProgress" style="width:0%"></div></div>
             </div>
             <span style="font-size:12px;font-weight:500;color:var(--amber-600)" id="pensionPercent">—</span>
-          </div>
-          <div class="summary-item">
-            <div class="summary-icon" style="background:var(--coral-50)"><i class="ti ti-pill" style="color:var(--coral-900)"></i></div>
-            <div style="flex:1">
-              <div class="summary-label">Medicine assistance</div>
-              <div class="summary-val">Not tracked</div>
-              <div class="progress-bar"><div class="progress-fill fill-coral" style="width:0%"></div></div>
-            </div>
-            <span style="font-size:12px;font-weight:500;color:var(--coral-600)">—</span>
           </div>
         </div>
 
@@ -269,32 +258,33 @@ document.addEventListener('click', evt => { const wrap=document.querySelector('.
 
 async function loadDashboard() {
   try {
-    const [account, seniorResponse, pensionResponse, grocerySummaryResponse, documentResponse, deathResponse] = await Promise.all([
+    const [account, seniorResponse, pensionResponse, documentResponse, deathResponse] = await Promise.all([
       ArkheionAPI.getCurrentUser(), ArkheionAPI.get('/api/seniors/'), ArkheionAPI.get('/api/pensions/'),
-      ArkheionAPI.get('/api/grocery/dashboard-summary/'), ArkheionAPI.get('/api/documents/'), ArkheionAPI.get('/api/deaths/'),
+      ArkheionAPI.get('/api/documents/'), ArkheionAPI.get('/api/deaths/'),
     ]);
-    const seniors=asArray(seniorResponse), pensions=asArray(pensionResponse), grocerySummary=grocerySummaryResponse||{}, documents=asArray(documentResponse), deaths=asArray(deathResponse);
+    const seniors=asArray(seniorResponse), pensions=asArray(pensionResponse), documents=asArray(documentResponse), deaths=asArray(deathResponse);
     const active=seniors.filter(row=>row.is_active), incomplete=seniors.filter(row=>row.registration_status==='incomplete');
     const now=new Date(), currentMonth=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
     const monthPensions=pensions.filter(row=>monthKey(row.period)===currentMonth);
-    const claimedPensions=monthPensions.filter(row=>row.claimed).length, claimedGroceries=Number(grocerySummary.total_released)||0;
+    const claimedPensions=monthPensions.filter(row=>row.claimed).length;
+    const isIsingStaff=account.role==='regular_staff'&&String(account.barangay?.name||'').trim().toLowerCase()==='ising';
+    const bookletCard=document.getElementById('medicineBookletDashboardCard');
+    if(isIsingStaff){bookletCard.style.cursor='pointer';bookletCard.setAttribute('role','link');bookletCard.tabIndex=0;bookletCard.onclick=()=>location.href='booklet-summary.html';bookletCard.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();location.href='booklet-summary.html';}};}
+    const bookletSummary=await ArkheionAPI.get(`/api/booklet-returns/summary/?month=${encodeURIComponent(currentMonth)}`).catch(()=>null);
     const name=formatStaffName(account.username,account.role,account.first_name,account.last_name);
     const hour=now.getHours(), greeting=hour<12?'Good morning':hour<18?'Good afternoon':'Good evening';
     document.getElementById('pageGreeting').textContent=`${greeting}, ${name} 👋`;
     document.getElementById('topbarAvatar').textContent=(account.first_name||account.username||'S').slice(0,1).toUpperCase();
     document.getElementById('dashboardScope').textContent=`${account.barangay?.name||'Assigned barangay'} · ${now.toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'})}`;
     document.getElementById('memberScope').textContent=account.barangay?.name||'Members visible to your account';
-    const groceryCard=document.getElementById('groceryDashboardCard');
-    if(account.role==='regular_staff'&&String(account.barangay?.name||'').trim().toLowerCase()==='ising'){
-      groceryCard.style.cursor='pointer';groceryCard.setAttribute('role','link');groceryCard.tabIndex=0;
-      groceryCard.onclick=()=>location.href='grocery.html';
-      groceryCard.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();location.href='grocery.html';}};
-    }
-    paintMetric('totalMembers',active.length); paintMetric('groceryClaimed',claimedGroceries); paintMetric('pensionClaimed',claimedPensions); paintMetric('incompleteMembers',incomplete.length);
-    document.getElementById('grocerySub').textContent=`${Number(grocerySummary.total_pending)||0} pending across OSCA this month`;
+    paintMetric('totalMembers',active.length); paintMetric('pensionClaimed',claimedPensions); paintMetric('incompleteMembers',incomplete.length);
+    document.getElementById('bookletReturned').textContent=bookletSummary?Number(bookletSummary.returned_count||0).toLocaleString():'—';
+    document.getElementById('bookletSub').textContent=bookletSummary?'Completed booklets returned this month':'Booklet summary unavailable';
+    document.getElementById('bookletSummary').textContent=bookletSummary?`${Number(bookletSummary.returned_count||0).toLocaleString()} returned`:'Unavailable';
     document.getElementById('pensionSub').textContent=`${monthPensions.length-claimedPensions} unclaimed this month`;
-    setProgress('grocery',claimedGroceries,Number(grocerySummary.total_beneficiaries)||0); setProgress('pension',claimedPensions,active.length);
-    document.getElementById('mapMemberCount').textContent=`${active.filter(row=>row.latitude!=null&&row.longitude!=null).length} mapped members from live records`;
+    setProgress('pension',claimedPensions,active.length);
+    const exactPins=active.filter(row=>row.map_latitude!=null&&row.map_longitude!=null).length;
+    document.getElementById('mapMemberCount').textContent=`${exactPins} exact household pins shared with consent; others shown at barangay center`;
     renderRecentMembers(seniors);
     renderDashboardNotifications(seniors,pensions,[],documents,deaths);
   } catch(error) {

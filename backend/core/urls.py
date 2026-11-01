@@ -2,6 +2,7 @@ from django.urls import path
 from .views import (
     BarangayListAPIView,
     BookletReturnListCreateAPIView,
+    BookletReturnSummaryAPIView,
     ChangePasswordAPIView,
     CurrentUserAPIView,
     AnalyticsAPIView,
@@ -48,6 +49,7 @@ urlpatterns = [
     path("transfers/", ResidenceTransferListCreateAPIView.as_view(), name="residence-transfer-records"),
     path("pensions/", PensionHistoryAPIView.as_view(), name="pension-history"),
     path("booklet-returns/", BookletReturnListCreateAPIView.as_view(), name="booklet-return-list-create"),
+    path("booklet-returns/summary/", BookletReturnSummaryAPIView.as_view(), name="booklet-return-summary"),
     path("grocery/claims/", GroceryClaimListAPIView.as_view(), name="grocery-claim-report"),
     path("grocery/claims/<int:pk>/", GroceryClaimDetailAPIView.as_view(), name="grocery-claim-detail"),
     path("grocery/distributions/", GroceryDistributionListCreateAPIView.as_view(), name="grocery-distribution-list-create"),

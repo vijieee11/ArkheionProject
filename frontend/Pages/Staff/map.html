@@ -14,11 +14,13 @@
     .pin-ok{color:var(--navy);}
     .pin-inc{color:var(--gold-dark);}
     .pin-urg{color:var(--coral-600);}
+    .pin-bedridden{color:#7c3aed;filter:drop-shadow(0 0 3px rgba(124,58,237,.45));}
     /* Custom divIcon markers for senior-citizen pins (colored by status) */
     .member-pin{font-size:26px;transform:translate(-50%,-100%);cursor:pointer;}
     .member-pin i{filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));}
     /* Small dot markers for the 20 real barangay centers, shown for context */
     .brgy-dot{width:9px;height:9px;border-radius:50%;background:var(--navy-light,#0F6E56);border:2px solid var(--white);box-shadow:0 1px 3px rgba(0,0,0,.3);}
+    .approx-group-pin{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--navy-light,#0F6E56);color:#fff;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35);font-size:11px;font-weight:700;}
     .leaflet-popup-content{font-family:var(--font-body);font-size:12px;}
     /* Shrink the required OSM attribution so it's unobtrusive without
        removing it — OpenStreetMap's terms of use require it to stay visible. */
@@ -55,12 +57,13 @@
         <div class="stat-sub">Based on document API status</div>
       </div>
     </div>
+    <div id="mobilitySummary" class="med-note" style="margin:0 0 14px;padding:11px 14px;border-radius:8px;background:#eff6ff;color:#1e40af;font-size:12px;line-height:1.5;">Bedridden seniors: loading. Household pins are approximate unless exact coordinates have staff verification and senior consent.</div>
 
     <div class="card">
       <div class="card-header">
         <div>
           <div class="card-title">Barangay map — Carmen, Davao del Norte</div>
-          <div class="card-subtitle">All 20 barangays shown · click a pin to view member details</div>
+        <div class="card-subtitle">Barangay centers are used by default. Exact household pins appear only when verified and consented.</div>
         </div>
         <div class="card-actions">
           <select class="filter-select" id="brgy-filter" onchange="filterPins()">
@@ -72,6 +75,13 @@
             <option value="inc">Incomplete</option>
             <option value="pending">Pending</option>
           </select>
+          <select class="filter-select" id="mobility-filter" onchange="filterPins()" aria-label="Filter by mobility status">
+            <option value="all">All mobility statuses</option>
+            <option value="bedridden">Bedridden</option>
+            <option value="needs_assistance">Needs assistance</option>
+            <option value="mobile">Mobile</option>
+            <option value="unknown">Not yet assessed</option>
+          </select>
         </div>
       </div>
       <div style="padding:16px;">
@@ -81,6 +91,7 @@
             <span style="color:var(--navy)">● Complete</span>
             <span style="color:var(--gold-dark)">● Incomplete</span>
             <span style="color:var(--coral-600)">● Pending</span>
+            <span style="color:#7c3aed">● Bedridden</span>
             <span style="color:var(--navy-light,#0F6E56)">● Barangay center</span>
           </div>
         </div>
@@ -144,12 +155,18 @@
       id: senior.id,
       name: [senior.first_name, senior.middle_name, senior.last_name, senior.suffix].filter(Boolean).join(' '),
       osca: senior.osca_id, brgy: senior.barangay_name || '', status: memberStatus(senior),
-      lat: coordinate(senior.latitude),
-      lng: coordinate(senior.longitude),
+      mobility: senior.mobility_status || 'unknown',
+      mobilitySource: senior.mobility_status_source || '',
+      mobilityVerifiedAt: senior.mobility_status_verified_at || '',
+      mobilityVerifiedBy: senior.mobility_status_verified_by_name || '',
+      lat: coordinate(senior.map_latitude),
+      lng: coordinate(senior.map_longitude),
     }));
     document.getElementById('complete-count').textContent = members.filter(m => m.status === 'ok').length.toLocaleString();
     document.getElementById('incomplete-count').textContent = members.filter(m => m.status !== 'ok').length.toLocaleString();
     document.getElementById('pending-doc-count').textContent = documents.filter(doc => !doc.is_verified && doc.review_status !== 'rejected').length.toLocaleString();
+    const bedridden = members.filter(m => m.mobility === 'bedridden' && m.mobilityVerifiedAt);
+    document.getElementById('mobilitySummary').textContent = `Bedridden seniors: ${bedridden.length.toLocaleString()} verified record${bedridden.length === 1 ? '' : 's'}. Household pins are approximate unless exact coordinates have staff verification and senior consent.`;
     renderMemberPins();
   }
 
@@ -208,43 +225,61 @@
 
   let memberMarkers = [];
 
-  function statusClass(s){ return s === 'ok' ? 'pin-ok' : s === 'pending' ? 'pin-urg' : 'pin-inc'; }
+  function statusClass(s){ return s.mobility === 'bedridden' ? 'pin-bedridden' : s.status === 'ok' ? 'pin-ok' : s.status === 'pending' ? 'pin-urg' : 'pin-inc'; }
 
-  function renderMemberPins(filterBrgy='all', filterStatus='all'){
+  function safeText(value){return String(value||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  function memberPopup(m,b,hasCoordinates){
+    const mobilityLabel=m.mobility==='needs_assistance'?'Needs assistance':m.mobility==='unknown'?'Not yet assessed':m.mobility.charAt(0).toUpperCase()+m.mobility.slice(1);
+    return `<p style="font-weight:600;color:var(--gray-900);margin-bottom:4px;">${safeText(m.name)}</p>
+      <p style="color:var(--gray-500);margin-bottom:2px;">OSCA ID: ${safeText(m.osca)}</p>
+      <p style="color:var(--gray-500);margin-bottom:2px;">Barangay ${safeText(b.name)}</p>
+      <p style="color:var(--gray-500);margin-bottom:2px;">Mobility: ${safeText(mobilityLabel)}</p>
+      ${m.mobilityVerifiedAt ? `<p style="color:var(--gray-500);margin-bottom:2px;">Verified: ${safeText(m.mobilityVerifiedAt.slice(0,10))}${m.mobilityVerifiedBy ? ` by ${safeText(m.mobilityVerifiedBy)}` : ''}</p>` : ''}
+      <p style="color:var(--gray-500);margin-bottom:6px;">Documents on file: ${documentCounts.get(Number(m.id)) || 0}</p>
+      <p style="color:var(--gray-500);margin-bottom:8px;">${hasCoordinates ? 'Consent and staff-verified exact pin' : 'Approximate barangay center'}</p>
+      <button class="btn btn-navy btn-sm btn-full" onclick="location.href='member-detail.html?id=${encodeURIComponent(m.osca)}'">View profile</button>`;
+  }
+
+  function renderMemberPins(filterBrgy='all', filterStatus='all', filterMobility='all'){
     memberMarkers.forEach(m => map.removeLayer(m));
     memberMarkers = [];
-
-    members.forEach(m => {
-      if (filterBrgy !== 'all' && m.brgy !== filterBrgy) return;
-      if (filterStatus !== 'all' && m.status !== filterStatus) return;
-
+    const visible = members.filter(m =>
+      (filterBrgy === 'all' || m.brgy === filterBrgy) &&
+      (filterStatus === 'all' || m.status === filterStatus) &&
+      (filterMobility === 'all' || m.mobility === filterMobility)
+    );
+    const approximateByBarangay = new Map();
+    visible.forEach(m => {
       const b = barangays.find(x => x.name === m.brgy);
       if (!b) return;
       const hasCoordinates = Number.isFinite(m.lat) && Number.isFinite(m.lng);
-      const lat = hasCoordinates ? m.lat : b.lat, lng = hasCoordinates ? m.lng : b.lng;
-
+      if (!hasCoordinates) {
+        if (!approximateByBarangay.has(m.brgy)) approximateByBarangay.set(m.brgy, []);
+        approximateByBarangay.get(m.brgy).push(m);
+        return;
+      }
       const icon = L.divIcon({
         className: '',
-        html: `<div class="member-pin"><i class="ti ti-map-pin-filled ${statusClass(m.status)}"></i></div>`,
+        html: `<div class="member-pin"><i class="ti ti-map-pin-filled ${statusClass(m)}"></i></div>`,
         iconSize: [26,26], iconAnchor: [13,26],
       });
-
-      const marker = L.marker([lat, lng], { icon }).addTo(map);
-      const safeName = String(m.name || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-      const safeOsca = String(m.osca || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-      marker.bindPopup(`
-        <p style="font-weight:600;color:var(--gray-900);margin-bottom:4px;">${safeName}</p>
-        <p style="color:var(--gray-500);margin-bottom:2px;">OSCA ID: ${safeOsca}</p>
-        <p style="color:var(--gray-500);margin-bottom:2px;">Barangay ${b.name}</p>
-        <p style="color:var(--gray-500);margin-bottom:8px;">Documents: ${documentCounts.get(Number(m.id)) || 0}${hasCoordinates ? '' : ' · location shown at barangay center'}</p>
-        <button class="btn btn-navy btn-sm btn-full" onclick="location.href='member-detail.html?id=${encodeURIComponent(m.osca)}'">View profile</button>
-      `);
+      const marker = L.marker([m.lat, m.lng], { icon }).addTo(map);
+      marker.bindPopup(memberPopup(m,b,true));
+      memberMarkers.push(marker);
+    });
+    approximateByBarangay.forEach((rows,brgyName)=>{
+      const b=barangays.find(item=>item.name===brgyName);if(!b)return;
+      const bedridden=rows.filter(row=>row.mobility==='bedridden').length;
+      const icon=L.divIcon({className:'',html:`<div class="approx-group-pin">${rows.length}</div>`,iconSize:[30,30],iconAnchor:[15,15]});
+      const marker=L.marker([b.lat,b.lng],{icon}).addTo(map);
+      const list=rows.slice(0,12).map(row=>`<li><a href="member-detail.html?id=${encodeURIComponent(row.osca)}">${safeText(row.name)}</a> — ${safeText(row.mobility==='needs_assistance'?'Needs assistance':row.mobility==='unknown'?'Not yet assessed':row.mobility)}</li>`).join('');
+      marker.bindPopup(`<strong>Approximate area: ${safeText(b.name)}</strong><p>${rows.length} senior record${rows.length===1?'':'s'} shown at barangay center. ${bedridden} bedridden.</p><ul style="padding-left:18px;max-height:160px;overflow:auto">${list}</ul>${rows.length>12?`<small>Showing 12 of ${rows.length}. Use the mobility and barangay filters to narrow results.</small>`:''}`);
       memberMarkers.push(marker);
     });
   }
 
   function filterPins(){
-    renderMemberPins(document.getElementById('brgy-filter').value, document.getElementById('status-filter').value);
+    renderMemberPins(document.getElementById('brgy-filter').value, document.getElementById('status-filter').value, document.getElementById('mobility-filter').value);
   }
 
   function showToast(msg){
@@ -255,14 +290,14 @@
   }
 
   function exportMapData(){
-    const headers = ['Name','OSCA ID','Barangay','Status','Latitude','Longitude','Location source'];
+    const headers = ['Name','OSCA ID','Barangay','Registration status','Mobility status','Latitude','Longitude','Location source'];
     const rows = members.map(m => {
       const b = barangays.find(x => x.name === m.brgy);
       if (!b) return null;
       const hasCoordinates = Number.isFinite(m.lat) && Number.isFinite(m.lng);
       const lat = (hasCoordinates ? m.lat : b.lat).toFixed(6), lng = (hasCoordinates ? m.lng : b.lng).toFixed(6);
-      const source = hasCoordinates ? 'Member coordinates' : 'Barangay center (approximate)';
-      return [m.name, m.osca, m.brgy, m.status, lat, lng, source].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
+      const source = hasCoordinates ? 'Senior-consented, staff-verified exact pin' : 'Barangay center (approximate)';
+      return [m.name, m.osca, m.brgy, m.status, m.mobility, lat, lng, source].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
     }).filter(Boolean);
     const csv = [headers.join(','), ...rows].join('\n');
     const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });

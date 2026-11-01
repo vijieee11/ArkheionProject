@@ -25,7 +25,7 @@
   const fullName = record => [record.first_name, record.middle_name, record.last_name].filter(Boolean).join(' ');
   function fmtDate(value) {
     if (!value) return '—';
-    const date = new Date(`${value}T00:00:00`);
+    const date = new Date(String(value).length === 10 ? `${value}T00:00:00` : value);
     return Number.isNaN(date.valueOf()) ? esc(value) : date.toLocaleDateString('en-PH', {year:'numeric',month:'short',day:'numeric'});
   }
   function getPeriodParts(record) {
@@ -64,12 +64,21 @@
   function renderProfile(record, deaths, transfers) {
     seniorRecord = record;
     const name = fullName(record) || 'Unnamed senior citizen';
+    const mobilityLabels = {unknown:'Not yet assessed',mobile:'Mobile',needs_assistance:'Needs assistance',bedridden:'Bedridden'};
+    const mobilitySources = {osca_record:'OSCA record',staff_assessment:'Staff assessment',home_visit:'Home visit',senior_report:'Reported by senior',representative_report:'Reported by representative'};
+    const mobilityBadgeClass = record.mobility_status === 'bedridden' ? 'badge-miss' : record.mobility_status === 'mobile' ? 'badge-ok' : 'badge-pend';
+    const hasExactMapPin = record.map_latitude != null && record.map_longitude != null;
     const death = deaths.find(item => Number(item.senior_citizen) === Number(record.id));
     const seniorTransfers = transfers.filter(item => Number(item.senior_citizen) === Number(record.id));
     const fields = [
       ['OSCA ID',record.osca_id],['Registration certificate',record.registration_cert_no],['Barangay',record.barangay_name],
       ['Date of birth',fmtDate(record.date_of_birth)],['Age',record.age],['Sex',record.sex === 'M' ? 'Male' : record.sex === 'F' ? 'Female' : record.sex],
       ['Civil status',record.civil_status],['Address',record.address],['Registered on',fmtDate(record.date_of_registration)],
+      ['Mobility status',mobilityLabels[record.mobility_status] || mobilityLabels.unknown],
+      ['Mobility verification source',mobilitySources[record.mobility_status_source] || '—'],
+      ['Mobility verified by',record.mobility_status_verified_by_name || '—'],
+      ['Mobility verified on',fmtDate(record.mobility_status_verified_at)],
+      ['Map location',hasExactMapPin ? 'Exact pin available — consent and staff verification recorded' : `Approximate barangay center · ${record.barangay_name || 'Barangay not recorded'}`],
       ['Registration status',record.registration_status],['Senior record',record.is_active ? 'Active' : 'Inactive'],
       ['Portal account',record.has_portal_account ? 'Generated' : 'Not generated'],['Milestone age',record.milestone_age],
     ];
@@ -82,7 +91,7 @@
     timeline.sort((a,b) => String(b.date || '').localeCompare(String(a.date || '')));
     const root = document.getElementById('profileContent');
     root.innerHTML = `
-      <section class="card"><div class="card-body"><div class="profile-top"><div class="profile-avatar">${esc(name.split(/\s+/).map(part=>part[0]).slice(0,2).join('').toUpperCase())}</div><div class="profile-title"><h1>${esc(name)}</h1><div class="profile-sub">${esc(record.osca_id)} · ${esc(record.barangay_name || 'No barangay recorded')}</div><div style="margin-top:9px"><span class="badge ${record.is_active ? 'badge-ok' : 'badge-miss'}">${record.is_active ? 'Active record' : 'Inactive record'}</span>${death ? ' <span class="badge badge-miss">Deceased</span>' : ''}</div></div><div class="profile-actions"><a class="btn btn-ghost btn-sm" href="member-records.html"><i class="ti ti-arrow-left"></i> Back to records</a></div></div></div></section>
+      <section class="card"><div class="card-body"><div class="profile-top"><div class="profile-avatar">${esc(name.split(/\s+/).map(part=>part[0]).slice(0,2).join('').toUpperCase())}</div><div class="profile-title"><h1>${esc(name)}</h1><div class="profile-sub">${esc(record.osca_id)} · ${esc(record.barangay_name || 'No barangay recorded')}</div><div style="margin-top:9px"><span class="badge ${record.is_active ? 'badge-ok' : 'badge-miss'}">${record.is_active ? 'Active record' : 'Inactive record'}</span> <span class="badge ${mobilityBadgeClass}">${esc(mobilityLabels[record.mobility_status] || mobilityLabels.unknown)}</span>${death ? ' <span class="badge badge-miss">Deceased</span>' : ''}</div></div><div class="profile-actions"><a class="btn btn-ghost btn-sm" href="member-records.html"><i class="ti ti-arrow-left"></i> Back to records</a></div></div></div></section>
       <div class="profile-note" style="margin:12px 0">This profile shows the information currently available in OSCA records. Membership classification, contact number, and uploaded document history are not included in the current senior-record API.</div>
       <section class="card"><div class="card-header"><div><div class="card-title">Senior background</div><div class="card-subtitle">Personal details and account status from the backend.</div></div></div><div class="card-body"><div class="profile-grid">${fields.map(([label,value])=>`<div class="profile-field"><div class="profile-label">${esc(label)}</div><div class="profile-value">${esc(value ?? '—')}</div></div>`).join('')}</div>${death ? `<div class="profile-note" style="margin-top:14px">Death record on file: ${fmtDate(death.date_of_death)}${death.notes ? ` · ${esc(death.notes)}` : ''}</div>` : ''}</div></section>
       <section class="card"><div class="card-header" style="gap:10px;flex-wrap:wrap"><div><div class="card-title">Pension history</div><div class="card-subtitle">Backend pension records for this senior.</div></div><div class="history-filters"><select id="pensionYear" onchange="renderPensionHistory()"><option value="">All years</option></select><select id="pensionMonth" onchange="renderPensionHistory()"><option value="">All months</option><option value="01">January</option><option value="02">February</option><option value="03">March</option><option value="04">April</option><option value="05">May</option><option value="06">June</option><option value="07">July</option><option value="08">August</option><option value="09">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select><select id="pensionStatus" onchange="renderPensionHistory()"><option value="">All statuses</option><option>Claimed</option><option>Unclaimed</option></select></div></div><div style="padding:0 16px 10px;color:var(--gray-500);font-size:11px" id="pensionResultCount"></div><div class="history-wrap"><table class="history-table"><thead><tr><th>Period</th><th>Amount</th><th>Status</th><th>Date claimed</th><th>Claimed by</th><th>Remarks</th></tr></thead><tbody id="pensionRows"></tbody></table><div id="pensionEmpty" class="history-empty" hidden>No pension history matches these filters.</div></div></section>

@@ -28,6 +28,12 @@ class FamilyMemberSerializer(serializers.ModelSerializer):
 
 
 class SeniorCitizenSerializer(serializers.ModelSerializer):
+    latitude = serializers.FloatField(required=False, allow_null=True, write_only=True)
+    longitude = serializers.FloatField(required=False, allow_null=True, write_only=True)
+    map_latitude = serializers.SerializerMethodField()
+    map_longitude = serializers.SerializerMethodField()
+    coordinates_verified_by_name = serializers.SerializerMethodField()
+    mobility_status_verified_by_name = serializers.SerializerMethodField()
     barangay = serializers.PrimaryKeyRelatedField(
         queryset=Barangay.objects.filter(is_active=True),
         allow_null=False,
@@ -61,6 +67,16 @@ class SeniorCitizenSerializer(serializers.ModelSerializer):
             "barangay_name",
             "latitude",
             "longitude",
+            "map_latitude",
+            "map_longitude",
+            "exact_location_consent",
+            "exact_location_verified",
+            "coordinates_verified_at",
+            "coordinates_verified_by_name",
+            "mobility_status",
+            "mobility_status_source",
+            "mobility_status_verified_at",
+            "mobility_status_verified_by_name",
             "place_of_birth",
             "educational_attainment",
             "occupation",
@@ -78,12 +94,39 @@ class SeniorCitizenSerializer(serializers.ModelSerializer):
             "is_active",
             "created_at",
         ]
-        read_only_fields = ["osca_id", "registration_cert_no", "date_of_registration", "created_at"]
+        read_only_fields = [
+            "osca_id", "registration_cert_no", "date_of_registration", "created_at",
+            "map_latitude", "map_longitude", "coordinates_verified_at",
+            "coordinates_verified_by_name", "mobility_status_verified_at",
+            "mobility_status_verified_by_name",
+        ]
 
     has_portal_account = serializers.SerializerMethodField()
 
     def get_has_portal_account(self, obj):
         return obj.portal_users.exists()
+
+    def get_map_latitude(self, obj):
+        if obj.exact_location_consent and obj.exact_location_verified and obj.coordinates_verified_at and obj.latitude is not None and obj.longitude is not None:
+            return obj.latitude
+        return None
+
+    def get_map_longitude(self, obj):
+        if obj.exact_location_consent and obj.exact_location_verified and obj.coordinates_verified_at and obj.latitude is not None and obj.longitude is not None:
+            return obj.longitude
+        return None
+
+    def get_coordinates_verified_by_name(self, obj):
+        user = obj.coordinates_verified_by
+        if not user:
+            return ""
+        return user.get_full_name().strip() or user.get_username()
+
+    def get_mobility_status_verified_by_name(self, obj):
+        user = obj.mobility_status_verified_by
+        if not user:
+            return ""
+        return user.get_full_name().strip() or user.get_username()
 
     def validate(self, attrs):
         from django.utils import timezone
@@ -105,6 +148,27 @@ class SeniorCitizenSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("This staff account has no assigned barangay.")
             if "barangay" in attrs and attrs["barangay"].id != profile.barangay_id:
                 raise serializers.ValidationError({"barangay": "You cannot move a senior citizen to another barangay."})
+
+        mobility_status = attrs.get("mobility_status", getattr(self.instance, "mobility_status", "unknown"))
+        mobility_source = attrs.get("mobility_status_source", getattr(self.instance, "mobility_status_source", ""))
+        if mobility_status != "unknown" and not mobility_source:
+            raise serializers.ValidationError({"mobility_status_source": "Choose how this mobility status was verified."})
+
+        latitude = attrs.get("latitude", getattr(self.instance, "latitude", None))
+        longitude = attrs.get("longitude", getattr(self.instance, "longitude", None))
+        if (latitude is None) != (longitude is None):
+            raise serializers.ValidationError("Enter both coordinates, or leave both blank.")
+        if latitude is not None and not -90 <= latitude <= 90:
+            raise serializers.ValidationError({"latitude": "Latitude must be between -90 and 90."})
+        if longitude is not None and not -180 <= longitude <= 180:
+            raise serializers.ValidationError({"longitude": "Longitude must be between -180 and 180."})
+
+        exact_consent = attrs.get("exact_location_consent", getattr(self.instance, "exact_location_consent", False))
+        exact_verified = attrs.get("exact_location_verified", getattr(self.instance, "exact_location_verified", False))
+        if exact_verified and not exact_consent:
+            raise serializers.ValidationError({"exact_location_consent": "Senior consent is required before showing an exact map pin."})
+        if exact_verified and (latitude is None or longitude is None):
+            raise serializers.ValidationError({"exact_location_verified": "Enter both coordinates before verifying the exact map pin."})
         return attrs
 
     def create(self, validated_data):

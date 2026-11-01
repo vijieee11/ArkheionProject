@@ -476,13 +476,38 @@ class BookletReturnListCreateAPIView(ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(recorded_by=self.request.user)
 
+
+class BookletReturnSummaryAPIView(APIView):
+    """Share only the monthly booklet-return count with OSCA staff accounts."""
+    permission_classes = [IsAuthenticated, IsOSCAStaff]
+
+    def get(self, request):
+        month = request.query_params.get("month", "").strip()
+        if len(month) == 7 and month[4] == "-" and month[:4].isdigit() and month[5:].isdigit():
+            year, month_number = int(month[:4]), int(month[5:])
+            if not 1 <= month_number <= 12:
+                year, month_number = timezone.localdate().year, timezone.localdate().month
+        else:
+            today = timezone.localdate()
+            year, month_number = today.year, today.month
+        count = BookletReturn.objects.filter(
+            date_returned__year=year,
+            date_returned__month=month_number,
+        ).count()
+        return Response({
+            "month": f"{year:04d}-{month_number:02d}",
+            "returned_count": count,
+        })
+
 class SeniorCitizenListAPIView(ListCreateAPIView):
     serializer_class = SeniorCitizenSerializer
     permission_classes = [IsAuthenticated, IsOSCAStaff]
 
     def get_queryset(self):
         user = self.request.user
-        seniors = SeniorCitizen.objects.select_related("barangay")
+        seniors = SeniorCitizen.objects.select_related(
+            "barangay", "coordinates_verified_by", "mobility_status_verified_by"
+        )
 
         if user.role == "head_staff":
             return seniors.order_by("last_name", "first_name")
@@ -504,6 +529,18 @@ class SeniorCitizenListAPIView(ListCreateAPIView):
                 osca_id=f"P-{placeholder}",
                 registration_cert_no=f"P-{placeholder}",
             )
+            verified_at = timezone.now()
+            metadata_fields = []
+            if senior.mobility_status != "unknown":
+                senior.mobility_status_verified_at = verified_at
+                senior.mobility_status_verified_by = self.request.user
+                metadata_fields.extend(["mobility_status_verified_at", "mobility_status_verified_by"])
+            if senior.exact_location_verified and senior.exact_location_consent:
+                senior.coordinates_verified_at = verified_at
+                senior.coordinates_verified_by = self.request.user
+                metadata_fields.extend(["coordinates_verified_at", "coordinates_verified_by"])
+            if metadata_fields:
+                senior.save(update_fields=metadata_fields)
             year = timezone.localdate().year
             sequence = senior.pk
             osca_id = f"{year}-{sequence:03d}"
@@ -724,7 +761,9 @@ class SeniorCitizenDetailAPIView(generics.RetrieveUpdateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = SeniorCitizen.objects.select_related("barangay")
+        queryset = SeniorCitizen.objects.select_related(
+            "barangay", "coordinates_verified_by", "mobility_status_verified_by"
+        )
         if user.role == "head_staff":
             return queryset
         if user.role == "regular_staff":
@@ -735,7 +774,25 @@ class SeniorCitizenDetailAPIView(generics.RetrieveUpdateAPIView):
         return queryset.none()
 
     def perform_update(self, serializer):
-        instance = serializer.save()
+        from django.utils import timezone
+
+        changed = set(serializer.validated_data)
+        mobility_changed = bool({"mobility_status", "mobility_status_source"} & changed)
+        location_changed = bool({"latitude", "longitude", "exact_location_consent", "exact_location_verified"} & changed)
+        metadata = {}
+        if mobility_changed:
+            if serializer.validated_data.get("mobility_status", serializer.instance.mobility_status) != "unknown":
+                metadata.update(mobility_status_verified_at=timezone.now(), mobility_status_verified_by=self.request.user)
+            else:
+                metadata.update(mobility_status_verified_at=None, mobility_status_verified_by=None)
+        if location_changed:
+            verified = serializer.validated_data.get("exact_location_verified", serializer.instance.exact_location_verified)
+            consent = serializer.validated_data.get("exact_location_consent", serializer.instance.exact_location_consent)
+            if verified and consent:
+                metadata.update(coordinates_verified_at=timezone.now(), coordinates_verified_by=self.request.user)
+            else:
+                metadata.update(coordinates_verified_at=None, coordinates_verified_by=None)
+        instance = serializer.save(**metadata)
         record_action(self.request, "edit", "senior", instance, "Updated senior citizen record.")
 
 

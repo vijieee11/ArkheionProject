@@ -12,6 +12,7 @@
     .badge-warn{background:#fff3e0;color:#b06a00;}
     .badge-info{background:#e3f2fd;color:#1565c0;}
     .badge-danger{background:#fde8e8;color:#c0392b;}
+    @media (max-width: 520px){#mobility-info{grid-template-columns:1fr !important;}#mobility-info>div[style*="grid-column"]{grid-column:auto !important;}}
 
     /* Self-contained modal styling, guarded with !important so it always shows
        regardless of any conflicting rule in styles.css */
@@ -126,6 +127,15 @@
       </div>
     </div>
 
+    <div class="card" id="mobility-card">
+      <div class="card-header"><div><div class="card-title">Mobility and map location</div><div class="card-subtitle">Use an OSCA source or documented staff verification; this is not a medical diagnosis.</div></div></div>
+      <div id="mobility-info" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:16px 24px;">
+        <div><div class="td-muted" style="font-size:12px;">Mobility status</div><div class="td-bold" id="i-mobility">—</div></div>
+        <div><div class="td-muted" style="font-size:12px;">Verification</div><div class="td-bold" id="i-mobility-verification">—</div></div>
+        <div style="grid-column:1/-1"><div class="td-muted" style="font-size:12px;">Map location</div><div class="td-bold" id="i-map-location">—</div></div>
+      </div>
+    </div>
+
     <!-- Services status -->
     <div class="card">
       <div class="card-header">
@@ -235,6 +245,14 @@
       </div>
       <div class="form-group"><label>Barangay <span class="required">*</span></label><select id="em-brgy"></select></div>
       <div class="form-group"><label>Address</label><input type="text" id="em-address"></div>
+      <hr style="width:100%;border:0;border-top:1px solid var(--gray-200);margin:2px 0">
+      <div class="form-group"><label>Mobility status</label><select id="em-mobility"><option value="unknown">Not yet assessed</option><option value="mobile">Mobile</option><option value="needs_assistance">Needs assistance</option><option value="bedridden">Bedridden</option></select></div>
+      <div class="form-group"><label>Verification source</label><select id="em-mobility-source"><option value="">Choose source</option><option value="osca_record">OSCA record</option><option value="staff_assessment">Staff assessment</option><option value="home_visit">Home visit</option><option value="senior_report">Reported by senior</option><option value="representative_report">Reported by representative</option></select></div>
+      <div class="form-group"><label>Exact location latitude (optional)</label><input type="number" id="em-latitude" min="-90" max="90" step="any" placeholder="e.g. 7.357528"></div>
+      <div class="form-group"><label>Exact location longitude (optional)</label><input type="number" id="em-longitude" min="-180" max="180" step="any" placeholder="e.g. 125.702119"></div>
+      <label style="display:flex;gap:9px;align-items:flex-start;font-size:12px;line-height:1.45"><input type="checkbox" id="em-location-consent" style="margin-top:2px"> Senior consent to display the exact household pin has been documented.</label>
+      <label style="display:flex;gap:9px;align-items:flex-start;font-size:12px;line-height:1.45"><input type="checkbox" id="em-location-verified" style="margin-top:2px"> I verified the coordinates against an OSCA record or field check.</label>
+      <small style="color:var(--gray-500)">Without both confirmations, the map uses the barangay center. The system never guesses a home's location.</small>
     </div>
     <div class="mdl-footer">
       <button class="btn btn-ghost" onclick="closeMdl('modal-edit-member')">Cancel</button>
@@ -351,13 +369,22 @@
     document.getElementById('i-brgy').textContent = m.brgy;
     document.getElementById('i-contact').textContent = '—';
     document.getElementById('i-address').textContent = m.address || '—';
+    const mobilityLabels = {unknown:'Not yet assessed',mobile:'Mobile',needs_assistance:'Needs assistance',bedridden:'Bedridden'};
+    const mobilitySources = {osca_record:'OSCA record',staff_assessment:'Staff assessment',home_visit:'Home visit',senior_report:'Reported by senior',representative_report:'Reported by representative'};
+    document.getElementById('i-mobility').textContent = mobilityLabels[m.mobility_status] || mobilityLabels.unknown;
+    document.getElementById('i-mobility-verification').textContent = m.mobility_status_verified_at
+      ? `${mobilitySources[m.mobility_status_source] || 'Verified source'} · ${String(m.mobility_status_verified_at).slice(0,10)}${m.mobility_status_verified_by_name ? ` by ${m.mobility_status_verified_by_name}` : ''}`
+      : 'No verification recorded';
+    document.getElementById('i-map-location').textContent = m.map_latitude != null && m.map_longitude != null
+      ? `Exact pin shared with consent · verified ${String(m.coordinates_verified_at || '').slice(0,10)}${m.coordinates_verified_by_name ? ` by ${m.coordinates_verified_by_name}` : ''}`
+      : 'Approximate barangay center';
 
     const pension = [...(m.pensionRecords || [])].sort((a,b)=>String(b.period||'').localeCompare(String(a.period||'')))[0];
     const grocery = [...(m.groceryClaims || [])].sort((a,b)=>String(b.distribution_date||'').localeCompare(String(a.distribution_date||'')))[0];
     const serviceStatus = {
       pension: pension ? {label:pension.claimed?'Claimed':'Unclaimed',cls:pension.claimed?'badge-ok':'badge-pend'} : {label:'No record yet',cls:'badge-proc'},
       grocery: grocery ? {label:grocery.claimed?'Claimed':'Unclaimed',cls:grocery.claimed?'badge-ok':'badge-pend'} : {label:'No record yet',cls:'badge-proc'},
-      medicine: {label:'Not tracked in system',cls:'badge-proc'},
+      medicine: {label:'See physical OSCA booklet',cls:'badge-info'},
     };
     Object.entries(serviceStatus).forEach(([key,data])=>{
       const el=document.getElementById('svc-'+key);
@@ -436,6 +463,12 @@
     document.getElementById('em-civil').value = m.civil;
     document.getElementById('em-brgy').value = m.brgy;
     document.getElementById('em-address').value = m.address;
+    document.getElementById('em-mobility').value = m.mobility_status || 'unknown';
+    document.getElementById('em-mobility-source').value = m.mobility_status_source || '';
+    document.getElementById('em-latitude').value = m.map_latitude ?? '';
+    document.getElementById('em-longitude').value = m.map_longitude ?? '';
+    document.getElementById('em-location-consent').checked = Boolean(m.exact_location_consent);
+    document.getElementById('em-location-verified').checked = Boolean(m.exact_location_verified);
     openMdl('modal-edit-member');
   }
 
@@ -446,9 +479,27 @@
     const civil = document.getElementById('em-civil').value;
     const brgy = document.getElementById('em-brgy').value.trim();
     const address = document.getElementById('em-address').value.trim();
+    const mobilityStatus = document.getElementById('em-mobility').value;
+    const mobilitySource = document.getElementById('em-mobility-source').value;
+    const latitudeValue = document.getElementById('em-latitude').value.trim();
+    const longitudeValue = document.getElementById('em-longitude').value.trim();
+    const locationConsent = document.getElementById('em-location-consent').checked;
+    const locationVerified = document.getElementById('em-location-verified').checked;
 
     if (!name || !birthdate || !brgy) {
       showToast('Please fill in all required fields', 'error');
+      return;
+    }
+    if (mobilityStatus !== 'unknown' && !mobilitySource) {
+      showToast('Choose the source used to verify the mobility status.', 'error');
+      return;
+    }
+    if (Boolean(latitudeValue) !== Boolean(longitudeValue)) {
+      showToast('Enter both map coordinates, or leave both blank.', 'error');
+      return;
+    }
+    if (locationVerified && (!locationConsent || !latitudeValue || !longitudeValue)) {
+      showToast('Exact map pins require documented senior consent and both verified coordinates.', 'error');
       return;
     }
     const parts = name.trim().split(/\s+/);
@@ -456,7 +507,13 @@
 
     const selectedBarangay = barangays.find(item => item.name === brgy);
     if (!selectedBarangay) { showToast('Choose a barangay returned by the API.', 'error'); return; }
-    const patch = { first_name: parts.shift(), last_name: parts.pop() || '', middle_name: parts.join(' '), date_of_birth: birthdate, sex, civil_status: civil, barangay: selectedBarangay.id, address };
+    const patch = {
+      first_name: parts.shift(), last_name: parts.pop() || '', middle_name: parts.join(' '),
+      date_of_birth: birthdate, sex, civil_status: civil, barangay: selectedBarangay.id, address,
+      mobility_status: mobilityStatus, mobility_status_source: mobilitySource,
+      exact_location_consent: locationConsent, exact_location_verified: locationVerified,
+    };
+    if (latitudeValue && longitudeValue) { patch.latitude = Number(latitudeValue); patch.longitude = Number(longitudeValue); }
     try {
       const updated = await ArkheionAPI.patch(`/api/seniors/${currentMember.id}/`, patch);
       currentMember = { ...normalizeSenior(updated), docs: currentMember.docs, pensionRecords: currentMember.pensionRecords, groceryClaims: currentMember.groceryClaims };

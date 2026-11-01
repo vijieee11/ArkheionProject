@@ -106,6 +106,19 @@ class User(AbstractUser):
 
 class SeniorCitizen(models.Model):
     SEX_CHOICES = [('M', 'Male'), ('F', 'Female')]
+    MOBILITY_STATUS_CHOICES = [
+        ('unknown', 'Not yet assessed'),
+        ('mobile', 'Mobile'),
+        ('needs_assistance', 'Needs assistance'),
+        ('bedridden', 'Bedridden'),
+    ]
+    MOBILITY_STATUS_SOURCE_CHOICES = [
+        ('osca_record', 'OSCA record'),
+        ('staff_assessment', 'Staff assessment'),
+        ('home_visit', 'Home visit'),
+        ('senior_report', 'Reported by senior'),
+        ('representative_report', 'Reported by representative'),
+    ]
     CIVIL_STATUS_CHOICES = [
         ('single', 'Single'),
         ('married', 'Married'),
@@ -144,6 +157,31 @@ class SeniorCitizen(models.Model):
 
     latitude             = models.FloatField(null=True, blank=True)
     longitude            = models.FloatField(null=True, blank=True)
+    exact_location_consent = models.BooleanField(default=False)
+    exact_location_verified = models.BooleanField(default=False)
+    coordinates_verified_at = models.DateTimeField(null=True, blank=True)
+    coordinates_verified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='verified_senior_locations',
+    )
+
+    mobility_status = models.CharField(
+        max_length=24, choices=MOBILITY_STATUS_CHOICES, default='unknown'
+    )
+    mobility_status_source = models.CharField(
+        max_length=28, choices=MOBILITY_STATUS_SOURCE_CHOICES, blank=True
+    )
+    mobility_status_verified_at = models.DateTimeField(null=True, blank=True)
+    mobility_status_verified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='verified_senior_mobility_statuses',
+    )
 
     # Background
     educational_attainment = models.CharField(max_length=100, blank=True)

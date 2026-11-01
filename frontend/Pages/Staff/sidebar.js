@@ -79,10 +79,7 @@ function renderSidebar(activePage) {
     { section: 'Services', items: [
       { id: 'pension',  label: 'Pension',   icon: 'ti-cash',          href: 'pension.html' },
       ...(role === 'regular_staff' && (localStorage.getItem('ark_barangay') || '').trim().toLowerCase() === 'ising'
-        ? [{ id: 'grocery', label: 'Grocery distribution', icon: 'ti-shopping-cart', href: 'grocery.html' }]
-        : []),
-      ...(role === 'regular_staff' && (localStorage.getItem('ark_barangay') || '').trim().toLowerCase() === 'ising'
-        ? [{ id: 'booklet-summary', label: 'Booklet returns', icon: 'ti-notes', href: 'booklet-summary.html' }]
+        ? [{ id: 'booklet-summary', label: 'Medicine booklet summary', icon: 'ti-notes', href: 'booklet-summary.html' }]
         : []),
     ]},
     { section: 'Documents', items: [
