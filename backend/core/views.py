@@ -1103,12 +1103,16 @@ class StaffSettingsAPIView(APIView):
         saved = user.staff_settings if isinstance(user.staff_settings, dict) else {}
         notifications = {**self.DEFAULT_NOTIFICATIONS, **(saved.get("notifications") or {})}
         preferences = {**self.DEFAULT_PREFERENCES, **(saved.get("preferences") or {})}
+        read_alert_keys = saved.get("read_alert_keys", [])
+        if not isinstance(read_alert_keys, list):
+            read_alert_keys = []
         if user.role == "head_staff" and preferences["landing_page"] == "dashboard.html":
             preferences["landing_page"] = "hs-dashboard.html"
         return {
             "contact_number": user.contact_number,
             "notifications": notifications,
             "preferences": preferences,
+            "read_alert_keys": read_alert_keys,
         }
 
     def get(self, request):
@@ -1117,7 +1121,7 @@ class StaffSettingsAPIView(APIView):
     def patch(self, request):
         if not isinstance(request.data, dict):
             return Response({"detail": "Settings must be sent as a JSON object."}, status=400)
-        allowed_fields = {"contact_number", "notifications", "preferences"}
+        allowed_fields = {"contact_number", "notifications", "preferences", "read_alert_keys"}
         unknown_fields = set(request.data) - allowed_fields
         if unknown_fields:
             return Response({"detail": "Unsupported settings field."}, status=400)
@@ -1157,6 +1161,17 @@ class StaffSettingsAPIView(APIView):
                 if merged["per_page"] not in {10, 25, 50}:
                     return Response({key: ["Records per page must be 10, 25, or 50."]}, status=400)
             settings_data[key] = merged
+            changed_fields.append("staff_settings")
+
+        if "read_alert_keys" in request.data:
+            keys = request.data["read_alert_keys"]
+            if (
+                not isinstance(keys, list)
+                or len(keys) > 500
+                or any(not isinstance(key, str) or not key or len(key) > 1000 for key in keys)
+            ):
+                return Response({"read_alert_keys": ["Send up to 500 non-empty alert keys, each 1000 characters or fewer."]}, status=400)
+            settings_data["read_alert_keys"] = list(dict.fromkeys(keys))
             changed_fields.append("staff_settings")
 
         if changed_fields:

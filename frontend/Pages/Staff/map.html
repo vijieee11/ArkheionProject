@@ -105,29 +105,29 @@
 <script>
   renderSidebar('map');
 
-  // The 20 actual barangays of Carmen, Davao del Norte, with real
-  // coordinates (from barangay hall locations) and 2020 census population.
+  // Barangay hall reference coordinates. Resident population is omitted until
+  // OSCA-verified totals can be served by the backend.
   const barangays = [
-    { name:'Alejal',                lat:7.385608, lng:125.658913, pop:8174 },
-    { name:'Anibongan',             lat:7.385836, lng:125.716116, pop:3234 },
-    { name:'Asuncion (Cuatro-Cuatro)', lat:7.345590, lng:125.688887, pop:1860 },
-    { name:'Cebulano',              lat:7.351393, lng:125.671377, pop:2662 },
-    { name:'Guadalupe',             lat:7.377131, lng:125.742069, pop:3150 },
-    { name:'Ising',     lat:7.357528, lng:125.702119, pop:14204 },
-    { name:'La Paz',                lat:7.321765, lng:125.718571, pop:2757 },
-    { name:'Mabaus',                lat:7.417509, lng:125.750059, pop:1714 },
-    { name:'Mabuhay',               lat:7.337211, lng:125.555594, pop:1656 },
-    { name:'Magsaysay',             lat:7.397401, lng:125.635500, pop:4208 },
-    { name:'Mangalcal',             lat:7.366278, lng:125.660711, pop:4243 },
-    { name:'Minda',                 lat:7.357951, lng:125.582526, pop:1226 },
-    { name:'New Camiling',          lat:7.382295, lng:125.680609, pop:3829 },
-    { name:'Salvacion',             lat:7.404260, lng:125.707401, pop:1724 },
-    { name:'San Isidro',            lat:7.404899, lng:125.708830, pop:2377 },
-    { name:'Sto. Niño',            lat:7.334990, lng:125.694722, pop:6210 },
-    { name:'Taba',                  lat:7.348628, lng:125.727038, pop:1619 },
-    { name:'Tibulao',               lat:7.374005, lng:125.560429, pop:1574 },
-    { name:'Tubod',                 lat:7.367831, lng:125.630161, pop:10631 },
-    { name:'Tuganay',               lat:7.370734, lng:125.721613, pop:4966 },
+    { name:'Alejal',                lat:7.385608, lng:125.658913 },
+    { name:'Anibongan',             lat:7.385836, lng:125.716116 },
+    { name:'Asuncion (Cuatro-Cuatro)', lat:7.345590, lng:125.688887 },
+    { name:'Cebulano',              lat:7.351393, lng:125.671377 },
+    { name:'Guadalupe',             lat:7.377131, lng:125.742069 },
+    { name:'Ising',     lat:7.357528, lng:125.702119 },
+    { name:'La Paz',                lat:7.321765, lng:125.718571 },
+    { name:'Mabaus',                lat:7.417509, lng:125.750059 },
+    { name:'Mabuhay',               lat:7.337211, lng:125.555594 },
+    { name:'Magsaysay',             lat:7.397401, lng:125.635500 },
+    { name:'Mangalcal',             lat:7.366278, lng:125.660711 },
+    { name:'Minda',                 lat:7.357951, lng:125.582526 },
+    { name:'New Camiling',          lat:7.382295, lng:125.680609 },
+    { name:'Salvacion',             lat:7.404260, lng:125.707401 },
+    { name:'San Isidro',            lat:7.404899, lng:125.708830 },
+    { name:'Sto. Niño',            lat:7.334990, lng:125.694722 },
+    { name:'Taba',                  lat:7.348628, lng:125.727038 },
+    { name:'Tibulao',               lat:7.374005, lng:125.560429 },
+    { name:'Tubod',                 lat:7.367831, lng:125.630161 },
+    { name:'Tuganay',               lat:7.370734, lng:125.721613 },
   ];
 
   let members = [];
@@ -220,7 +220,7 @@
     const icon = L.divIcon({ className: '', html: '<div class="brgy-dot"></div>', iconSize: [9,9] });
     L.marker([b.lat, b.lng], { icon, zIndexOffset: -100 })
       .addTo(map)
-      .bindPopup(`<strong>Barangay ${b.name}</strong><br>Population (2020 census): ${b.pop.toLocaleString()}`);
+      .bindPopup(`<strong>Barangay ${safeText(b.name)}</strong><br>Resident population: not recorded from an OSCA-verified source`);
   });
 
   let memberMarkers = [];
