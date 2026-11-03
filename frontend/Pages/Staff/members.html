@@ -96,7 +96,7 @@
 <script>
   renderSidebar('members');
 
-  const PAGE_SIZE = 10;
+  let PAGE_SIZE = 10;
   let currentPage = 1;
   let members = [];
 
@@ -252,7 +252,12 @@
   async function loadMembers() {
     const rows = document.getElementById('members-rows');
     try {
-      const response = await ArkheionAPI.get('/api/seniors/');
+      const [response, settings] = await Promise.all([
+        ArkheionAPI.get('/api/seniors/'),
+        ArkheionAPI.get('/api/staff/settings/'),
+      ]);
+      const savedPageSize = Number(settings?.preferences?.per_page);
+      if ([10, 25, 50].includes(savedPageSize)) PAGE_SIZE = savedPageSize;
       const records = Array.isArray(response) ? response : (response.results || []);
       members = records.map(normalizeMember);
       updateSummary();

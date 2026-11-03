@@ -37,7 +37,7 @@
   <div class="content">
     <div class="alert alert-teal">
       <i class="ti ti-info-circle"></i>
-      Quick operational exports. PDF opens a print-ready page that you can print or save as PDF. Excel downloads an Excel-compatible CSV file. Official reports for DSWD, NCSC, or LGU should use the Head Staff Reports page.
+      Quick operational exports. PDF opens a print-ready page that you can print or save as PDF. Excel downloads a real .xlsx workbook. Official reports for DSWD, NCSC, or LGU should use the Head Staff Reports page.
     </div>
     <div id="reportStatus" class="report-status" role="status" aria-live="polite"></div>
 
@@ -45,26 +45,26 @@
       <div class="card"><div class="card-body report-card-body">
         <div class="report-icon" style="background:var(--teal-50);color:var(--navy)"><i class="ti ti-users"></i></div>
         <div><p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900)">Masterlist report</p><p class="report-subtitle">Active senior records visible to your account, grouped by barangay.</p></div>
-        <div class="report-actions"><button class="btn btn-ghost btn-sm" onclick="generateReport(this,'masterlist','pdf')"><i class="ti ti-file-type-pdf"></i> PDF / Print</button><button class="btn btn-ghost btn-sm" onclick="generateReport(this,'masterlist','csv')"><i class="ti ti-file-spreadsheet"></i> Excel (CSV)</button></div>
+        <div class="report-actions"><button class="btn btn-ghost btn-sm" onclick="generateReport(this,'masterlist','pdf')"><i class="ti ti-file-type-pdf"></i> PDF / Print</button><button class="btn btn-ghost btn-sm" onclick="generateReport(this,'masterlist','xlsx')"><i class="ti ti-file-spreadsheet"></i> Excel (.xlsx)</button></div>
       </div></div>
 
       <div class="card"><div class="card-body report-card-body">
         <div class="report-icon" style="background:var(--amber-100);color:var(--gold-dark)"><i class="ti ti-cash"></i></div>
         <div><p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900)">Pension payroll</p><p class="report-subtitle">Claim records for the selected month and barangay.</p></div>
-        <div class="report-actions"><button class="btn btn-ghost btn-sm" onclick="generateReport(this,'pension','pdf')"><i class="ti ti-file-type-pdf"></i> PDF / Print</button><button class="btn btn-ghost btn-sm" onclick="generateReport(this,'pension','csv')"><i class="ti ti-file-spreadsheet"></i> Excel (CSV)</button></div>
+        <div class="report-actions"><button class="btn btn-ghost btn-sm" onclick="generateReport(this,'pension','pdf')"><i class="ti ti-file-type-pdf"></i> PDF / Print</button><button class="btn btn-ghost btn-sm" onclick="generateReport(this,'pension','xlsx')"><i class="ti ti-file-spreadsheet"></i> Excel (.xlsx)</button></div>
       </div></div>
 
       <div class="card" id="groceryReportCard"><div class="card-body report-card-body">
         <div class="report-icon" style="background:var(--coral-50);color:var(--coral-900)"><i class="ti ti-shopping-cart"></i></div>
         <div><p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900)">Grocery distribution list</p><p class="report-subtitle">Beneficiary and claim status from saved grocery distribution records.</p></div>
-        <div class="report-actions"><button class="btn btn-ghost btn-sm" onclick="generateReport(this,'grocery','pdf')"><i class="ti ti-file-type-pdf"></i> PDF / Print</button><button class="btn btn-ghost btn-sm" onclick="generateReport(this,'grocery','csv')"><i class="ti ti-file-spreadsheet"></i> Excel (CSV)</button></div>
+        <div class="report-actions"><button class="btn btn-ghost btn-sm" onclick="generateReport(this,'grocery','pdf')"><i class="ti ti-file-type-pdf"></i> PDF / Print</button><button class="btn btn-ghost btn-sm" onclick="generateReport(this,'grocery','xlsx')"><i class="ti ti-file-spreadsheet"></i> Excel (.xlsx)</button></div>
       </div></div>
 
-      <div class="card"><div class="card-body report-card-body">
+      <div class="card" id="bookletReportCard"><div class="card-body report-card-body">
         <div class="report-icon" style="background:var(--teal-50);color:var(--navy)"><i class="ti ti-pill"></i></div>
         <div><p style="font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--gray-900)">Full booklet returns</p><p class="report-subtitle">Completed physical booklets returned to the OSCA office, filterable by month and barangay.</p></div>
         <div class="report-source-note">Each row represents one completed physical booklet received by OSCA.</div>
-        <div class="report-actions"><button class="btn btn-ghost btn-sm" onclick="generateReport(this,'booklet','pdf')"><i class="ti ti-file-type-pdf"></i> PDF / Print</button><button class="btn btn-ghost btn-sm" onclick="generateReport(this,'booklet','csv')"><i class="ti ti-file-spreadsheet"></i> Excel (CSV)</button></div>
+        <div class="report-actions"><button class="btn btn-ghost btn-sm" onclick="generateReport(this,'booklet','pdf')"><i class="ti ti-file-type-pdf"></i> PDF / Print</button><button class="btn btn-ghost btn-sm" onclick="generateReport(this,'booklet','xlsx')"><i class="ti ti-file-spreadsheet"></i> Excel (.xlsx)</button></div>
       </div></div>
     </div>
   </div>

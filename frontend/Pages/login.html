@@ -192,7 +192,16 @@
         } else if (profile.role === 'head_staff') {
           window.location.href = 'Headstaff/hs-dashboard.html';
         } else {
-          window.location.href = 'Staff/dashboard.html';
+          let landingPage = 'dashboard.html';
+          try {
+            const saved = await ArkheionAPI.get('/api/staff/settings/');
+            const candidate = saved?.preferences?.landing_page;
+            const allowed = ['dashboard.html', 'members.html', 'reports.html'];
+            if (allowed.includes(candidate)) landingPage = candidate;
+          } catch (_) {
+            // Use the role's default page when settings are unavailable.
+          }
+          window.location.href = `Staff/${landingPage}`;
         }
         return;
       }

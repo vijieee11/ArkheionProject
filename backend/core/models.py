@@ -90,6 +90,7 @@ class User(AbstractUser):
     )
     must_change_password = models.BooleanField(default=True)
     contact_number = models.CharField(max_length=20, blank=True)
+    staff_settings = models.JSONField(default=dict, blank=True)
     senior_citizen = models.ForeignKey(
         'SeniorCitizen',
         on_delete=models.SET_NULL,

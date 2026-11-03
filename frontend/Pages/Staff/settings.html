@@ -231,7 +231,10 @@
 renderSidebar('settings');
 
 async function loadSettings() {
-  const account = await ArkheionAPI.getCurrentUser();
+  const [account, savedSettings] = await Promise.all([
+    ArkheionAPI.getCurrentUser(),
+    ArkheionAPI.get('/api/staff/settings/'),
+  ]);
   if (!['head_staff', 'regular_staff'].includes(account.role)) {
     throw new Error('This settings page is for OSCA staff accounts.');
   }
@@ -251,7 +254,7 @@ async function loadSettings() {
   document.getElementById('profileRoleBadge').className = 'badge ' + (role === 'head_staff' ? 'badge-ok' : 'badge-proc');
   document.getElementById('pageGreeting').textContent = 'Hello, ' + displayName + ' 👋';
 
-  document.getElementById('contactInput').value = localStorage.getItem('ark_contact') || '';
+  document.getElementById('contactInput').value = savedSettings.contact_number || '';
   const assignedName = account.barangay?.name || (role === 'head_staff' ? 'All barangays' : 'Not assigned');
   document.getElementById('barangaySelection').textContent = assignedName;
   document.getElementById('barangayAssignmentHint').textContent = role === 'head_staff'
@@ -265,32 +268,42 @@ async function loadSettings() {
     localStorage.removeItem('ark_barangay_id');
   }
 
-  document.getElementById('notifReg').checked     = localStorage.getItem('ark_notif_reg') !== 'off';
-  document.getElementById('notifGrocery').checked = localStorage.getItem('ark_notif_grocery') !== 'off';
-  document.getElementById('notifPension').checked = localStorage.getItem('ark_notif_pension') !== 'off';
-  document.getElementById('notifSystem').checked  = localStorage.getItem('ark_notif_system') === 'on';
+  document.getElementById('notifReg').checked = savedSettings.notifications.registration;
+  document.getElementById('notifGrocery').checked = savedSettings.notifications.grocery;
+  document.getElementById('notifPension').checked = savedSettings.notifications.pension;
+  document.getElementById('notifSystem').checked = savedSettings.notifications.system;
 
-  document.getElementById('prefLanding').value = localStorage.getItem('ark_pref_landing') || 'dashboard.html';
-  document.getElementById('prefPerPage').value = localStorage.getItem('ark_pref_perpage') || '10';
+  document.getElementById('prefLanding').value = savedSettings.preferences.landing_page || 'dashboard.html';
+  document.getElementById('prefPerPage').value = String(savedSettings.preferences.per_page || 10);
+}
+
+async function saveSettingsPatch(payload, successMessage) {
+  try {
+    await ArkheionAPI.patch('/api/staff/settings/', payload);
+    showToast(successMessage);
+  } catch (error) {
+    showToast(error.message || 'Could not save your settings.', 'error');
+  }
 }
 
 function saveProfile() {
-  localStorage.setItem('ark_contact', document.getElementById('contactInput').value.trim());
-  showToast('Contact number saved on this device. Account and barangay assignment are managed by OSCA.');
+  return saveSettingsPatch({ contact_number: document.getElementById('contactInput').value.trim() }, 'Contact number saved to your OSCA account.');
 }
 
 function saveNotifications() {
-  localStorage.setItem('ark_notif_reg', document.getElementById('notifReg').checked ? 'on' : 'off');
-  localStorage.setItem('ark_notif_grocery', document.getElementById('notifGrocery').checked ? 'on' : 'off');
-  localStorage.setItem('ark_notif_pension', document.getElementById('notifPension').checked ? 'on' : 'off');
-  localStorage.setItem('ark_notif_system', document.getElementById('notifSystem').checked ? 'on' : 'off');
-  showToast('Notification preferences saved');
+  return saveSettingsPatch({ notifications: {
+    registration: document.getElementById('notifReg').checked,
+    grocery: document.getElementById('notifGrocery').checked,
+    pension: document.getElementById('notifPension').checked,
+    system: document.getElementById('notifSystem').checked,
+  } }, 'Notification preferences saved to your OSCA account.');
 }
 
 function saveSystemPrefs() {
-  localStorage.setItem('ark_pref_landing', document.getElementById('prefLanding').value);
-  localStorage.setItem('ark_pref_perpage', document.getElementById('prefPerPage').value);
-  showToast('System preferences saved');
+  return saveSettingsPatch({ preferences: {
+    landing_page: document.getElementById('prefLanding').value,
+    per_page: Number(document.getElementById('prefPerPage').value),
+  } }, 'System preferences saved to your OSCA account.');
 }
 
 loadSettings().catch(error => showToast(error.message || 'Could not load your OSCA account.', 'error'));

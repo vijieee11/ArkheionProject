@@ -28,6 +28,7 @@ from .views import (
     ResidenceTransferListCreateAPIView,
     StaffRegistrationAPIView,
     StaffRegistrationReviewAPIView,
+    StaffSettingsAPIView,
 )
 
 urlpatterns = [
@@ -59,6 +60,7 @@ urlpatterns = [
     path("analytics/", AnalyticsAPIView.as_view(), name="analytics"),
     path("barangays/", BarangayListAPIView.as_view(), name="barangay-list"),
     path("me/", CurrentUserAPIView.as_view(), name="current-user"),
+    path("staff/settings/", StaffSettingsAPIView.as_view(), name="staff-settings"),
     path("password/change/", ChangePasswordAPIView.as_view(), name="password-change"),
 ]
 

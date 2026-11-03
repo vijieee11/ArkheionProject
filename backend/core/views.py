@@ -1084,6 +1084,88 @@ class CurrentUserAPIView(APIView):
         return Response(result)
 
 
+class StaffSettingsAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsOSCAStaff]
+
+    DEFAULT_NOTIFICATIONS = {
+        "registration": True,
+        "grocery": True,
+        "pension": True,
+        "system": False,
+    }
+    DEFAULT_PREFERENCES = {"landing_page": "dashboard.html", "per_page": 10}
+    ALLOWED_LANDING_PAGES = {
+        "dashboard.html", "members.html", "reports.html",
+        "hs-dashboard.html", "hs-pending-approval.html", "hs-reports.html",
+    }
+
+    def get_settings(self, user):
+        saved = user.staff_settings if isinstance(user.staff_settings, dict) else {}
+        notifications = {**self.DEFAULT_NOTIFICATIONS, **(saved.get("notifications") or {})}
+        preferences = {**self.DEFAULT_PREFERENCES, **(saved.get("preferences") or {})}
+        if user.role == "head_staff" and preferences["landing_page"] == "dashboard.html":
+            preferences["landing_page"] = "hs-dashboard.html"
+        return {
+            "contact_number": user.contact_number,
+            "notifications": notifications,
+            "preferences": preferences,
+        }
+
+    def get(self, request):
+        return Response(self.get_settings(request.user))
+
+    def patch(self, request):
+        if not isinstance(request.data, dict):
+            return Response({"detail": "Settings must be sent as a JSON object."}, status=400)
+        allowed_fields = {"contact_number", "notifications", "preferences"}
+        unknown_fields = set(request.data) - allowed_fields
+        if unknown_fields:
+            return Response({"detail": "Unsupported settings field."}, status=400)
+
+        user = request.user
+        settings_data = user.staff_settings if isinstance(user.staff_settings, dict) else {}
+        changed_fields = []
+
+        if "contact_number" in request.data:
+            contact_number = str(request.data.get("contact_number") or "").strip()
+            if len(contact_number) > 20:
+                return Response({"contact_number": ["Contact number must be 20 characters or fewer."]}, status=400)
+            if contact_number != user.contact_number:
+                user.contact_number = contact_number
+                changed_fields.append("contact_number")
+
+        for key, allowed_keys in (
+            ("notifications", set(self.DEFAULT_NOTIFICATIONS)),
+            ("preferences", {"landing_page", "per_page"}),
+        ):
+            if key not in request.data:
+                continue
+            incoming = request.data[key]
+            if not isinstance(incoming, dict) or set(incoming) - allowed_keys:
+                return Response({key: ["Invalid settings format."]}, status=400)
+            current = self.get_settings(user)[key]
+            merged = {**current, **incoming}
+            if key == "notifications" and any(type(value) is not bool for value in merged.values()):
+                return Response({key: ["Notification preferences must be true or false."]}, status=400)
+            if key == "preferences":
+                if merged["landing_page"] not in self.ALLOWED_LANDING_PAGES:
+                    return Response({key: ["Choose an available landing page."]}, status=400)
+                try:
+                    merged["per_page"] = int(merged["per_page"])
+                except (TypeError, ValueError):
+                    return Response({key: ["Records per page must be 10, 25, or 50."]}, status=400)
+                if merged["per_page"] not in {10, 25, 50}:
+                    return Response({key: ["Records per page must be 10, 25, or 50."]}, status=400)
+            settings_data[key] = merged
+            changed_fields.append("staff_settings")
+
+        if changed_fields:
+            user.staff_settings = settings_data
+            user.save(update_fields=list(dict.fromkeys(changed_fields)))
+            record_action(request, "edit", "staff_settings", user, "Updated personal staff contact or preferences.")
+        return Response(self.get_settings(user))
+
+
 class ChangePasswordAPIView(APIView):
     permission_classes = [IsAuthenticated]
 

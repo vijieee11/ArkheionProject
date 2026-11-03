@@ -199,6 +199,7 @@ const asArray = data => Array.isArray(data) ? data : (data && Array.isArray(data
 const safeText = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let notifications = [];
 let unreadNotificationIds = new Set();
+let notificationPreferences = { registration: true, grocery: true, pension: true, system: false };
 
 function monthKey(value) {
   const date = String(value || '');
@@ -232,12 +233,12 @@ function renderDashboardNotifications(seniors, pensions, claims, documents, deat
   const incomplete = seniors.filter(row => row.registration_status === 'incomplete');
   const pendingDocs = documents.filter(row => row.review_status === 'pending');
   const pendingDeaths = deaths.filter(row => row.review_status === 'pending');
-  if (incomplete.length) alerts.push({id:'incomplete', icon:'ti-clock', tint:'var(--amber-100)', color:'var(--gold-dark)', text:`<strong>${incomplete.length}</strong> senior record${incomplete.length===1?'':'s'} marked incomplete.`, time:'Registration', href:'members.html'});
-  if (pendingDocs.length) alerts.push({id:'documents', icon:'ti-file-check', tint:'var(--teal-50)', color:'var(--navy)', text:`<strong>${pendingDocs.length}</strong> uploaded document${pendingDocs.length===1?'':'s'} awaiting review.`, time:'Document review', href:'upload.html'});
-  if (pendingDeaths.length) alerts.push({id:'deaths', icon:'ti-heart-x', tint:'var(--coral-50)', color:'var(--coral-900)', text:`<strong>${pendingDeaths.length}</strong> death report${pendingDeaths.length===1?'':'s'} awaiting Head Staff review.`, time:'Death records', href:'deaths.html'});
+  if (notificationPreferences.registration && incomplete.length) alerts.push({id:'incomplete', icon:'ti-clock', tint:'var(--amber-100)', color:'var(--gold-dark)', text:`<strong>${incomplete.length}</strong> senior record${incomplete.length===1?'':'s'} marked incomplete.`, time:'Registration', href:'members.html'});
+  if (notificationPreferences.system && pendingDocs.length) alerts.push({id:'documents', icon:'ti-file-check', tint:'var(--teal-50)', color:'var(--navy)', text:`<strong>${pendingDocs.length}</strong> uploaded document${pendingDocs.length===1?'':'s'} awaiting review.`, time:'Document review', href:'upload.html'});
+  if (notificationPreferences.system && pendingDeaths.length) alerts.push({id:'deaths', icon:'ti-heart-x', tint:'var(--coral-50)', color:'var(--coral-900)', text:`<strong>${pendingDeaths.length}</strong> death report${pendingDeaths.length===1?'':'s'} awaiting Head Staff review.`, time:'Death records', href:'deaths.html'});
   const currentMonth = new Date().toISOString().slice(0,7);
   const overdue = pensions.filter(row => !row.claimed && monthKey(row.period) && monthKey(row.period) < currentMonth);
-  if (overdue.length) alerts.push({id:'pension', icon:'ti-cash', tint:'var(--amber-100)', color:'var(--gold-dark)', text:`<strong>${overdue.length}</strong> unclaimed pension record${overdue.length===1?'':'s'} from an earlier period.`, time:'Pension records', href:'pension.html'});
+  if (notificationPreferences.pension && overdue.length) alerts.push({id:'pension', icon:'ti-cash', tint:'var(--amber-100)', color:'var(--gold-dark)', text:`<strong>${overdue.length}</strong> unclaimed pension record${overdue.length===1?'':'s'} from an earlier period.`, time:'Pension records', href:'pension.html'});
   notifications = alerts;
   unreadNotificationIds = new Set(alerts.map(item=>item.id));
   const badge = document.getElementById('notificationCount');
@@ -258,10 +259,11 @@ document.addEventListener('click', evt => { const wrap=document.querySelector('.
 
 async function loadDashboard() {
   try {
-    const [account, seniorResponse, pensionResponse, documentResponse, deathResponse] = await Promise.all([
+    const [account, seniorResponse, pensionResponse, documentResponse, deathResponse, savedSettings] = await Promise.all([
       ArkheionAPI.getCurrentUser(), ArkheionAPI.get('/api/seniors/'), ArkheionAPI.get('/api/pensions/'),
-      ArkheionAPI.get('/api/documents/'), ArkheionAPI.get('/api/deaths/'),
+      ArkheionAPI.get('/api/documents/'), ArkheionAPI.get('/api/deaths/'), ArkheionAPI.get('/api/staff/settings/'),
     ]);
+    notificationPreferences = { ...notificationPreferences, ...(savedSettings.notifications || {}) };
     const seniors=asArray(seniorResponse), pensions=asArray(pensionResponse), documents=asArray(documentResponse), deaths=asArray(deathResponse);
     const active=seniors.filter(row=>row.is_active), incomplete=seniors.filter(row=>row.registration_status==='incomplete');
     const now=new Date(), currentMonth=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;

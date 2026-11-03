@@ -7,7 +7,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
-from .models import Barangay, Document, SeniorCitizen, StaffProfile
+from .models import Barangay, Document, PensionRecord, SeniorCitizen, StaffProfile
 
 
 @override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
@@ -193,4 +193,75 @@ class DocumentWorkflowTests(TestCase):
             f"/api/documents/{document.pk}/review/", {"decision": "verify"}, format="json"
         )
         self.assertEqual(allowed.status_code, 200)
+
+    def test_staff_senior_list_and_detail_stay_within_assigned_barangay(self):
+        self.client.force_authenticate(self.staff)
+        listing = self.client.get("/api/seniors/")
+        self.assertEqual(listing.status_code, 200)
+        self.assertEqual([row["id"] for row in listing.data], [self.senior.pk])
+        self.assertEqual(self.client.get(f"/api/seniors/{self.other_senior.pk}/").status_code, 404)
+
+        self.client.force_authenticate(self.head)
+        all_records = self.client.get("/api/seniors/")
+        self.assertEqual(all_records.status_code, 200)
+        self.assertEqual({row["id"] for row in all_records.data}, {self.senior.pk, self.other_senior.pk})
+
+    def test_senior_can_only_view_own_profile_and_pension_records(self):
+        self.senior_user.senior_citizen = self.senior
+        self.senior_user.save(update_fields=["senior_citizen"])
+        own_pension = PensionRecord.objects.create(senior_citizen=self.senior, period="2026-10")
+        other_pension = PensionRecord.objects.create(senior_citizen=self.other_senior, period="2026-10")
+
+        self.client.force_authenticate(self.senior_user)
+        self.assertEqual(self.client.get(f"/api/seniors/{self.senior.pk}/").status_code, 200)
+        self.assertEqual(self.client.get(f"/api/seniors/{self.other_senior.pk}/").status_code, 404)
+        history = self.client.get("/api/pensions/")
+        self.assertEqual(history.status_code, 200)
+        self.assertEqual([row["id"] for row in history.data], [own_pension.pk])
+        filtered_history = self.client.get(f"/api/pensions/?senior={self.other_senior.pk}")
+        self.assertEqual(filtered_history.status_code, 200)
+        self.assertEqual(filtered_history.data, [])
+
+        self.client.force_authenticate(self.head)
+        head_history = self.client.get("/api/pensions/")
+        self.assertEqual({row["id"] for row in head_history.data}, {own_pension.pk, other_pension.pk})
+
+    def test_staff_cannot_read_or_create_pension_records_for_another_barangay(self):
+        other_pension = PensionRecord.objects.create(senior_citizen=self.other_senior, period="2026-10")
+        self.client.force_authenticate(self.staff)
+        history = self.client.get(f"/api/pensions/?senior={self.other_senior.pk}")
+        self.assertEqual(history.status_code, 200)
+        self.assertEqual(history.data, [])
+        self.assertEqual(self.client.get(f"/api/pensions/{other_pension.pk}/").status_code, 404)
+        create = self.client.post(
+            "/api/pensions/create/",
+            {"senior_citizen": self.other_senior.pk, "period": "2026-11", "amount": "500.00"},
+            format="json",
+        )
+        self.assertEqual(create.status_code, 400)
+
+    def test_staff_settings_are_saved_per_account_and_reject_non_staff(self):
+        self.client.force_authenticate(self.staff)
+        updated = self.client.patch(
+            "/api/staff/settings/",
+            {
+                "contact_number": "09123456789",
+                "notifications": {"registration": False, "system": True},
+                "preferences": {"landing_page": "members.html", "per_page": 25},
+            },
+            format="json",
+        )
+        self.assertEqual(updated.status_code, 200)
+        self.assertEqual(updated.data["contact_number"], "09123456789")
+        self.assertFalse(updated.data["notifications"]["registration"])
+        self.assertTrue(updated.data["notifications"]["system"])
+        self.assertEqual(updated.data["preferences"]["landing_page"], "members.html")
+        self.assertEqual(updated.data["preferences"]["per_page"], 25)
+
+        self.staff.refresh_from_db()
+        self.assertEqual(self.staff.contact_number, "09123456789")
+        self.assertEqual(self.client.get("/api/staff/settings/").data["preferences"]["per_page"], 25)
+
+        self.client.force_authenticate(self.senior_user)
+        self.assertEqual(self.client.get("/api/staff/settings/").status_code, 403)
 
