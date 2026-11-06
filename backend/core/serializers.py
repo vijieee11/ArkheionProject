@@ -4,6 +4,7 @@ import zipfile
 from rest_framework import serializers
 from .models import (
     Barangay,
+    BarangayPopulationSnapshot,
     BookletReturn,
     DeathRecord,
     Document,
@@ -19,6 +20,24 @@ class BarangaySerializer(serializers.ModelSerializer):
     class Meta:
         model = Barangay
         fields = ["id", "code", "name", "municipality"]
+
+
+class BarangayPopulationSnapshotSerializer(serializers.ModelSerializer):
+    barangay_name = serializers.CharField(source="barangay.name", read_only=True)
+    verified_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = BarangayPopulationSnapshot
+        fields = [
+            "id", "barangay", "barangay_name", "reference_year",
+            "resident_population", "source", "source_reference",
+            "verified_by_name", "verified_at",
+        ]
+
+    def get_verified_by_name(self, obj):
+        if not obj.verified_by:
+            return ""
+        return obj.verified_by.get_full_name().strip() or obj.verified_by.get_username()
 
 
 class FamilyMemberSerializer(serializers.ModelSerializer):

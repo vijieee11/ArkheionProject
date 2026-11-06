@@ -8,6 +8,18 @@ The upload page can display a **suggested document type** from a locally trained
 
 The text classifier cannot classify photo-only classes such as `2x2 ID photo` or `Full body photo` from text. Those need a separate image classifier or OCR/vision workflow and labeled image data.
 
+## Current project development set
+
+`data/document_classifier_development_v1.csv` has 80 labeled text examples: the 78 simulated samples from `document_classifier_simulated_v2.csv` plus text summaries of the two blank OSCA forms supplied for development. Its six labels match the Staff Upload dropdown: `OSCA Registration Form`, `NCSC Application Form`, `Birth certificate`, `Government ID`, `LCE endorsement letter`, and `Other`. The earlier `OSCA Form No. 1` and `Application form` labels are normalized to the corresponding dropdown labels.
+
+Use this file only for a grouped development holdout:
+
+```powershell
+python manage.py evaluate_document_classifier --dataset .\data\document_classifier_development_v1.csv --dataset-kind simulated
+```
+
+This reports accuracy, macro-F1, and per-class metrics. It intentionally does not save a model because this is not a separate independent test set. Only two examples are text summaries of the supplied blank OSCA forms; the remaining records are simulated, so this score must not be presented as real OSCA accuracy or as evidence that the 80% target has been met on real documents.
+
 ## Dataset format
 
 Create a UTF-8 CSV with these columns:

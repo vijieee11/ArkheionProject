@@ -4,10 +4,11 @@ import tempfile
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
-from .models import Barangay, Document, PensionRecord, SeniorCitizen, StaffProfile
+from .models import Barangay, BarangayPopulationSnapshot, Document, PensionRecord, SeniorCitizen, StaffProfile
 
 
 @override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
@@ -264,4 +265,69 @@ class DocumentWorkflowTests(TestCase):
 
         self.client.force_authenticate(self.senior_user)
         self.assertEqual(self.client.get("/api/staff/settings/").status_code, 403)
+
+    def test_population_api_exposes_only_verified_rows_in_staff_barangay(self):
+        from django.utils import timezone
+
+        rows = [
+            BarangayPopulationSnapshot.objects.create(
+                barangay=self.carmen, reference_year=2025, resident_population=12000,
+                source="OSCA registry", is_verified=True, verified_by=self.head,
+                verified_at=timezone.now(),
+            ),
+            BarangayPopulationSnapshot.objects.create(
+                barangay=self.carmen, reference_year=2023, resident_population=11500,
+                source="OSCA archive", is_verified=True, verified_by=self.head,
+                verified_at=timezone.now(),
+            ),
+            BarangayPopulationSnapshot.objects.create(
+                barangay=self.other_barangay, reference_year=2025, resident_population=8500,
+                source="OSCA registry", is_verified=True, verified_by=self.head,
+                verified_at=timezone.now(),
+            ),
+            BarangayPopulationSnapshot.objects.create(
+                barangay=self.carmen, reference_year=2026, resident_population=12500,
+                source="Unreviewed estimate", is_verified=False,
+            ),
+            BarangayPopulationSnapshot.objects.create(
+                barangay=self.carmen, reference_year=2024, resident_population=11800,
+                source="Incomplete verification", is_verified=True,
+            ),
+        ]
+
+        self.client.force_authenticate(self.staff)
+        response = self.client.get("/api/barangay-population/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual({row["id"] for row in response.data}, {rows[0].pk, rows[1].pk})
+        self.assertEqual(self.client.get("/api/barangay-population/?reference_year=2023").data[0]["id"], rows[1].pk)
+        self.assertEqual(self.client.get("/api/barangay-population/?reference_year=not-a-year").status_code, 400)
+        self.assertEqual(self.client.get("/api/barangay-population/?reference_year=1800").status_code, 400)
+        self.assertEqual(self.client.post("/api/barangay-population/", {}, format="json").status_code, 405)
+
+        self.client.force_authenticate(self.other_staff)
+        other_response = self.client.get("/api/barangay-population/")
+        self.assertEqual([row["id"] for row in other_response.data], [rows[2].pk])
+
+        self.client.force_authenticate(self.head)
+        head_response = self.client.get("/api/barangay-population/")
+        self.assertEqual({row["id"] for row in head_response.data}, {rows[0].pk, rows[1].pk, rows[2].pk})
+
+        self.client.force_authenticate(self.senior_user)
+        self.assertEqual(self.client.get("/api/barangay-population/").status_code, 403)
+
+    def test_population_snapshot_validates_reference_year_and_nonzero_total(self):
+        valid = BarangayPopulationSnapshot(
+            barangay=self.carmen, reference_year=2025, resident_population=12000,
+            source="OSCA registry",
+        )
+        valid.full_clean()
+
+        for year, total in ((1899, 12000), (2101, 12000), (2025, 0)):
+            with self.subTest(year=year, total=total):
+                invalid = BarangayPopulationSnapshot(
+                    barangay=self.carmen, reference_year=year,
+                    resident_population=total, source="OSCA registry",
+                )
+                with self.assertRaises(DjangoValidationError):
+                    invalid.full_clean()
 

@@ -1,0 +1,61 @@
+﻿text,label,source_id
+OSCA Form No. 1 | Office of the Senior Citizens Affairs Carmen | registration form | name date of birth age sex civil status place of birth address educational attainment occupation annual income family composition association membership date of registration,OSCA Registration Form,TEST-05-01
+Senior citizens affairs office | registration of senior citizen | applicant name birth date barangay address civil status skills family composition | signature and date of registration,OSCA Registration Form,TEST-05-02
+"OSCA Carmen registration form | senior citizen personal information | birth details, sex, civil status, address, occupation and family members | applicant certifies information is correct",OSCA Registration Form,TEST-05-03
+Registration form for OSCA membership | photo | last name first name middle name | date of birth age sex | place of birth address | family composition and senior citizens association,OSCA Registration Form,TEST-05-04
+"Office of Senior Citizens Affairs | application to register as a local senior citizen | residence, educational attainment, income, occupation, family members and association details",OSCA Registration Form,TEST-05-05
+Senior citizen registry record | registration date | certificate number | date of birth | address | civil status | family composition | thumbmark,OSCA Registration Form,TEST-05-06
+"OSCA Form 1 | Municipality of Carmen | name, birth date, age, sex, place of birth, address and occupation | family composition table | signature",OSCA Registration Form,TEST-05-07
+Senior citizens registration sheet | applicant details | current address and barangay | annual income | family members and relationship | membership to seniors association,OSCA Registration Form,TEST-05-08
+Registration of senior citizen | OSCA personal data form | age and residence information | family composition | association membership | issued at and issued on,OSCA Registration Form,TEST-05-09
+Local OSCA new member form | personal information and family profile | birth details and residential address | certification and applicant signature,OSCA Registration Form,TEST-05-10
+National Commission of Senior Citizens | Annex A application form | Octogenarian Nonagenarian and Centenarian Benefit Program | milestone age | RRN and OSCA ID number,NCSC Application Form,TEST-04-01
+Application to claim benefits under Republic Act 11982 | NCSC | applicant for milestone age 80 85 90 95 or 100 | personal information and designated beneficiary,NCSC Application Form,TEST-04-02
+NCSC Registration Reference Number | application form for cash gift benefit | name date of birth permanent address citizenship | certification under oath,NCSC Application Form,TEST-04-03
+Office of the President National Commission of Senior Citizens | Annex A | documentary requirements | validation assessment report | initial assessment eligible or ineligible,NCSC Application Form,TEST-04-04
+Octogenarian benefit program application | 2x2 ID picture | OSCA ID number | family information | contact information | utilization of cash gifts,NCSC Application Form,TEST-04-05
+NCSC application form | primary document for age verification | PSA certificate of live birth or Philippine Identification System ID | recent ID picture,NCSC Application Form,TEST-04-06
+Milestone age cash gift application | personal information | spouse children authorized representatives | designated primary and contingent beneficiary,NCSC Application Form,TEST-04-07
+National Commission of Senior Citizens Annex A | documentary requirements to be filled by NCSC personnel | findings and recommendations | date validated,NCSC Application Form,TEST-04-08
+RA 11982 application | applicant declaration | birth details and residence | documentary requirements | name and signature or thumbmark of applicant,NCSC Application Form,TEST-04-09
+NCSC benefit claim form for senior citizens | milestone age selection | application certification | data privacy consent | validating personnel signature,NCSC Application Form,TEST-04-10
+Republic of the Philippines | Certificate of Live Birth | Office of the Civil Registrar General | province city municipality | registry number | name sex date of birth place of birth,Birth certificate,TEST-01-01
+PSA certified true copy | Certificate of Live Birth | child name date born place of birth sex | mother and father particulars | registrar certification,Birth certificate,TEST-01-02
+Certificate of Live Birth | date of registration | name of child | date and place of birth | citizenship and religion | attendant at birth,Birth certificate,TEST-01-03
+Philippine Statistics Authority | civil registry document | live birth record | registry number | date born | mother father and informant,Birth certificate,TEST-01-04
+Local civil registrar | birth certificate | name at birth | date of birth | sex | place of birth | parents names | official seal,Birth certificate,TEST-01-05
+PSA Birth Certificate | Republic of the Philippines | certified copy of entry in the civil register | certificate of live birth | registrar signature,Birth certificate,TEST-01-06
+Certificate of Live Birth | province and municipality | first middle last name | date and time of birth | mother maiden name | father name,Birth certificate,TEST-01-07
+Civil Registry document | Certificate of Live Birth | birth order and type of birth | weight at birth | parents citizenship and occupation,Birth certificate,TEST-01-08
+Office of the Civil Registrar General | certified certificate of live birth | registration number | date of birth | place of birth | parent information,Birth certificate,TEST-01-09
+Birth record issued by Philippine Statistics Authority | live birth certificate | registrant name | birth date and location | date filed and registry details,Birth certificate,TEST-01-10
+Republic of the Philippines | PhilID | Philippine Identification System | surname given names date of birth sex | card number,Government ID,TEST-02-01
+Philippine Identification Card | National ID | holder name | date of birth | address | PhilSys card number,Government ID,TEST-02-02
+Republic of the Philippines | UMID card | unified multi-purpose identification | member name | CRN | date of birth,Government ID,TEST-02-03
+Driver license | Land Transportation Office | license number | name | address | date of birth | expiry date | restriction codes,Government ID,TEST-02-04
+Philippine passport | Department of Foreign Affairs | passport number | surname given names nationality date of birth place of birth,Government ID,TEST-02-05
+Voter identification card | Commission on Elections | registered voter name | precinct number | city municipality | voter ID,Government ID,TEST-02-06
+Postal identity card | Republic of the Philippines | ID number | cardholder | birth date | residential address | signature,Government ID,TEST-02-07
+Senior citizen identification card | Office of Senior Citizens Affairs | OSCA ID no | member name | barangay | date issued | photograph,Government ID,TEST-02-08
+Professional Regulation Commission identification card | PRC license number | profession | registrant name | validity date,Government ID,TEST-02-09
+Government issued identification | cardholder name and photograph | identification number | birth date | issuing agency | expiration date,Government ID,TEST-02-10
+Office of the Municipal Mayor | endorsement letter | respectfully endorses the attached list of senior citizen applicants for validation | Local Chief Executive signature,LCE endorsement letter,TEST-03-01
+Municipality of Carmen | letter to the National Commission of Senior Citizens | endorsed list for validation | hereby certify these applicants are residents | Mayor,LCE endorsement letter,TEST-03-02
+Local Chief Executive endorsement | senior citizens included in the municipal list | request for eligibility validation | issued this date | mayor signature,LCE endorsement letter,TEST-03-03
+To whom it may concern | endorsement of applicant for senior citizen benefit | local chief executive confirms residence and recommends validation,LCE endorsement letter,TEST-03-04
+Office of the Mayor | endorsement for NCSC application | attached names are endorsed for milestone age benefit processing | municipal seal,LCE endorsement letter,TEST-03-05
+Municipal government letter | endorses eligible senior citizens for verification | pursuant to program guidelines | signed by the Mayor,LCE endorsement letter,TEST-03-06
+Endorsement letter from the Local Chief Executive | applicant list and barangay certification | submitted for review and validation by NCSC,LCE endorsement letter,TEST-03-07
+Mayor certification and endorsement | confirms applicant is included in the endorsed list | senior citizen cash benefit | signature and date,LCE endorsement letter,TEST-03-08
+Municipality of Carmen official correspondence | re: endorsement of senior citizens | respectfully forwarded for validation | local chief executive,LCE endorsement letter,TEST-03-09
+Endorsed list transmittal | Office of the Mayor | senior citizen applicants | for verification of eligibility | municipal mayor approval,LCE endorsement letter,TEST-03-10
+Community health center appointment reminder | clinic schedule and physician consultation | bring this notice to the health office,Other,TEST-06-01
+Utility billing statement | account number and billing period | amount due | customer service contact information,Other,TEST-06-02
+Barangay meeting notice | residents are invited to attend the community assembly | date venue and agenda,Other,TEST-06-03
+Pharmacy purchase receipt | item description quantity and amount paid | cashier and transaction date,Other,TEST-06-04
+Personal letter regarding a family gathering | greeting and invitation | date location and contact details,Other,TEST-06-05
+Public transport ticket | origin destination travel date seat number and fare,Other,TEST-06-06
+Municipal office queue stub | transaction number | service counter | date and time issued,Other,TEST-06-07
+Grocery store receipt | purchase items subtotal tax total and payment method,Other,TEST-06-08
+Community program flyer | information about upcoming activities and registration schedule,Other,TEST-06-09
+Bank deposit slip | depositor account reference | amount received | transaction date and teller,Other,TEST-06-10

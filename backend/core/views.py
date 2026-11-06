@@ -24,6 +24,7 @@ from .models import (
     AuditLog,
     BookletReturn,
     Barangay,
+    BarangayPopulationSnapshot,
     DeathRecord,
     Document,
     GroceryClaim,
@@ -36,6 +37,7 @@ from .models import (
 )
 from .serializers import (
     BarangaySerializer,
+    BarangayPopulationSnapshotSerializer,
     BookletReturnSerializer,
     DeathRecordSerializer,
     DocumentSerializer,
@@ -325,6 +327,35 @@ class StaffRegistrationReviewAPIView(APIView):
 class IsOSCAStaff(BasePermission):
     def has_permission(self, request, view):
         return request.user.role in ["head_staff", "regular_staff"]
+
+
+class BarangayPopulationListAPIView(ListAPIView):
+    """Expose only verified resident totals, scoped to the staff member's barangay."""
+    serializer_class = BarangayPopulationSnapshotSerializer
+    permission_classes = [IsAuthenticated, IsOSCAStaff]
+
+    def get_queryset(self):
+        rows = BarangayPopulationSnapshot.objects.filter(
+            is_verified=True,
+            verified_at__isnull=False,
+            verified_by__isnull=False,
+        ).select_related("barangay", "verified_by")
+        if self.request.user.role == "regular_staff":
+            profile = getattr(self.request.user, "staff_profile", None)
+            if not profile:
+                return rows.none()
+            rows = rows.filter(barangay_id=profile.barangay_id)
+        reference_year = self.request.query_params.get("reference_year")
+        if reference_year:
+            if not reference_year.isdigit() or len(reference_year) != 4:
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError({"reference_year": "Use a four-digit year."})
+            year = int(reference_year)
+            if not 1900 <= year <= 2100:
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError({"reference_year": "Use a year from 1900 through 2100."})
+            rows = rows.filter(reference_year=year)
+        return rows.order_by("barangay__name", "-reference_year")
 
 
 def is_ising_staff_user(user):
@@ -1089,7 +1120,6 @@ class StaffSettingsAPIView(APIView):
 
     DEFAULT_NOTIFICATIONS = {
         "registration": True,
-        "grocery": True,
         "pension": True,
         "system": False,
     }
@@ -1101,7 +1131,11 @@ class StaffSettingsAPIView(APIView):
 
     def get_settings(self, user):
         saved = user.staff_settings if isinstance(user.staff_settings, dict) else {}
-        notifications = {**self.DEFAULT_NOTIFICATIONS, **(saved.get("notifications") or {})}
+        stored_notifications = saved.get("notifications") or {}
+        notifications = {
+            key: stored_notifications.get(key, default)
+            for key, default in self.DEFAULT_NOTIFICATIONS.items()
+        }
         preferences = {**self.DEFAULT_PREFERENCES, **(saved.get("preferences") or {})}
         read_alert_keys = saved.get("read_alert_keys", [])
         if not isinstance(read_alert_keys, list):

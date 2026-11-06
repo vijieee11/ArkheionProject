@@ -82,6 +82,9 @@
             <option value="mobile">Mobile</option>
             <option value="unknown">Not yet assessed</option>
           </select>
+          <select class="filter-select" id="population-year-filter" onchange="updateBarangayCenterPopups()" aria-label="Filter OSCA-verified population reference year">
+            <option value="latest">Latest verified population</option>
+          </select>
         </div>
       </div>
       <div style="padding:16px;">
@@ -132,6 +135,8 @@
 
   let members = [];
   let documentCounts = new Map();
+  let populationSnapshots = [];
+  let barangayCenterMarkers = [];
   function coordinate(value) {
     if (value === null || value === undefined || value === '') return null;
     const number = Number(value);
@@ -144,11 +149,17 @@
     return 'inc';
   }
   async function loadMapRecords() {
-    const [seniorResponse, documentResponse] = await Promise.all([
-      ArkheionAPI.get('/api/seniors/'), ArkheionAPI.get('/api/documents/')
+    const [seniorResponse, documentResponse, populationResponse] = await Promise.all([
+      ArkheionAPI.get('/api/seniors/'),
+      ArkheionAPI.get('/api/documents/'),
+      ArkheionAPI.get('/api/barangay-population/').catch(() => []),
     ]);
     const seniors = asList(seniorResponse);
     const documents = asList(documentResponse);
+    populationSnapshots = asList(populationResponse);
+    const years = [...new Set(populationSnapshots.map(row => String(row.reference_year)))].sort((a, b) => Number(b) - Number(a));
+    const yearSelect = document.getElementById('population-year-filter');
+    yearSelect.innerHTML = '<option value="latest">Latest verified population</option>' + years.map(year => `<option value="${safeText(year)}">Reference year ${safeText(year)}</option>`).join('');
     documentCounts = new Map();
     documents.forEach(doc => documentCounts.set(Number(doc.senior_citizen), (documentCounts.get(Number(doc.senior_citizen)) || 0) + 1));
     members = seniors.map(senior => ({
@@ -167,6 +178,7 @@
     document.getElementById('pending-doc-count').textContent = documents.filter(doc => !doc.is_verified && doc.review_status !== 'rejected').length.toLocaleString();
     const bedridden = members.filter(m => m.mobility === 'bedridden' && m.mobilityVerifiedAt);
     document.getElementById('mobilitySummary').textContent = `Bedridden seniors: ${bedridden.length.toLocaleString()} verified record${bedridden.length === 1 ? '' : 's'}. Household pins are approximate unless exact coordinates have staff verification and senior consent.`;
+    updateBarangayCenterPopups();
     renderMemberPins();
   }
 
@@ -216,11 +228,27 @@
   window.addEventListener('resize', () => map.invalidateSize());
 
   // Barangay center reference dots — always shown for geographic context.
+  function populationSnapshotFor(barangayName) {
+    const selectedYear = document.getElementById('population-year-filter').value;
+    const rows = populationSnapshots.filter(row => row.barangay_name === barangayName);
+    if (selectedYear === 'latest') return rows.sort((a, b) => Number(b.reference_year) - Number(a.reference_year))[0] || null;
+    return rows.find(row => String(row.reference_year) === selectedYear) || null;
+  }
+
+  function updateBarangayCenterPopups() {
+    barangayCenterMarkers.forEach(({ marker, barangay }) => {
+      const snapshot = populationSnapshotFor(barangay.name);
+      const populationText = snapshot
+        ? `OSCA-verified residents (${snapshot.reference_year}): ${Number(snapshot.resident_population).toLocaleString()}${snapshot.source ? `<br>Source: ${safeText(snapshot.source)}` : ''}`
+        : 'Resident population: no OSCA-verified total for this reference year';
+      marker.setPopupContent(`<strong>Barangay ${safeText(barangay.name)}</strong><br>${populationText}`);
+    });
+  }
+
   barangays.forEach(b => {
     const icon = L.divIcon({ className: '', html: '<div class="brgy-dot"></div>', iconSize: [9,9] });
-    L.marker([b.lat, b.lng], { icon, zIndexOffset: -100 })
-      .addTo(map)
-      .bindPopup(`<strong>Barangay ${safeText(b.name)}</strong><br>Resident population: not recorded from an OSCA-verified source`);
+    const marker = L.marker([b.lat, b.lng], { icon, zIndexOffset: -100 }).addTo(map).bindPopup('Loading OSCA population…');
+    barangayCenterMarkers.push({ marker, barangay: b });
   });
 
   let memberMarkers = [];

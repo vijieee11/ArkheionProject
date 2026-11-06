@@ -4,6 +4,7 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 
 class Barangay(models.Model):
@@ -18,6 +19,49 @@ class Barangay(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.code})"
+
+
+class BarangayPopulationSnapshot(models.Model):
+    """OSCA-verified resident population for a barangay and reference year."""
+    barangay = models.ForeignKey(
+        Barangay, on_delete=models.PROTECT, related_name="population_snapshots"
+    )
+    reference_year = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1900), MaxValueValidator(2100)]
+    )
+    resident_population = models.PositiveIntegerField()
+    source = models.CharField(max_length=150)
+    source_reference = models.CharField(max_length=300, blank=True)
+    is_verified = models.BooleanField(default=False)
+    verified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="verified_barangay_populations",
+    )
+    verified_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["barangay__name", "-reference_year"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["barangay", "reference_year"],
+                name="unique_barangay_population_year",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(resident_population__gt=0),
+                name="positive_barangay_resident_population",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(reference_year__gte=1900, reference_year__lte=2100),
+                name="valid_barangay_population_year",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.barangay.name} — {self.reference_year}: {self.resident_population:,}"
 
 
 class StaffProfile(models.Model):

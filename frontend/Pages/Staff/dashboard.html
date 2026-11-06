@@ -200,7 +200,7 @@ const safeText = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&a
 let notifications = [];
 let unreadNotificationIds = new Set();
 let savedReadAlertKeys = [];
-let notificationPreferences = { registration: true, grocery: true, pension: true, system: false };
+let notificationPreferences = { registration: true, pension: true, system: false };
 
 function monthKey(value) {
   const date = String(value || '');

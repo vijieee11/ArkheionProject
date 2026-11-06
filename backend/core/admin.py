@@ -1,6 +1,8 @@
 # Register your models here.
 from django.contrib import admin
-from .models import Barangay, BookletReturn, DeathRecord, Document, GroceryClaim, GroceryDistribution, ResidenceTransferRecord, StaffProfile, StaffRegistrationRequest
+from django.utils import timezone
+
+from .models import Barangay, BarangayPopulationSnapshot, BookletReturn, DeathRecord, Document, GroceryClaim, GroceryDistribution, ResidenceTransferRecord, StaffProfile, StaffRegistrationRequest
 
 
 @admin.register(Barangay)
@@ -8,6 +10,24 @@ class BarangayAdmin(admin.ModelAdmin):
     list_display = ("name", "code", "municipality", "is_active")
     list_filter = ("is_active", "municipality")
     search_fields = ("name", "code", "municipality")
+
+
+@admin.register(BarangayPopulationSnapshot)
+class BarangayPopulationSnapshotAdmin(admin.ModelAdmin):
+    list_display = ("barangay", "reference_year", "resident_population", "source", "is_verified", "verified_by", "verified_at")
+    list_filter = ("reference_year", "is_verified", "barangay")
+    search_fields = ("barangay__name", "source", "source_reference")
+    readonly_fields = ("verified_by", "verified_at", "updated_at")
+
+    def save_model(self, request, obj, form, change):
+        if obj.is_verified:
+            if not obj.verified_at or not change or "is_verified" in form.changed_data:
+                obj.verified_by = request.user
+                obj.verified_at = timezone.now()
+        else:
+            obj.verified_by = None
+            obj.verified_at = None
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(StaffProfile)
