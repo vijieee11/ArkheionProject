@@ -9,7 +9,7 @@ from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
 from .models import (
-    Barangay, BarangayPopulationSnapshot, BookletReturn, Document, GroceryClaim,
+    AuditLog, Barangay, BarangayPopulationSnapshot, BookletReturn, Document, GroceryClaim,
     GroceryDistribution, PensionRecord, SeniorCitizen, StaffProfile,
 )
 
@@ -523,4 +523,39 @@ class StaffReportDataFlowTests(TestCase):
         response = self.client.get(f"/api/pensions/?senior={self.alejal_senior.pk}")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, [])
+
+    def test_headstaff_pdf_export_is_server_generated_scoped_and_audited(self):
+        self.client.force_authenticate(self.head)
+        response = self.client.get(
+            "/api/headstaff/reports/masterlist/pdf/?month=2026-11&barangay=Ising"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertIn("masterlist-2026-11-ising.pdf", response["Content-Disposition"])
+        self.assertTrue(response.content.startswith(b"%PDF-"))
+        export = AuditLog.objects.get(module="report_export", action="export")
+        self.assertIn("scope=Ising", export.description)
+        self.assertIn("rows=1", export.description)
+
+    def test_report_pdf_endpoint_rejects_non_headstaff_and_invalid_filters(self):
+        self.client.force_authenticate(self.ising_staff)
+        forbidden = self.client.get("/api/headstaff/reports/masterlist/pdf/?month=2026-11")
+        self.assertEqual(forbidden.status_code, 403)
+
+        self.client.force_authenticate(self.head)
+        invalid_month = self.client.get("/api/headstaff/reports/masterlist/pdf/?month=2026-13")
+        invalid_barangay = self.client.get("/api/headstaff/reports/masterlist/pdf/?barangay=NotARealBarangay")
+        self.assertEqual(invalid_month.status_code, 400)
+        self.assertEqual(invalid_barangay.status_code, 400)
+
+    def test_every_headstaff_report_template_generates_a_pdf(self):
+        self.client.force_authenticate(self.head)
+        for report_key in ("ncsc_annex_a", "pension_payroll", "masterlist", "quarterly_analytics"):
+            with self.subTest(report=report_key):
+                response = self.client.get(
+                    f"/api/headstaff/reports/{report_key}/pdf/?month=2026-11&barangay=All"
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response["Content-Type"], "application/pdf")
+                self.assertTrue(response.content.startswith(b"%PDF-"))
 

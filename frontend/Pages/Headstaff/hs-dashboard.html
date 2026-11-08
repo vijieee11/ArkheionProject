@@ -58,6 +58,7 @@
     .notif-item:last-child { border-bottom:none; }
     .notif-item:hover { background:#e2e5e9 !important; }
     .notif-item.unread { background: #eef0f2; border-left: 3px solid #c7ccd3; padding-left: 13px; }
+    .notif-item.urgent { border-left: 3px solid var(--coral-600,#b9382f); padding-left: 13px; }
     .notif-item-icon {
       width:30px; height:30px; border-radius:50%; flex-shrink:0;
       display:flex; align-items:center; justify-content:center; font-size:14px;
@@ -186,6 +187,7 @@
   const asArray = value => Array.isArray(value) ? value : Array.isArray(value?.results) ? value.results : [];
   let dashboardDeaths = [];
   let notifications = [];
+  let dashboardSettings = {notifications:{requests:true,approvals:true,audit:true},read_alert_keys:[]};
   const dashboardYear = new Date().getFullYear();
   document.getElementById('dashboardToday').textContent = new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
   document.getElementById('dashboardYear').textContent = `Calendar year ${dashboardYear}`;
@@ -218,12 +220,14 @@
 
   async function loadDashboard() {
     try {
-      const [seniorsResult, deathsResult, auditResult, staffRequestsResult, documentsResult] = await Promise.all([
+      const [seniorsResult, deathsResult, auditResult, staffRequestsResult, documentsResult, settingsResult] = await Promise.all([
         ArkheionAPI.get('/api/seniors/'), ArkheionAPI.get('/api/deaths/'),
         ArkheionAPI.get('/api/audit-logs/?page_size=10'),
         ArkheionAPI.get('/api/staff-registration/requests/?status=pending'),
         ArkheionAPI.get('/api/documents/'),
+        ArkheionAPI.get('/api/staff/settings/').catch(()=>null),
       ]);
+      if (settingsResult) dashboardSettings = settingsResult;
       document.getElementById('registeredSeniorCount').dataset.count = asArray(seniorsResult).length;
       dashboardDeaths = asArray(deathsResult);
       renderDeathDashboard();
@@ -232,11 +236,19 @@
       const pendingDocuments = asArray(documentsResult).filter(document=>document.review_status==='pending');
       const pendingStaff = asArray(staffRequestsResult);
       notifications = [
-        ...pendingStaff.map(item=>({id:`staff-${item.id}`,category:'requests',icon:'ti-user-plus',iconBg:'var(--teal-50)',iconColor:'var(--navy)',title:'Staff account request',desc:`${item.first_name} ${item.last_name} · ${item.requested_barangay.name}`,time:'Awaiting review',goto:'staff_request.html'})),
-        ...pendingDeaths.map(item=>({id:`death-${item.id}`,category:'approvals',icon:'ti-heart-x',iconBg:'var(--coral-50)',iconColor:'var(--coral-600)',title:'Death report to review',desc:`${item.senior_name} · ${item.barangay_name}`,time:'Awaiting review',goto:'deaths.html'})),
-        ...pendingDocuments.map(item=>({id:`document-${item.id}`,category:'approvals',icon:'ti-file-check',iconBg:'var(--amber-100)',iconColor:'var(--gold-dark)',title:'Document review',desc:`${item.file_name} · ${item.senior_name}`,time:'Awaiting review',goto:'hs-pending-approval.html'})),
+        ...pendingStaff.map(item=>({id:`staff-${item.id}`,category:'requests',icon:'ti-user-plus',iconBg:'var(--teal-50)',iconColor:'var(--navy)',title:'Staff account request',desc:`${item.first_name} ${item.last_name} · ${item.requested_barangay.name}`,createdAt:item.created_at,time:'Awaiting review',goto:'staff_request.html'})),
+        ...pendingDeaths.map(item=>({id:`death-${item.id}`,category:'approvals',icon:'ti-heart-x',iconBg:'var(--coral-50)',iconColor:'var(--coral-600)',title:'Death report to review',desc:`${item.senior_name} · ${item.barangay_name}`,createdAt:item.created_at,time:'Awaiting review',goto:'deaths.html'})),
+        ...pendingDocuments.map(item=>({id:`document-${item.id}`,category:'approvals',icon:'ti-file-check',iconBg:'var(--amber-100)',iconColor:'var(--gold-dark)',title:'Document review',desc:`${item.file_name} · ${item.senior_name}`,createdAt:item.created_at||item.upload_date,time:'Awaiting review',goto:'hs-pending-approval.html'})),
         ...asArray(auditResult).slice(0,3).map(entry=>({id:`activity-${entry.id}`,category:'audit',icon:'ti-shield-check',iconBg:'var(--teal-50)',iconColor:'var(--navy)',title:`${entry.action} · ${entry.module}`,desc:`${entry.staff_name||entry.username} — ${entry.description}`,time:new Date(entry.timestamp).toLocaleString(),goto:'audit.html'})),
       ];
+      const thresholdDays = Number(dashboardSettings.preferences?.approval_threshold || 3);
+      notifications.forEach(item=>{
+        const created = item.createdAt ? new Date(item.createdAt).getTime() : NaN;
+        if (Number.isFinite(created) && (Date.now()-created) >= thresholdDays*86400000) {
+          item.urgent = true;
+          item.time = `Awaiting review · older than ${thresholdDays} day${thresholdDays===1?'':'s'}`;
+        }
+      });
       renderNotifDropdown();
     } catch (error) {
       document.getElementById('deathActionList').innerHTML = `<div class="dash-empty">Could not load dashboard records: ${safeText(error.message||'API unavailable')}</div>`;
@@ -245,20 +257,22 @@
   }
 
   function readNotifSettings() {
+    const saved = dashboardSettings.notifications || {};
     return {
-      requests: localStorage.getItem('ark_hs_notif_requests') !== 'off',
-      approvals: localStorage.getItem('ark_hs_notif_approvals') !== 'off',
-      audit: localStorage.getItem('ark_hs_notif_audit') !== 'off',
+      requests: saved.requests !== false,
+      approvals: saved.approvals !== false,
+      audit: saved.audit !== false,
     };
   }
 
-  // Read state (which notification ids have been opened/clicked)
   function getReadIds() {
-    try { return JSON.parse(localStorage.getItem('ark_hs_notif_read') || '[]'); }
-    catch (e) { return []; }
+    return Array.isArray(dashboardSettings.read_alert_keys) ? dashboardSettings.read_alert_keys : [];
   }
-  function saveReadIds(ids) {
-    localStorage.setItem('ark_hs_notif_read', JSON.stringify(ids));
+  async function saveReadIds(ids) {
+    try {
+      dashboardSettings = await ArkheionAPI.patch('/api/staff/settings/', {read_alert_keys: [...new Set(ids)].slice(-500)});
+      renderNotifDropdown();
+    } catch (error) { console.error('Could not save notification read state:', error); }
   }
 
   function renderNotifDropdown() {
@@ -273,7 +287,7 @@
       list.innerHTML = visible.map(n => {
         const unread = !readIds.includes(n.id);
         return `
-        <div class="notif-item ${unread ? 'unread' : ''}" onclick="openNotif('${n.id}')">
+        <div class="notif-item ${unread ? 'unread' : ''} ${n.urgent ? 'urgent' : ''}" onclick="openNotif('${n.id}')">
           <div class="notif-item-icon" style="background:${n.iconBg};color:${n.iconColor};"><i class="ti ${n.icon}"></i></div>
           <div class="notif-item-text">
             <div><strong>${safeText(n.title)}</strong> — ${safeText(n.desc)}</div>
@@ -294,22 +308,21 @@
     document.getElementById('notifDropdown').classList.toggle('open');
   }
 
-  function openNotif(id) {
+  async function openNotif(id) {
     const n = notifications.find(x => x.id === id);
     if (!n) return;
 
     const ids = getReadIds();
     if (!ids.includes(id)) {
       ids.push(id);
-      saveReadIds(ids);
+      await saveReadIds(ids);
     }
     location.href = n.goto;
   }
 
-  function markAllNotifsRead(evt) {
+  async function markAllNotifsRead(evt) {
     if (evt) evt.stopPropagation();
-    saveReadIds(notifications.map(n => n.id));
-    renderNotifDropdown();
+    await saveReadIds([...getReadIds(), ...notifications.map(n => n.id)]);
   }
 
   document.addEventListener('click', function (e) {

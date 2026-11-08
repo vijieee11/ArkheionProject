@@ -113,8 +113,8 @@
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Display name</label>
-                <input type="text" class="form-input" id="usernameInput" placeholder="e.g. osca_head">
-                <div class="form-hint">Shown on the sidebar and in the audit log.</div>
+                <input type="text" class="form-input" id="usernameInput" disabled>
+                <div class="form-hint">Account name comes from your OSCA login.</div>
               </div>
               <div class="form-group">
                 <label class="form-label">Role</label>
@@ -201,14 +201,14 @@
           <div class="setting-row">
             <div>
               <div class="setting-row-label">Audit & security alerts</div>
-              <div class="setting-row-desc">Unusual activity or failed login attempts</div>
+              <div class="setting-row-desc">Show recorded audit activity in your dashboard notifications</div>
             </div>
             <label class="toggle"><input type="checkbox" id="notifAudit" checked><span class="toggle-slider"></span></label>
           </div>
           <div class="setting-row">
             <div>
               <div class="setting-row-label">Weekly summary</div>
-              <div class="setting-row-desc">OSCA Carmen activity digest every Monday</div>
+              <div class="setting-row-desc">Preference only; scheduled weekly digest delivery is not configured</div>
             </div>
             <label class="toggle"><input type="checkbox" id="notifWeekly"><span class="toggle-slider"></span></label>
           </div>
@@ -219,11 +219,11 @@
 
         <!-- Organization settings -->
         <div class="card">
-          <div class="card-header"><div class="card-title">Organization settings</div></div>
+          <div class="card-header"><div class="card-title">Portal preferences</div></div>
           <div style="padding:16px;">
             <div class="form-group">
-              <label class="form-label">Office name</label>
-              <input type="text" class="form-input" id="orgName" value="OSCA Carmen, Davao del Norte">
+                <label class="form-label">Office name (fixed)</label>
+              <input type="text" class="form-input" id="orgName" value="OSCA Carmen, Davao del Norte" disabled>
             </div>
             <div class="form-row">
               <div class="form-group">
@@ -275,53 +275,65 @@
   </div>
 </div>
 
+<script src="../api.js"></script>
 <script>
 renderHeadStaffSidebar('settings');
 
-function loadSettings() {
-  const role = localStorage.getItem('ark_role');
-  const username = (role === 'head_staff' ? localStorage.getItem('ark_username') : null) || 'Head Staff';
-  const initials = 'HS';
-
-  document.getElementById('usernameInput').value = username;
-  document.getElementById('profileName').textContent = username;
-  document.getElementById('profileAvatar').textContent = initials;
-  document.getElementById('topbarAvatar').textContent = initials;
-
-  document.getElementById('contactInput').value = localStorage.getItem('ark_contact') || '';
-
-  document.getElementById('notifRequests').checked = localStorage.getItem('ark_hs_notif_requests') !== 'off';
-  document.getElementById('notifApprovals').checked = localStorage.getItem('ark_hs_notif_approvals') !== 'off';
-  document.getElementById('notifAudit').checked = localStorage.getItem('ark_hs_notif_audit') !== 'off';
-  document.getElementById('notifWeekly').checked = localStorage.getItem('ark_hs_notif_weekly') === 'on';
-
-  document.getElementById('prefLanding').value = localStorage.getItem('ark_hs_pref_landing') || 'hs-dashboard.html';
-  document.getElementById('prefPerPage').value = localStorage.getItem('ark_hs_pref_perpage') || '10';
-  document.getElementById('prefApprovalThreshold').value = localStorage.getItem('ark_hs_pref_threshold') || '3';
+async function loadSettings() {
+  try {
+    const [account, settings] = await Promise.all([
+      ArkheionAPI.getCurrentUser(), ArkheionAPI.get('/api/staff/settings/'),
+    ]);
+    if (account.role !== 'head_staff') throw new Error('Only Head Staff can view these settings.');
+    const displayName = [account.first_name, account.last_name].filter(Boolean).join(' ') || account.username || 'Head Staff';
+    document.getElementById('usernameInput').value = displayName;
+    document.getElementById('profileName').textContent = displayName;
+    document.getElementById('profileAvatar').textContent = displayName.split(/\s+/).map(part => part[0]).join('').slice(0,2).toUpperCase();
+    document.getElementById('topbarAvatar').textContent = document.getElementById('profileAvatar').textContent;
+    document.getElementById('contactInput').value = settings.contact_number || '';
+    const notifications = settings.notifications || {};
+    document.getElementById('notifRequests').checked = notifications.requests !== false;
+    document.getElementById('notifApprovals').checked = notifications.approvals !== false;
+    document.getElementById('notifAudit').checked = notifications.audit !== false;
+    document.getElementById('notifWeekly').checked = notifications.weekly === true;
+    const preferences = settings.preferences || {};
+    document.getElementById('prefLanding').value = preferences.landing_page || 'hs-dashboard.html';
+    document.getElementById('prefPerPage').value = String(preferences.per_page || 10);
+    document.getElementById('prefApprovalThreshold').value = String(preferences.approval_threshold || 3);
+  } catch (error) {
+    showToast(error.message || 'Could not load account settings.', 'error');
+  }
 }
 
-function saveProfile() {
-  const username = document.getElementById('usernameInput').value.trim();
-  if (!username) { showToast('Display name cannot be empty', 'error'); return; }
-  localStorage.setItem('ark_username', username);
-  localStorage.setItem('ark_contact', document.getElementById('contactInput').value.trim());
-  showToast('Profile updated');
-  setTimeout(() => location.reload(), 600);
+async function saveProfile() {
+  try {
+    const settings = await ArkheionAPI.patch('/api/staff/settings/', {contact_number: document.getElementById('contactInput').value.trim()});
+    document.getElementById('contactInput').value = settings.contact_number || '';
+    showToast('Contact number saved to your account.');
+  } catch (error) { showToast(error.message || 'Could not save contact number.', 'error'); }
 }
 
-function saveNotifications() {
-  localStorage.setItem('ark_hs_notif_requests', document.getElementById('notifRequests').checked ? 'on' : 'off');
-  localStorage.setItem('ark_hs_notif_approvals', document.getElementById('notifApprovals').checked ? 'on' : 'off');
-  localStorage.setItem('ark_hs_notif_audit', document.getElementById('notifAudit').checked ? 'on' : 'off');
-  localStorage.setItem('ark_hs_notif_weekly', document.getElementById('notifWeekly').checked ? 'on' : 'off');
-  showToast('Notification preferences saved');
+async function saveNotifications() {
+  try {
+    await ArkheionAPI.patch('/api/staff/settings/', {notifications: {
+      requests: document.getElementById('notifRequests').checked,
+      approvals: document.getElementById('notifApprovals').checked,
+      audit: document.getElementById('notifAudit').checked,
+      weekly: document.getElementById('notifWeekly').checked,
+    }});
+    showToast('Notification preferences saved to your account.');
+  } catch (error) { showToast(error.message || 'Could not save notification preferences.', 'error'); }
 }
 
-function saveOrgPrefs() {
-  localStorage.setItem('ark_hs_pref_landing', document.getElementById('prefLanding').value);
-  localStorage.setItem('ark_hs_pref_perpage', document.getElementById('prefPerPage').value);
-  localStorage.setItem('ark_hs_pref_threshold', document.getElementById('prefApprovalThreshold').value);
-  showToast('Organization preferences saved');
+async function saveOrgPrefs() {
+  try {
+    await ArkheionAPI.patch('/api/staff/settings/', {preferences: {
+      landing_page: document.getElementById('prefLanding').value,
+      per_page: Number(document.getElementById('prefPerPage').value),
+      approval_threshold: Number(document.getElementById('prefApprovalThreshold').value),
+    }});
+    showToast('Head Staff preferences saved to your account.');
+  } catch (error) { showToast(error.message || 'Could not save preferences.', 'error'); }
 }
 
 loadSettings();

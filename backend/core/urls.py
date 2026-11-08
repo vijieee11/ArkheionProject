@@ -32,8 +32,11 @@ from .views import (
     StaffRegistrationReviewAPIView,
     StaffSettingsAPIView,
 )
+from .headstaff_reports import HeadStaffReportHistoryAPIView, HeadStaffReportPdfAPIView
 
 urlpatterns = [
+    path("headstaff/reports/history/", HeadStaffReportHistoryAPIView.as_view(), name="headstaff-report-history"),
+    path("headstaff/reports/<str:report_key>/pdf/", HeadStaffReportPdfAPIView.as_view(), name="headstaff-report-pdf"),
     path("audit-logs/", AuditLogListAPIView.as_view(), name="audit-log-list"),
     path("staff/", StaffDirectoryAPIView.as_view(), name="staff-directory"),
     path("staff-registration/", StaffRegistrationAPIView.as_view(), name="staff-registration"),

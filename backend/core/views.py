@@ -1152,8 +1152,12 @@ class StaffSettingsAPIView(APIView):
         "registration": True,
         "pension": True,
         "system": False,
+        "requests": True,
+        "approvals": True,
+        "audit": True,
+        "weekly": False,
     }
-    DEFAULT_PREFERENCES = {"landing_page": "dashboard.html", "per_page": 10}
+    DEFAULT_PREFERENCES = {"landing_page": "dashboard.html", "per_page": 10, "approval_threshold": 3}
     ALLOWED_LANDING_PAGES = {
         "dashboard.html", "members.html", "reports.html",
         "hs-dashboard.html", "hs-pending-approval.html", "hs-reports.html",
@@ -1204,7 +1208,7 @@ class StaffSettingsAPIView(APIView):
 
         for key, allowed_keys in (
             ("notifications", set(self.DEFAULT_NOTIFICATIONS)),
-            ("preferences", {"landing_page", "per_page"}),
+            ("preferences", {"landing_page", "per_page", "approval_threshold"}),
         ):
             if key not in request.data:
                 continue
@@ -1224,6 +1228,12 @@ class StaffSettingsAPIView(APIView):
                     return Response({key: ["Records per page must be 10, 25, or 50."]}, status=400)
                 if merged["per_page"] not in {10, 25, 50}:
                     return Response({key: ["Records per page must be 10, 25, or 50."]}, status=400)
+                try:
+                    merged["approval_threshold"] = int(merged["approval_threshold"])
+                except (TypeError, ValueError):
+                    return Response({key: ["Approval threshold must be 1, 3, or 7 days."]}, status=400)
+                if merged["approval_threshold"] not in {1, 3, 7}:
+                    return Response({key: ["Approval threshold must be 1, 3, or 7 days."]}, status=400)
             settings_data[key] = merged
             changed_fields.append("staff_settings")
 

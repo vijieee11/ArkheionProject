@@ -469,6 +469,7 @@ class AuditLog(models.Model):
         ('upload', 'Upload'),
         ('search', 'Search'),
         ('approve','Approve'),
+        ('export', 'Export'),
     ]
     user        = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     action      = models.CharField(max_length=20, choices=ACTION_CHOICES)
