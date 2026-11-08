@@ -17,7 +17,11 @@ renderSidebar('reports');
     box.textContent = message;
     box.className = `report-status show ${type}`;
   }
-  function selectedBarangay() { return document.getElementById('reportBarangay').value; }
+  let isIsingOffice = false;
+  function selectedBarangay(reportKey) {
+    if (isIsingOffice && ['grocery','booklet'].includes(reportKey)) return document.getElementById('officeReportBarangay').value;
+    return document.getElementById('reportBarangay').value;
+  }
   function matchesBarangay(row, name) { return !name || String(row.barangay || '') === name; }
   function periodAsMonth(value) {
     const raw = String(value || '').trim();
@@ -187,9 +191,11 @@ renderSidebar('reports');
 
   async function buildReport(key) {
     const definition = reportDefinitions[key];
-    const barangay = selectedBarangay();
+    const barangay = selectedBarangay(key);
     const selectedMonth = monthInput.value;
-    const scopeLabel = `${monthName(selectedMonth)} · ${barangay || 'All barangays'}`;
+    const scopeLabel = key === 'masterlist'
+      ? (barangay || 'All barangays')
+      : `${monthName(selectedMonth)} · ${barangay || 'All barangays'}`;
     if (key === 'booklet') {
       const returns = asArray(await ArkheionAPI.get('/api/booklet-returns/'));
       const filtered = returns.filter(row => (!selectedMonth || String(row.date_returned).startsWith(selectedMonth)) && (!barangay || row.barangay_name === barangay));
@@ -240,8 +246,9 @@ renderSidebar('reports');
     showReportStatus('Preparing report from current records…','info');
     try {
       const report = await buildReport(key);
-      if (format === 'xlsx') downloadXlsx(report.definition,report.rows,`${monthInput.value || 'all-periods'}-${selectedBarangay() || 'all-barangays'}`);
-      else if (format === 'csv') downloadCsv(report.definition,report.rows,monthInput.value || 'all-periods');
+      const fileScope = `${key === 'masterlist' ? 'all-periods' : (monthInput.value || 'all-periods')}-${selectedBarangay(key) || 'all-barangays'}`;
+      if (format === 'xlsx') downloadXlsx(report.definition,report.rows,fileScope);
+      else if (format === 'csv') downloadCsv(report.definition,report.rows,fileScope);
       else openPrintReport(printWindow,report.definition,report.rows,report.scopeLabel,report.sourceNote);
       showReportStatus(`${report.definition.title}: prepared ${report.rows.length} row${report.rows.length === 1 ? '' : 's'}.`,'success');
     } catch (error) {
@@ -255,9 +262,14 @@ renderSidebar('reports');
 
   async function initReports() {
     try {
-      const [account] = await Promise.all([ArkheionAPI.getCurrentUser(), ArkheionAPI.populateBarangaySelects()]);
-      const isIsingStaff = account.role === 'regular_staff' && String(account.barangay?.name || '').trim().toLowerCase() === 'ising';
-      if (!isIsingStaff) {
+      const [account, context] = await Promise.all([ArkheionAPI.getCurrentUser(), ArkheionAPI.populateBarangaySelects()]);
+      isIsingOffice = account.role === 'regular_staff' && String(account.barangay?.name || '').trim().toLowerCase() === 'ising';
+      if (isIsingOffice) {
+        const officeFilter = document.getElementById('officeReportBarangay');
+        (context?.availableBarangays || []).forEach(row => officeFilter.add(new Option(row.name,row.name)));
+        officeFilter.value = '';
+        document.getElementById('officeReportScope').hidden = false;
+      } else {
         document.getElementById('groceryReportCard').hidden = true;
         document.getElementById('bookletReportCard').hidden = true;
       }

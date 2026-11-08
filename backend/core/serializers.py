@@ -40,6 +40,14 @@ class BarangayPopulationSnapshotSerializer(serializers.ModelSerializer):
         return obj.verified_by.get_full_name().strip() or obj.verified_by.get_username()
 
 
+class BookletSeniorOptionSerializer(serializers.ModelSerializer):
+    barangay_name = serializers.CharField(source="barangay.name", read_only=True)
+
+    class Meta:
+        model = SeniorCitizen
+        fields = ["id", "osca_id", "first_name", "middle_name", "last_name", "suffix", "barangay_name"]
+
+
 class FamilyMemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = FamilyMember
@@ -494,7 +502,8 @@ class GroceryDistributionSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         if request and request.user.role == "regular_staff":
             profile = getattr(request.user, "staff_profile", None)
-            if not profile or profile.barangay.name != value:
+            is_ising_office = bool(profile and profile.barangay.name.strip().casefold() == "ising")
+            if not profile or (not is_ising_office and profile.barangay.name != value):
                 raise serializers.ValidationError("You may schedule distributions only for your assigned barangay.")
         return value
 
@@ -526,9 +535,10 @@ class GroceryClaimWriteSerializer(serializers.ModelSerializer):
             profile = getattr(request.user, "staff_profile", None)
             if not profile:
                 raise serializers.ValidationError("This staff account has no assigned barangay.")
-            if not distribution or distribution.barangay != profile.barangay.name:
+            is_ising_office = profile.barangay.name.strip().casefold() == "ising"
+            if not distribution or (not is_ising_office and distribution.barangay != profile.barangay.name):
                 raise serializers.ValidationError({"distribution": "You may record claims only for your assigned barangay."})
-            if not senior or senior.barangay_id != profile.barangay_id:
+            if not senior or (not is_ising_office and senior.barangay_id != profile.barangay_id):
                 raise serializers.ValidationError({"senior_citizen": "You may record claims only for seniors in your assigned barangay."})
         if claimed and not date_claimed:
             raise serializers.ValidationError({"date_claimed": "Enter the date the grocery was received."})
@@ -570,7 +580,8 @@ class BookletReturnSerializer(serializers.ModelSerializer):
             profile = getattr(request.user, "staff_profile", None)
             if not profile:
                 raise serializers.ValidationError("This staff account has no assigned barangay.")
-            if senior and senior.barangay_id != profile.barangay_id:
+            is_ising_office = profile.barangay.name.strip().casefold() == "ising"
+            if senior and not is_ising_office and senior.barangay_id != profile.barangay_id:
                 raise serializers.ValidationError({"senior_citizen": "You can record booklet returns only for seniors in your assigned barangay."})
         return attrs
 

@@ -8,7 +8,10 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
-from .models import Barangay, BarangayPopulationSnapshot, Document, PensionRecord, SeniorCitizen, StaffProfile
+from .models import (
+    Barangay, BarangayPopulationSnapshot, BookletReturn, Document, GroceryClaim,
+    GroceryDistribution, PensionRecord, SeniorCitizen, StaffProfile,
+)
 
 
 @override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
@@ -330,4 +333,194 @@ class DocumentWorkflowTests(TestCase):
                 )
                 with self.assertRaises(DjangoValidationError):
                     invalid.full_clean()
+
+
+
+@override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
+class StaffReportDataFlowTests(TestCase):
+    """Exercise each report page's authenticated data sources with multiple staff scopes."""
+
+    def setUp(self):
+        User = get_user_model()
+        self.head = User.objects.create_user("report_head", password="TestPassword.2026", role="head_staff")
+        self.ising_staff = User.objects.create_user("report_ising", password="TestPassword.2026", role="regular_staff")
+        # Carmen is the municipality/main office located in Ising, not a separate
+        # barangay assignment. Test Ising plus independent barangays instead.
+        self.tuganay_staff = User.objects.create_user("report_tuganay", password="TestPassword.2026", role="regular_staff")
+        self.alejal_staff = User.objects.create_user("report_alejal", password="TestPassword.2026", role="regular_staff")
+
+        self.ising = Barangay.objects.create(name="Ising", code="ISING")
+        self.tuganay = Barangay.objects.create(name="Tuganay", code="TUGANAY")
+        self.alejal = Barangay.objects.create(name="Alejal", code="ALEJAL")
+        StaffProfile.objects.create(user=self.ising_staff, barangay=self.ising)
+        StaffProfile.objects.create(user=self.tuganay_staff, barangay=self.tuganay)
+        StaffProfile.objects.create(user=self.alejal_staff, barangay=self.alejal)
+
+        self.ising_senior = self.make_senior("ISING-001", self.ising, "Ising")
+        self.tuganay_senior = self.make_senior("TUGANAY-001", self.tuganay, "Tuganay")
+        self.alejal_senior = self.make_senior("ALEJAL-001", self.alejal, "Alejal")
+
+        self.ising_pension = PensionRecord.objects.create(
+            senior_citizen=self.ising_senior, period="2026-11", amount="500.00", claimed=True,
+            date_claimed="2026-11-05",
+        )
+        self.tuganay_pension = PensionRecord.objects.create(
+            senior_citizen=self.tuganay_senior, period="2026-11", amount="500.00", claimed=False,
+        )
+        self.alejal_pension = PensionRecord.objects.create(
+            senior_citizen=self.alejal_senior, period="2026-11", amount="500.00", claimed=True,
+            date_claimed="2026-11-06",
+        )
+
+        self.ising_distribution = GroceryDistribution.objects.create(
+            distribution_date="2026-11-04", barangay="Ising", period="2026-11",
+        )
+        self.tuganay_distribution = GroceryDistribution.objects.create(
+            distribution_date="2026-11-04", barangay="Tuganay", period="2026-11",
+        )
+        self.alejal_distribution = GroceryDistribution.objects.create(
+            distribution_date="2026-11-04", barangay="Alejal", period="2026-11",
+        )
+        self.ising_claim = GroceryClaim.objects.create(
+            distribution=self.ising_distribution, senior_citizen=self.ising_senior, claimed=True,
+            date_claimed="2026-11-04", claimed_by="self",
+        )
+        self.tuganay_claim = GroceryClaim.objects.create(
+            distribution=self.tuganay_distribution, senior_citizen=self.tuganay_senior, claimed=False,
+        )
+        self.alejal_claim = GroceryClaim.objects.create(
+            distribution=self.alejal_distribution, senior_citizen=self.alejal_senior, claimed=True,
+            date_claimed="2026-11-04", claimed_by="self",
+        )
+
+        self.ising_booklet_return = BookletReturn.objects.create(
+            senior_citizen=self.ising_senior, date_returned="2026-11-07", recorded_by=self.ising_staff,
+        )
+        self.tuganay_booklet_return = BookletReturn.objects.create(
+            senior_citizen=self.tuganay_senior, date_returned="2026-11-07", recorded_by=self.tuganay_staff,
+        )
+        self.client = APIClient()
+
+    @staticmethod
+    def make_senior(osca_id, barangay, name):
+        return SeniorCitizen.objects.create(
+            osca_id=osca_id, registration_cert_no=f"CERT-{osca_id}",
+            first_name=name, last_name="ReportTest", date_of_birth="1940-01-01", age=86,
+            sex="F", place_of_birth=name, civil_status="widowed", address="Sample address",
+            barangay=barangay, registration_status="complete",
+        )
+
+    def report_sources(self, user):
+        self.client.force_authenticate(user)
+        return {
+            "seniors": self.client.get("/api/seniors/"),
+            "pensions": self.client.get("/api/pensions/"),
+            "grocery": self.client.get("/api/grocery/claims/"),
+            "dashboard_grocery_summary": self.client.get("/api/grocery/dashboard-summary/"),
+        }
+
+    def test_report_sources_return_only_the_authenticated_staff_barangay(self):
+        cases = [
+            (self.ising_staff, self.ising_senior, self.ising_pension, self.ising_claim),
+            (self.tuganay_staff, self.tuganay_senior, self.tuganay_pension, self.tuganay_claim),
+            (self.alejal_staff, self.alejal_senior, self.alejal_pension, self.alejal_claim),
+        ]
+        for staff, senior, pension, claim in cases:
+            with self.subTest(barangay=staff.staff_profile.barangay.name):
+                responses = self.report_sources(staff)
+                self.assertEqual(responses["seniors"].status_code, 200)
+                self.assertEqual([row["id"] for row in responses["seniors"].data], [senior.pk])
+                self.assertEqual(responses["pensions"].status_code, 200)
+                self.assertEqual([row["id"] for row in responses["pensions"].data], [pension.pk])
+                if staff is self.ising_staff:
+                    self.assertEqual(responses["grocery"].status_code, 200)
+                    self.assertEqual(
+                        {row["id"] for row in responses["grocery"].data},
+                        {self.ising_claim.pk, self.tuganay_claim.pk, self.alejal_claim.pk},
+                    )
+                else:
+                    self.assertEqual(responses["grocery"].status_code, 403)
+                # Dashboard aggregate is intentionally visible to every staff account.
+                self.assertEqual(responses["dashboard_grocery_summary"].status_code, 200)
+                self.assertEqual(responses["dashboard_grocery_summary"].data["total_released"], 2)
+
+    def test_booklet_report_is_available_only_to_ising_and_covers_all_barangays(self):
+        for staff in (self.tuganay_staff, self.alejal_staff):
+            self.client.force_authenticate(staff)
+            response = self.client.get("/api/booklet-returns/")
+            self.assertEqual(response.status_code, 403)
+
+        self.client.force_authenticate(self.ising_staff)
+        response = self.client.get("/api/booklet-returns/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            {row["id"] for row in response.data},
+            {self.ising_booklet_return.pk, self.tuganay_booklet_return.pk},
+        )
+        senior_options = self.client.get("/api/booklet-returns/seniors/")
+        self.assertEqual(senior_options.status_code, 200)
+        self.assertEqual(
+            {row["id"] for row in senior_options.data},
+            {self.ising_senior.pk, self.tuganay_senior.pk, self.alejal_senior.pk},
+        )
+
+    def test_ising_only_account_can_create_grocery_distribution_and_booklet_return(self):
+        distribution_payload = {
+            "distribution_date": "2026-11-09", "distribution_time": "09:00",
+            "barangay": "Tuganay", "period": "2026-11", "status": "scheduled",
+        }
+        self.client.force_authenticate(self.tuganay_staff)
+        denied_distribution = self.client.post("/api/grocery/distributions/", distribution_payload, format="json")
+        denied_grocery_report = self.client.get("/api/grocery/claims/")
+        denied_distribution_list = self.client.get("/api/grocery/distributions/")
+        denied_return = self.client.post(
+            "/api/booklet-returns/",
+            {"senior_citizen": self.tuganay_senior.pk, "date_returned": "2026-11-09"},
+            format="json",
+        )
+        self.assertEqual(denied_distribution.status_code, 403)
+        self.assertEqual(denied_grocery_report.status_code, 403)
+        self.assertEqual(denied_distribution_list.status_code, 403)
+        self.assertEqual(denied_return.status_code, 403)
+
+        self.client.force_authenticate(self.ising_staff)
+        allowed_grocery_report = self.client.get("/api/grocery/claims/")
+        allowed_distribution_list = self.client.get("/api/grocery/distributions/")
+        allowed_distribution = self.client.post("/api/grocery/distributions/", distribution_payload, format="json")
+        allowed_return = self.client.post(
+            "/api/booklet-returns/",
+            {"senior_citizen": self.tuganay_senior.pk, "date_returned": "2026-11-09"},
+            format="json",
+        )
+        allowed_foreign_distribution_claim = self.client.post(
+            "/api/grocery/claims/",
+            {
+                "distribution": allowed_distribution.data["id"],
+                "senior_citizen": self.tuganay_senior.pk,
+                "claimed": True,
+                "date_claimed": "2026-11-09",
+                "claimed_by": "self",
+            },
+            format="json",
+        )
+        self.assertEqual(allowed_grocery_report.status_code, 200)
+        self.assertEqual(
+            {row["id"] for row in allowed_grocery_report.data},
+            {self.ising_claim.pk, self.tuganay_claim.pk, self.alejal_claim.pk},
+        )
+        self.assertEqual(allowed_distribution_list.status_code, 200)
+        self.assertEqual(
+            {row["id"] for row in allowed_distribution_list.data},
+            {self.ising_distribution.pk, self.tuganay_distribution.pk, self.alejal_distribution.pk},
+        )
+        self.assertEqual(allowed_distribution.status_code, 201)
+        self.assertEqual(allowed_distribution.data["total_beneficiaries"], 1)
+        self.assertEqual(allowed_return.status_code, 201)
+        self.assertEqual(allowed_foreign_distribution_claim.status_code, 201)
+
+    def test_staff_cannot_export_another_barangays_pension_by_querying_its_senior_id(self):
+        self.client.force_authenticate(self.ising_staff)
+        response = self.client.get(f"/api/pensions/?senior={self.alejal_senior.pk}")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, [])
 

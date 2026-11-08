@@ -38,6 +38,7 @@ from .models import (
 from .serializers import (
     BarangaySerializer,
     BarangayPopulationSnapshotSerializer,
+    BookletSeniorOptionSerializer,
     BookletReturnSerializer,
     DeathRecordSerializer,
     DocumentSerializer,
@@ -365,6 +366,15 @@ def is_ising_staff_user(user):
     return bool(profile and profile.barangay.name.strip().casefold() == "ising")
 
 
+class IsIsingStaffOrHeadStaff(BasePermission):
+    """Detailed grocery operations belong to Ising staff; Head Staff has oversight access."""
+    def has_permission(self, request, view):
+        return bool(
+            request.user.is_authenticated
+            and (request.user.role == "head_staff" or is_ising_staff_user(request.user))
+        )
+
+
 class GroceryDashboardSummaryAPIView(APIView):
     """Share aggregate grocery progress on every OSCA staff dashboard."""
     permission_classes = [IsAuthenticated, IsOSCAStaff]
@@ -392,13 +402,15 @@ class GroceryDashboardSummaryAPIView(APIView):
 
 class GroceryDistributionListCreateAPIView(ListCreateAPIView):
     serializer_class = GroceryDistributionSerializer
-    permission_classes = [IsAuthenticated, IsOSCAStaff]
+    permission_classes = [IsAuthenticated, IsIsingStaffOrHeadStaff]
 
     def get_queryset(self):
         distributions = GroceryDistribution.objects.all().order_by("-distribution_date", "-id")
         if self.request.user.role == "head_staff":
             return distributions
         profile = getattr(self.request.user, "staff_profile", None)
+        if is_ising_staff_user(self.request.user):
+            return distributions
         return distributions.filter(barangay=profile.barangay.name) if profile else distributions.none()
 
     def create(self, request, *args, **kwargs):
@@ -407,15 +419,15 @@ class GroceryDistributionListCreateAPIView(ListCreateAPIView):
         return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
-        profile = getattr(self.request.user, "staff_profile", None)
-        total = SeniorCitizen.objects.filter(barangay_id=profile.barangay_id, is_active=True).count() if profile else 0
+        barangay_name = serializer.validated_data["barangay"]
+        total = SeniorCitizen.objects.filter(barangay__name=barangay_name, is_active=True).count()
         distribution = serializer.save(total_beneficiaries=total)
         record_action(self.request, "create", "grocery_distribution", distribution, "Scheduled a grocery distribution.")
 
 
 class GroceryClaimListAPIView(ListCreateAPIView):
     serializer_class = GroceryClaimReportSerializer
-    permission_classes = [IsAuthenticated, IsOSCAStaff]
+    permission_classes = [IsAuthenticated, IsIsingStaffOrHeadStaff]
 
     def get_queryset(self):
         claims = GroceryClaim.objects.select_related(
@@ -425,7 +437,10 @@ class GroceryClaimListAPIView(ListCreateAPIView):
             queryset = claims
         else:
             profile = getattr(self.request.user, "staff_profile", None)
-            queryset = claims.filter(distribution__barangay=profile.barangay.name) if profile else claims.none()
+            if is_ising_staff_user(self.request.user):
+                queryset = claims
+            else:
+                queryset = claims.filter(distribution__barangay=profile.barangay.name) if profile else claims.none()
         distribution_id = self.request.query_params.get("distribution")
         senior_id = self.request.query_params.get("senior")
         if distribution_id and distribution_id.isdigit():
@@ -460,6 +475,8 @@ class GroceryClaimDetailAPIView(generics.UpdateAPIView):
         if self.request.user.role != "regular_staff":
             return claims.none()
         profile = getattr(self.request.user, "staff_profile", None)
+        if is_ising_staff_user(self.request.user):
+            return claims
         return claims.filter(distribution__barangay=profile.barangay.name) if profile else claims.none()
 
     def update(self, request, *args, **kwargs):
@@ -490,7 +507,9 @@ class BookletReturnListCreateAPIView(ListCreateAPIView):
         profile = self.request.user.staff_profile
         returns = BookletReturn.objects.select_related(
             "senior_citizen", "senior_citizen__barangay", "recorded_by"
-        ).filter(senior_citizen__barangay_id=profile.barangay_id)
+        )
+        if not is_ising_staff_user(self.request.user):
+            returns = returns.filter(senior_citizen__barangay_id=profile.barangay_id)
         month = self.request.query_params.get("month")
         year = self.request.query_params.get("year")
         barangay_id = self.request.query_params.get("barangay")
@@ -506,6 +525,17 @@ class BookletReturnListCreateAPIView(ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(recorded_by=self.request.user)
+
+
+class BookletReturnSeniorOptionsAPIView(ListAPIView):
+    """Minimal active-senior options for the Ising office's municipality-wide booklet desk."""
+    serializer_class = BookletSeniorOptionSerializer
+    permission_classes = [IsAuthenticated, IsIsingStaff]
+
+    def get_queryset(self):
+        return SeniorCitizen.objects.filter(is_active=True).select_related("barangay").order_by(
+            "barangay__name", "last_name", "first_name"
+        )
 
 
 class BookletReturnSummaryAPIView(APIView):
