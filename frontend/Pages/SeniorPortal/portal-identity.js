@@ -16,6 +16,11 @@
       .filter(Boolean).join(' ') || currentUser.username || 'Senior citizen';
     const initials = name.split(/\s+/).filter(Boolean).slice(0, 2)
       .map((part) => part.charAt(0)).join('').toUpperCase() || 'SC';
+    const displayDate = (value) => {
+      if (!value) return null;
+      const date = new Date(`${value}T00:00:00`);
+      return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
+    };
 
     document.querySelectorAll('.portal-uname, [data-senior-name], #portal-greeting-name')
       .forEach((element) => { element.textContent = name; });
@@ -26,14 +31,16 @@
       full_name: name,
       osca_id: record.osca_id,
       registration_cert_no: record.registration_cert_no,
-      date_of_registration: record.date_of_registration,
-      date_of_birth: record.date_of_birth,
+      date_of_registration: displayDate(record.date_of_registration),
+      date_of_birth: displayDate(record.date_of_birth),
       age: record.age == null ? null : `${record.age} years old`,
       sex: record.sex === 'M' ? 'Male' : record.sex === 'F' ? 'Female' : record.sex,
       civil_status: record.civil_status,
+      place_of_birth: record.place_of_birth,
       address: record.address,
       barangay_name: record.barangay_name,
-      milestone_age: record.milestone_age,
+      milestone_age: record.milestone_age == null ? null : `${record.milestone_age} years`,
+      registration_status: ({ complete: 'Complete', pending: 'Pending', incomplete: 'Incomplete' })[record.registration_status] || record.registration_status,
     };
     document.querySelectorAll('[data-senior-field]').forEach((element) => {
       const value = fields[element.dataset.seniorField];

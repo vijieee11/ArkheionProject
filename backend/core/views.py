@@ -51,6 +51,7 @@ from .serializers import (
     SeniorCitizenSerializer,
 )
 from .document_classifier import classify_document, classifier_artifact_path, classifier_source, extract_document_entities, extract_document_text
+from .chatbot import answer_for_senior
 
 
 def record_action(request, action, module, record=None, description=""):
@@ -733,6 +734,25 @@ class DocumentListCreateAPIView(generics.ListCreateAPIView):
             record_action(self.request, "upload", "document", document, "Uploaded a senior citizen document.")
 
 
+class SeniorDocumentHistoryAPIView(ListAPIView):
+    """Return only non-sensitive metadata for the authenticated senior's own uploads."""
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role != "senior" or not user.senior_citizen_id:
+            return Document.objects.none()
+        return Document.objects.filter(senior_citizen_id=user.senior_citizen_id).order_by("-created_at", "-id")
+
+    def list(self, request, *args, **kwargs):
+        if request.user.role != "senior" or not request.user.senior_citizen_id:
+            return Response({"detail": "Document history is available only to the linked senior account."}, status=403)
+        rows = self.get_queryset().values(
+            "id", "file_name", "document_type", "upload_date", "review_status", "is_verified"
+        )
+        return Response(list(rows))
+
+
 class DocumentDownloadAPIView(APIView):
     permission_classes = [IsAuthenticated, IsOSCAStaff]
 
@@ -1143,6 +1163,30 @@ class CurrentUserAPIView(APIView):
             }
 
         return Response(result)
+
+
+class SeniorChatbotAPIView(APIView):
+    """Authenticated backend assistant; answers personal questions from the user's own records."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from rest_framework.exceptions import ValidationError
+
+        if request.user.role != "senior" or not request.user.senior_citizen_id:
+            return Response({"detail": "This assistant is available to a linked senior account."}, status=403)
+        message = request.data.get("message") if isinstance(request.data, dict) else None
+        if not isinstance(message, str) or not message.strip():
+            raise ValidationError({"message": ["Enter a question for the assistant."]})
+        if len(message) > 500:
+            raise ValidationError({"message": ["Keep the question to 500 characters or fewer."]})
+
+        senior = get_object_or_404(
+            SeniorCitizen.objects.select_related("barangay"),
+            pk=request.user.senior_citizen_id,
+            is_active=True,
+        )
+        intent, answer = answer_for_senior(senior, message.strip())
+        return Response({"intent": intent, "answer": answer, "source": "senior_records_and_osca_guidance"})
 
 
 class StaffSettingsAPIView(APIView):

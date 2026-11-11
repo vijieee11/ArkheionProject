@@ -55,7 +55,7 @@
   <div class="card">
     <div class="card-header">
       <div class="card-title"><i class="ti ti-user" style="margin-right:6px;color:var(--navy-light)"></i>Personal information</div>
-      <span class="badge badge-ok">OSCA Form No. 1</span>
+      <span class="badge badge-proc" data-senior-field="registration_status">Loading…</span>
     </div>
     <div class="detail-grid">
       <div class="detail-field"><span class="detail-label">OSCA ID</span><span class="detail-value" data-senior-field="osca_id">—</span></div>
@@ -66,9 +66,9 @@
       <div class="detail-field"><span class="detail-label">Age</span><span class="detail-value" data-senior-field="age">—</span></div>
       <div class="detail-field"><span class="detail-label">Sex</span><span class="detail-value" data-senior-field="sex">—</span></div>
       <div class="detail-field"><span class="detail-label">Civil status</span><span class="detail-value" data-senior-field="civil_status">—</span></div>
-      <div class="detail-field"><span class="detail-label">Place of birth</span><span class="detail-value">Carmen, Davao del Norte</span></div>
+      <div class="detail-field"><span class="detail-label">Place of birth</span><span class="detail-value" data-senior-field="place_of_birth">—</span></div>
       <div class="detail-field" style="grid-column:span 2;"><span class="detail-label">Address</span><span class="detail-value" data-senior-field="address">—</span></div>
-      <div class="detail-field"><span class="detail-label">Milestone age</span><span class="badge badge-urgent">80+ (NCSC eligible)</span></div>
+      <div class="detail-field"><span class="detail-label">Milestone age</span><span class="detail-value" data-senior-field="milestone_age">—</span></div>
     </div>
   </div>
 
@@ -80,43 +80,7 @@
       <thead>
         <tr><th>Document</th><th>Type</th><th>Upload date</th><th>NLP Classification</th><th>Status</th></tr>
       </thead>
-      <tbody>
-        <tr>
-          <td><i class="ti ti-file-type-pdf" style="color:var(--coral-600);margin-right:6px"></i>birth_certificate.pdf</td>
-          <td class="td-muted">PSA Birth Certificate</td>
-          <td class="td-muted">Mar 10, 2024</td>
-          <td><span class="badge badge-ok">Birth certificate</span></td>
-          <td><span class="badge badge-ok">Verified</span></td>
-        </tr>
-        <tr>
-          <td><i class="ti ti-photo" style="color:var(--blue-900);margin-right:6px"></i>photo_2x2.jpg</td>
-          <td class="td-muted">2x2 ID Photo</td>
-          <td class="td-muted">Mar 10, 2024</td>
-          <td><span class="badge badge-ok">ID photo</span></td>
-          <td><span class="badge badge-ok">Verified</span></td>
-        </tr>
-        <tr>
-          <td><i class="ti ti-photo" style="color:var(--blue-900);margin-right:6px"></i>fullbody_photo.jpg</td>
-          <td class="td-muted">Full body photo (A4)</td>
-          <td class="td-muted">Mar 10, 2024</td>
-          <td><span class="badge badge-ok">Full body photo</span></td>
-          <td><span class="badge badge-ok">Verified</span></td>
-        </tr>
-        <tr>
-          <td><i class="ti ti-file-type-pdf" style="color:var(--coral-600);margin-right:6px"></i>lce_endorsement.pdf</td>
-          <td class="td-muted">LCE Endorsement Letter</td>
-          <td class="td-muted">Mar 10, 2024</td>
-          <td><span class="badge badge-ok">LCE endorsement</span></td>
-          <td><span class="badge badge-ok">Verified</span></td>
-        </tr>
-        <tr>
-          <td><span style="color:var(--gray-400);">— Not yet uploaded —</span></td>
-          <td class="td-muted">Valid Government ID</td>
-          <td class="td-muted">—</td>
-          <td>—</td>
-          <td><span class="badge badge-miss">Missing</span></td>
-        </tr>
-      </tbody>
+      <tbody id="document-history-rows"><tr><td colspan="5" class="td-muted">Loading document history…</td></tr></tbody>
     </table>
   </div>
 
@@ -128,22 +92,7 @@
       <thead>
         <tr><th>Service</th><th>Period</th><th>Status</th><th>Date</th><th>Claimed by</th></tr>
       </thead>
-      <tbody>
-        <tr>
-          <td><i class="ti ti-cash" style="color:var(--amber-600);margin-right:6px"></i><span class="td-bold">Pension</span></td>
-          <td class="td-muted">June 2026</td>
-          <td><span class="badge badge-ok">Claimed</span></td>
-          <td class="td-muted">Jun 5, 2026</td>
-          <td class="td-muted">Self</td>
-        </tr>
-        <tr>
-          <td><i class="ti ti-cash" style="color:var(--amber-600);margin-right:6px"></i><span class="td-bold">Pension</span></td>
-          <td class="td-muted">July 2026</td>
-          <td><span class="badge badge-proc">Unclaimed</span></td>
-          <td class="td-muted">—</td>
-          <td class="td-muted">—</td>
-        </tr>
-      </tbody>
+      <tbody id="pension-history-rows"><tr><td colspan="5" class="td-muted">Loading pension history…</td></tr></tbody>
     </table>
   </div>
 </div>
@@ -152,6 +101,74 @@
   function toggleMobileNav() {
     document.getElementById('portalNavLinks').classList.toggle('open');
   }
+
+  function escapeHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function displayDate(value) {
+    if (!value) return '—';
+    const date = new Date(value + 'T00:00:00');
+    return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('en-PH', {year:'numeric', month:'short', day:'numeric'});
+  }
+  async function loadSeniorRecords() {
+    const api = window.ArkheionAPI;
+    const documentsBody = document.getElementById('document-history-rows');
+    const pensionBody = document.getElementById('pension-history-rows');
+    try {
+      const user = await api.getCurrentUser();
+      const seniorId = user.senior_citizen && user.senior_citizen.id;
+      if (user.role !== 'senior' || !seniorId) throw new Error('This portal account is not linked to a senior record.');
+
+      const [senior, pensions, documents] = await Promise.all([
+        api.get(`/api/seniors/${seniorId}/`),
+        api.get(`/api/pensions/?senior=${seniorId}`),
+        api.get('/api/my/documents/'),
+      ]);
+      document.dispatchEvent(new CustomEvent('arkheion:senior-identity-loaded', {detail:{user, senior}}));
+      const profileFields = {
+        osca_id: senior.osca_id,
+        registration_cert_no: senior.registration_cert_no,
+        date_of_registration: displayDate(senior.date_of_registration),
+        date_of_birth: displayDate(senior.date_of_birth),
+        age: senior.age == null ? null : `${senior.age} years old`,
+        sex: senior.sex === 'M' ? 'Male' : senior.sex === 'F' ? 'Female' : senior.sex,
+        civil_status: senior.civil_status,
+        place_of_birth: senior.place_of_birth,
+        address: senior.address,
+        milestone_age: senior.milestone_age == null ? null : `${senior.milestone_age} years`,
+        registration_status: senior.registration_status,
+      };
+      document.querySelectorAll('[data-senior-field]').forEach(el => {
+        const value = profileFields[el.dataset.seniorField];
+        el.textContent = value == null || value === '' ? '—' : value;
+        if (el.dataset.seniorField === 'registration_status') {
+          el.className = `badge ${value === 'complete' ? 'badge-ok' : value === 'incomplete' ? 'badge-miss' : 'badge-proc'}`;
+        }
+      });
+
+      const docRows = Array.isArray(documents) ? documents : (documents.results || []);
+      documentsBody.innerHTML = docRows.length ? docRows.map(doc => `
+        <tr><td>${escapeHtml(doc.file_name || 'Uploaded document')}</td>
+        <td class="td-muted">${escapeHtml(doc.document_type || '—')}</td>
+        <td class="td-muted">${escapeHtml(displayDate(doc.upload_date))}</td>
+        <td>${escapeHtml(doc.review_status === 'verified' ? 'Staff verified' : 'Not shown to senior')}</td>
+        <td><span class="badge ${doc.is_verified ? 'badge-ok' : 'badge-proc'}">${doc.is_verified ? 'Verified' : escapeHtml((doc.review_status || 'pending').replaceAll('_',' '))}</span></td></tr>`).join('')
+        : '<tr><td colspan="5" class="td-muted">No documents have been recorded for your profile yet.</td></tr>';
+
+      const pensionRows = Array.isArray(pensions) ? pensions : (pensions.results || []);
+      pensionBody.innerHTML = pensionRows.length ? pensionRows.map(row => `
+        <tr><td><i class="ti ti-cash" style="color:var(--amber-600);margin-right:6px"></i><span class="td-bold">Pension</span></td>
+        <td class="td-muted">${escapeHtml(row.period || '—')}</td>
+        <td><span class="badge ${row.claimed ? 'badge-ok' : 'badge-proc'}">${row.claimed ? 'Claimed' : 'Unclaimed'}</span></td>
+        <td class="td-muted">${escapeHtml(displayDate(row.date_claimed))}</td>
+        <td class="td-muted">${escapeHtml(!row.claimed ? '—' : row.claimed_by === 'self' ? 'Self' : row.representative || 'Representative')}</td></tr>`).join('')
+        : '<tr><td colspan="5" class="td-muted">No pension history is recorded yet.</td></tr>';
+    } catch (error) {
+      documentsBody.innerHTML = `<tr><td colspan="5" class="td-muted">${escapeHtml(error.message || 'Could not load document history.')}</td></tr>`;
+      pensionBody.innerHTML = `<tr><td colspan="5" class="td-muted">${escapeHtml(error.message || 'Could not load pension history.')}</td></tr>`;
+    }
+  }
+  loadSeniorRecords();
 </script>
 <script src="../api.js"></script>
 <script src="portal-identity.js"></script>

@@ -155,13 +155,14 @@
       <div class="chat-header">
         <div class="chat-dot"></div>
         <span class="chat-name">Arkheion Assistant</span>
-        <span class="chat-status">Online</span>
+        <span class="chat-status">Backend assistant</span>
       </div>
       <div class="chat-messages" id="chatMessages">
-        <div class="msg bot">Hello! I am your Arkheion assistant. How can I help you today? 😊</div>
+        <div class="msg bot">Kumusta! Pangutana bahin sa imong profile, pension, uploaded documents, o physical medicine booklet. 😊</div>
       </div>
       <div class="quick-replies">
         <div class="qr" onclick="sendMsg('Pension status ko?')">Pension status</div>
+        <div class="qr" onclick="sendMsg('Unsa ang requirements para magpa register sa OSCA?')">Registration requirements</div>
         <div class="qr" onclick="sendMsg('Asa akong booklet record?')">Booklet information</div>
         <div class="qr" onclick="sendMsg('Unsa ang oras sa opisina?')">Office hours</div>
         <div class="qr" onclick="sendMsg('Gusto ko makigtalk sa staff.')">Talk to staff</div>
@@ -177,26 +178,10 @@
 
 <script src="../api.js"></script>
 <script>
-  // Fallback identity from the login session; portal-identity.js overwrites this with the live record.
-  function loadPortalIdentity() {
-    try {
-      const profile=JSON.parse(localStorage.getItem('ark_senior_profile')||'{}');
-      const name=profile.name||localStorage.getItem('ark_username')||'Senior citizen';
-      const initials=name.split(/\s+/).filter(Boolean).slice(0,2).map(part=>part[0]).join('').toUpperCase()||'SC';
-      document.getElementById('portal-display-name').textContent=name;
-      document.getElementById('portal-greeting-name').textContent=name;
-      document.getElementById('portal-avatar-initials').textContent=initials;
-      document.getElementById('portal-osca-id').textContent=profile.osca||localStorage.getItem('ark_osca_id')||'—';
-      document.getElementById('portal-barangay').textContent=profile.brgy||profile.barangay||'Barangay not set';
-    } catch {}
-  }
   function toggleMobileNav() {
     document.getElementById('portalNavLinks').classList.toggle('open');
   }
 
-  function esc(value) {
-    return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
   function formatPeso(value) {
     const n = Number(value);
     return Number.isFinite(n) ? n.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) : '—';
@@ -267,39 +252,7 @@
     portalData.loaded = true;
   }
 
-  function pensionReply() {
-    const p = portalData.pension;
-    if (!portalData.loaded) return 'Gikuha pa nako ang imong pension record. Sulayi usab sa makadiyot.';
-    if (!p) return 'Wala pa koy makita nga pension record para nimo. Pangutana sa OSCA Carmen office para makumpirma.';
-    const period = esc(p.period || '—');
-    const amount = esc(formatPeso(p.amount));
-    if (p.claimed) {
-      return `Ang imong pension para sa <strong>${period}</strong> (${amount}) kay <strong>na-claim na</strong> kaniadtong ${esc(formatDate(p.date_claimed))}.`;
-    }
-    return `Ang imong pension para sa <strong>${period}</strong> (${amount}) kay <strong>unclaimed pa</strong>. Punta sa OSCA Carmen office para makuha kini. Magdala og valid ID.`;
-  }
-
-  const responses = [
-    { keys: ['pension'],       reply: () => pensionReply() },
-    { keys: ['medicine'],      reply: () => 'Ang medicine release record naa sa imong <strong>physical booklet</strong>. Dad-a kini ug imong OSCA ID sa OSCA. Para sa schedule, pangutana sa OSCA Carmen o sa imong barangay staff.' },
-    { keys: ['grocery'],       reply: () => 'Ang grocery release record naa sa imong <strong>physical booklet</strong>. Para sa sunod nga schedule, pangutana sa OSCA Carmen o sa imong barangay staff.' },
-    { keys: ['booklet'],       reply: () => 'Ang medicine ug grocery release entries isulat sa <strong>physical booklet</strong>. Dili kini ipakita isip individual transaction history sa portal. Dad-a ang booklet ug imong OSCA ID sa OSCA.' },
-    { keys: ['opisina', 'oras', 'office'], reply: () => 'Ang OSCA Carmen office bukas <strong>Monday–Friday, 8:00 AM–5:00 PM</strong>. Closed sa weekends ug public holidays.' },
-    { keys: ['requirements'], reply: () => 'Para sa registration, kinahanglan nimo: Birth certificate (PSA), valid government ID, 2x2 ID photo, full body photo (A4), ug LCE endorsement letter. Ang OSCA staff ang mo-check kung kompleto na ang imong mga dokumento.' },
-    { keys: ['kulang'],        reply: () => 'Dili nako ma-check dinhi kung unsa ang kulang sa imong mga dokumento. Pangutana sa OSCA Carmen office o sa imong barangay staff, ug dad-a ang imong OSCA ID.' },
-    { keys: ['staff'],         reply: () => 'Palihug tawagan ang OSCA Carmen office: <strong>(082) xxx-xxxx</strong>, o bisita sa opisina Monday–Friday, 8AM–5PM.' },
-  ];
-  const defaultReply = 'Pasensya, dili ko kasabtan ang imong pangutana. Pwede ka mag-click sa mga quick reply buttons sa ibabaw, o tawagan ang OSCA Carmen office: (082) xxx-xxxx para sa dugang tabang.';
-
-  function findReply(text) {
-    const lower = text.toLowerCase();
-    for (const item of responses) {
-      if (item.keys.some(key => lower.includes(key))) return item.reply();
-    }
-    return defaultReply;
-  }
-
-  function sendMsg(text) {
+  async function sendMsg(text) {
     const input = document.getElementById('chatInput');
     const msg   = text || input.value.trim();
     if (!msg) return;
@@ -315,21 +268,19 @@
 
     const typing = document.createElement('div');
     typing.className = 'msg bot';
-    typing.innerHTML = '<i class="ti ti-dots" style="animation:pulse 1s infinite"></i> Typing...';
+    typing.textContent = 'Giproseso ang imong pangutana…';
     msgs.appendChild(typing);
     msgs.scrollTop = msgs.scrollHeight;
 
-    setTimeout(() => {
-      typing.remove();
-      const botDiv = document.createElement('div');
-      botDiv.className = 'msg bot';
-      botDiv.innerHTML = findReply(msg);
-      msgs.appendChild(botDiv);
-      msgs.scrollTop = msgs.scrollHeight;
-    }, 1000);
+    try {
+      const result = await window.ArkheionAPI.post('/api/chatbot/', { message: msg });
+      typing.textContent = result.answer || 'Walay tubag nga nadawat. Palihug sulayi pag-usab.';
+    } catch (error) {
+      typing.textContent = error.message || 'Dili maabot ang assistant karon. Sulayi pag-usab o moduol sa OSCA staff.';
+    }
+    msgs.scrollTop = msgs.scrollHeight;
   }
 
-  loadPortalIdentity();
   loadPortalData();
 </script>
 <script src="portal-identity.js"></script>

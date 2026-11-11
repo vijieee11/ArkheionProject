@@ -10,7 +10,7 @@ from rest_framework.test import APIClient
 
 from .models import (
     AuditLog, Barangay, BarangayPopulationSnapshot, BookletReturn, Document, GroceryClaim,
-    GroceryDistribution, PensionRecord, SeniorCitizen, StaffProfile,
+    DeathRecord, GroceryDistribution, PensionRecord, SeniorCitizen, StaffProfile,
 )
 
 
@@ -229,6 +229,74 @@ class DocumentWorkflowTests(TestCase):
         self.client.force_authenticate(self.head)
         head_history = self.client.get("/api/pensions/")
         self.assertEqual({row["id"] for row in head_history.data}, {own_pension.pk, other_pension.pk})
+
+    def test_senior_document_history_returns_only_own_metadata(self):
+        self.senior_user.senior_citizen = self.senior
+        self.senior_user.save(update_fields=["senior_citizen"])
+        own_document = self.make_document(self.senior)
+        other_document = self.make_document(self.other_senior)
+
+        self.client.force_authenticate(self.senior_user)
+        response = self.client.get("/api/my/documents/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([row["id"] for row in response.data], [own_document.pk])
+        self.assertEqual(response.data[0]["file_name"], "sample.png")
+        self.assertNotIn("file", response.data[0])
+        self.assertNotIn("extracted_entities", response.data[0])
+
+    def test_verified_death_deactivates_linked_accounts_and_preserves_records(self):
+        self.senior_user.senior_citizen = self.senior
+        self.senior_user.save(update_fields=["senior_citizen"])
+        pension = PensionRecord.objects.create(senior_citizen=self.senior, period="2026-10")
+        document = self.make_document(self.senior)
+        death = DeathRecord.objects.create(
+            senior_citizen=self.senior,
+            date_of_death="2026-10-20",
+            recorded_by=self.staff,
+            review_status="pending",
+        )
+
+        self.client.force_authenticate(self.head)
+        response = self.client.patch(
+            f"/api/deaths/{death.pk}/review/", {"decision": "verify"}, format="json"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.senior.refresh_from_db()
+        self.senior_user.refresh_from_db()
+        self.assertFalse(self.senior.is_active)
+        self.assertFalse(self.senior_user.is_active)
+        self.assertTrue(SeniorCitizen.objects.filter(pk=self.senior.pk).exists())
+        self.assertTrue(PensionRecord.objects.filter(pk=pension.pk).exists())
+        self.assertTrue(Document.objects.filter(pk=document.pk).exists())
+        self.assertTrue(DeathRecord.objects.filter(pk=death.pk, review_status="verified").exists())
+
+        login = self.client.post(
+            "/api/token/", {"username": self.senior_user.username, "password": "TestPassword.2026"},
+            format="json",
+        )
+        self.assertEqual(login.status_code, 401)
+
+    def test_returning_death_report_does_not_deactivate_senior(self):
+        self.senior_user.senior_citizen = self.senior
+        self.senior_user.save(update_fields=["senior_citizen"])
+        death = DeathRecord.objects.create(
+            senior_citizen=self.senior,
+            date_of_death="2026-10-20",
+            recorded_by=self.staff,
+            review_status="pending",
+        )
+
+        self.client.force_authenticate(self.head)
+        response = self.client.patch(
+            f"/api/deaths/{death.pk}/review/",
+            {"decision": "return", "review_note": "Please confirm the date."},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.senior.refresh_from_db()
+        self.senior_user.refresh_from_db()
+        self.assertTrue(self.senior.is_active)
+        self.assertTrue(self.senior_user.is_active)
 
     def test_staff_cannot_read_or_create_pension_records_for_another_barangay(self):
         other_pension = PensionRecord.objects.create(senior_citizen=self.other_senior, period="2026-10")
@@ -558,4 +626,67 @@ class StaffReportDataFlowTests(TestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(response["Content-Type"], "application/pdf")
                 self.assertTrue(response.content.startswith(b"%PDF-"))
+
+
+@override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"])
+class SeniorChatbotTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.barangay = Barangay.objects.create(name="Carmen", code="CHAT-CARMEN")
+        self.senior = SeniorCitizen.objects.create(
+            osca_id="CHAT-001", registration_cert_no="CHAT-CERT-001",
+            first_name="Maria", middle_name="Sample", last_name="Senior",
+            date_of_birth="1940-01-01", age=86, sex="F", place_of_birth="Carmen",
+            civil_status="widowed", address="Sample address", barangay=self.barangay,
+        )
+        self.other_senior = SeniorCitizen.objects.create(
+            osca_id="CHAT-002", registration_cert_no="CHAT-CERT-002",
+            first_name="Jose", last_name="Other", date_of_birth="1941-01-01", age=85,
+            sex="M", place_of_birth="Carmen", civil_status="married", address="Other address",
+            barangay=self.barangay,
+        )
+        self.user = User.objects.create_user("chat_senior", password="TestPassword.2026", role="senior", senior_citizen=self.senior)
+        self.staff = User.objects.create_user("chat_staff", password="TestPassword.2026", role="regular_staff")
+        self.client = APIClient()
+
+    def test_osca_intent_detection_handles_question_variations_and_scope(self):
+        from .chatbot import classify_intent
+
+        cases = {
+            "Pila man akong makuha sa pensyon?": "pension_status",
+            "Unsa akong kulang sa papeles?": "document_status",
+            "Unsa ang requirements sa pag register?": "registration_requirements",
+            "Nawala akong OSCA ID, unsay buhaton?": "lost_id",
+            "Di ko maka login sa account": "password_help",
+            "Unsa ang purpose sa system?": "portal_purpose",
+            "Unsa imong paboritong pagkaon?": "out_of_scope",
+        }
+        for message, expected in cases.items():
+            with self.subTest(message=message):
+                self.assertEqual(classify_intent(message), expected)
+
+    def test_chatbot_answers_with_only_authenticated_senior_pension_data(self):
+        PensionRecord.objects.create(
+            senior_citizen=self.senior, period="2026-10", amount="500.00",
+            claimed=True, date_claimed="2026-10-05",
+        )
+        PensionRecord.objects.create(
+            senior_citizen=self.other_senior, period="2026-11", amount="700.00", claimed=False,
+        )
+        self.client.force_authenticate(self.user)
+        response = self.client.post("/api/chatbot/", {"message": "Unsa akong pension status?"}, format="json")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["intent"], "pension_status")
+        self.assertIn("2026-10", response.data["answer"])
+        self.assertIn("₱500.00", response.data["answer"])
+        self.assertNotIn("2026-11", response.data["answer"])
+
+    def test_chatbot_rejects_staff_and_invalid_questions(self):
+        self.client.force_authenticate(self.staff)
+        self.assertEqual(self.client.post("/api/chatbot/", {"message": "hello"}, format="json").status_code, 403)
+
+        self.client.force_authenticate(self.user)
+        self.assertEqual(self.client.post("/api/chatbot/", {"message": " "}, format="json").status_code, 400)
+        self.assertEqual(self.client.post("/api/chatbot/", {"message": "x" * 501}, format="json").status_code, 400)
 
