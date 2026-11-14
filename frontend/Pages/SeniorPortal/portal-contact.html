@@ -52,43 +52,30 @@
 
 <div class="portal-content">
   <p class="section-heading">Contact OSCA Carmen</p>
-  <p class="section-sub">Reach out to the office, or send a message below.</p>
+  <p class="section-sub">OSCA contact details are being confirmed. Ask OSCA Carmen or your barangay staff for current assistance.</p>
 
   <div class="two-equal">
     <div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-phone" style="margin-right:6px;color:var(--navy-light)"></i>Office details</div></div>
-      <div style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-        <div class="detail-field"><span class="detail-label">Office location</span><span class="detail-value">Carmen Municipal Hall, Davao del Norte</span></div>
-        <div class="detail-field"><span class="detail-label">Office hours</span><span class="detail-value">Monday–Friday, 8:00 AM – 5:00 PM</span></div>
-        <div class="detail-field"><span class="detail-label">Contact number</span><span class="detail-value">Wala pay verified contact number</span></div>
-        <div class="detail-field"><span class="detail-label">OSCA Head</span><span class="detail-value">Mario V. Solis</span></div>
-        <div class="detail-field"><span class="detail-label">Municipality</span><span class="detail-value">Carmen, Davao del Norte</span></div>
-        <div class="detail-field"><span class="detail-label">Email</span><span class="detail-value">osca@carmen.gov.ph</span></div>
+      <div style="padding:16px;">
+        <p style="margin:0 0 10px;">The office phone number, email address, office hours, and named contact have not been verified for this portal.</p>
+        <p style="margin:0;">For help with your account or records, contact or visit OSCA Carmen through a channel confirmed by OSCA or your barangay staff. Do not send your password or sensitive personal details through an unverified channel.</p>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-header"><div class="card-title">Send a message</div></div>
-      <div style="padding:16px;display:flex;flex-direction:column;gap:12px;">
-        <div class="form-group"><label>Full name</label><input type="text" data-senior-input="full_name" value="Senior citizen" readonly></div>
-        <div class="form-group"><label>OSCA ID</label><input type="text" data-senior-input="osca_id" value="" readonly></div>
-        <div class="form-group"><label>Message</label><textarea placeholder="Type your concern here..."></textarea></div>
-        <button class="btn btn-navy" onclick="showToast('Message sent to OSCA Carmen office!')"><i class="ti ti-send"></i> Send message</button>
+      <div class="card-header"><div class="card-title">Online messaging</div></div>
+      <div style="padding:16px;display:flex;align-items:flex-start;gap:12px;">
+        <i class="ti ti-info-circle" style="font-size:20px;color:var(--navy-light);margin-top:1px;"></i>
+        <p style="margin:0;">Online messages are not available yet. This portal does not send or store messages to OSCA, so please contact the office or your barangay staff directly.</p>
       </div>
     </div>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
 <script>
   function toggleMobileNav() {
     document.getElementById('portalNavLinks').classList.toggle('open');
-  }
-  function showToast(msg){
-    const toast = document.getElementById('toast');
-    toast.innerHTML = `<i class="ti ti-circle-check"></i> ${msg}`;
-    toast.classList.add('show');
-    setTimeout(()=>toast.classList.remove('show'), 3000);
   }
 </script>
 <script src="../api.js"></script>
