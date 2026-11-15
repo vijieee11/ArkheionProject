@@ -131,7 +131,10 @@
   }
 
   async function download(path, filename) {
-    const headers = new Headers({ Accept: "application/octet-stream" });
+    // DRF negotiates a renderer before returning even a raw HttpResponse.
+    // Request a supported renderer; the endpoint's Content-Type still controls
+    // the downloaded file (for example application/pdf).
+    const headers = new Headers({ Accept: "application/json" });
     const token = sessionStorage.getItem("ark_token");
     if (token) headers.set("Authorization", `Bearer ${token}`);
     let response = await fetch(buildUrl(path), { method: "GET", headers, cache: "no-store" });

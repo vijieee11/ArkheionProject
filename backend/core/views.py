@@ -151,7 +151,7 @@ class StaffDirectoryAPIView(ListAPIView):
     def get(self, request):
         User = get_user_model()
         users = User.objects.filter(role__in=["head_staff", "regular_staff"]).select_related(
-            "staff_profile__barangay"
+            "staff_profile__barangay", "staff_registration_request"
         ).order_by("last_name", "first_name", "username")
         rows = []
         for user in users:
@@ -167,8 +167,38 @@ class StaffDirectoryAPIView(ListAPIView):
                 "date_joined": user.date_joined,
                 "last_login": user.last_login,
                 "barangay": {"id": profile.barangay_id, "name": profile.barangay.name} if profile else None,
+                "registration_status": getattr(
+                    getattr(user, "staff_registration_request", None), "status", "approved"
+                ),
             })
         return Response(rows)
+
+
+class StaffAccountStatusAPIView(APIView):
+    """Let Head Staff revoke or restore access for approved regular staff."""
+    permission_classes = [HeadStaffOnly]
+
+    def patch(self, request, pk):
+        from rest_framework.exceptions import ValidationError
+
+        User = get_user_model()
+        staff = get_object_or_404(User, pk=pk, role="regular_staff")
+        is_active = request.data.get("is_active")
+        if not isinstance(is_active, bool):
+            raise ValidationError({"is_active": ["Provide true to activate or false to deactivate the account."]})
+
+        registration = getattr(staff, "staff_registration_request", None)
+        if is_active and registration and registration.status != "approved":
+            raise ValidationError({"is_active": ["Only an approved staff account can be activated here. Review its request first."]})
+
+        if staff.is_active == is_active:
+            return Response({"id": staff.pk, "is_active": staff.is_active, "detail": "No status change was needed."})
+
+        staff.is_active = is_active
+        staff.save(update_fields=["is_active"])
+        action = "Activated" if is_active else "Deactivated"
+        record_action(request, "edit", "staff_account", staff, f"{action} regular staff account {staff.username}.")
+        return Response({"id": staff.pk, "is_active": staff.is_active, "detail": f"{action} staff account."})
 
 
 class StaffRegistrationAPIView(APIView):

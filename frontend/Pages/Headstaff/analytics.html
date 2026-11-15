@@ -21,10 +21,11 @@
     .month-bar{width:100%;min-height:2px;background:var(--coral-600);border-radius:5px 5px 0 0;transition:height .2s}
     .month-label{font-size:10px;color:var(--gray-500);padding-bottom:7px}
     .population-bars{display:flex;flex-direction:column;gap:20px;padding:22px 4px}
-    .population-row{display:grid;grid-template-columns:155px minmax(0,1fr) 74px;gap:12px;align-items:center}
+    .population-row{display:grid;grid-template-columns:125px minmax(0,1fr) 112px;gap:12px;align-items:center}
     .population-label{font-size:12px;color:var(--gray-700)}
-    .population-track{height:20px;background:var(--gray-100);border-radius:5px;overflow:hidden}
-    .population-fill{height:100%;border-radius:5px;min-width:2px}
+    .population-bars-stack{display:grid;gap:4px}
+    .population-track{height:9px;background:var(--gray-100);border-radius:5px;overflow:hidden}
+    .population-fill{height:100%;border-radius:5px;min-width:0}
     .population-value{text-align:right;font-size:12px;font-weight:600;color:var(--gray-800)}
     .chart-legend{display:flex;gap:15px;flex-wrap:wrap;padding:0 18px 14px;color:var(--gray-600);font-size:11px}
     .legend-item{display:flex;align-items:center;gap:6px}
@@ -58,7 +59,7 @@
     .booklet-record-table th,.booklet-record-table td{padding:10px 12px;border-bottom:1px solid var(--gray-200);text-align:left;font-size:11.5px;white-space:nowrap}
     .booklet-record-table th{font-weight:600;color:var(--gray-500);background:var(--gray-50)}
     @media(max-width:850px){.analytics-grid{grid-template-columns:1fr}.analytics-grid .wide{grid-column:auto}.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:560px){.population-row{grid-template-columns:110px minmax(0,1fr) 60px;gap:7px}.month-chart{gap:4px}.month-label{font-size:9px}}
+    @media(max-width:560px){.population-row{grid-template-columns:95px minmax(0,1fr) 88px;gap:7px}.month-chart{gap:4px}.month-label{font-size:9px}}
     @media(max-width:460px){.metric-grid{grid-template-columns:1fr}.metric-line{grid-template-columns:100px minmax(0,1fr) 42px;gap:7px}}
   </style>
 </head>
@@ -78,11 +79,11 @@
     </div>
   </div>
   <div class="content">
-    <div class="analytics-note" id="analyticsNotice"><i class="ti ti-info-circle"></i><div><strong>Live OSCA data.</strong> Deaths, transfers, senior records, and pension history are loaded from the backend. Full booklets returned to the OSCA office are loaded from the backend. Resident population and bedridden status are not yet recorded.</div></div>
+    <div class="analytics-note" id="analyticsNotice"><i class="ti ti-info-circle"></i><div><strong>Live OSCA data.</strong> Analytics uses verified population snapshots and registered senior records. Bedridden counts include profiles marked bedridden and exclude seniors with a verified death report.</div></div>
 
     <div class="stats-grid stats-3" style="margin-top:14px">
       <div class="stat-card coral"><div class="stat-label"><i class="ti ti-heart-broken"></i> Verified deaths</div><div class="stat-value" id="deathTotal">0</div><div class="stat-sub" id="deathPeriodLabel">Selected year · all barangays</div></div>
-      <div class="stat-card"><div class="stat-label"><i class="ti ti-users"></i> Resident population</div><div class="stat-value" id="residentTotal">—</div><div class="stat-sub" id="residentScope">No resident population API yet</div></div>
+      <div class="stat-card"><div class="stat-label"><i class="ti ti-users"></i> Resident population</div><div class="stat-value" id="residentTotal">—</div><div class="stat-sub" id="residentScope">Verified OSCA snapshots</div></div>
       <div class="stat-card teal"><div class="stat-label"><i class="ti ti-user-heart"></i> Active senior citizens</div><div class="stat-value" id="seniorTotal">0</div><div class="stat-sub" id="seniorShare">Current registered senior records</div></div>
     </div>
 
@@ -90,11 +91,11 @@
       <div class="stat-card coral"><div class="stat-label"><i class="ti ti-heart-broken"></i> Verified deaths</div><div class="stat-value" id="overviewDeaths">0</div><div class="stat-sub">Verified · selected year</div></div>
       <div class="stat-card"><div class="stat-label"><i class="ti ti-home-move"></i> Residence transfers</div><div class="stat-value" id="transferTotal">0</div><div class="stat-sub" id="transferScope">Selected year · backend</div></div>
       <div class="stat-card teal"><div class="stat-label"><i class="ti ti-user-plus"></i> New members</div><div class="stat-value" id="newMemberTotal">0</div><div class="stat-sub" id="newMemberScope">Based on registration date</div></div>
-      <div class="stat-card"><div class="stat-label"><i class="ti ti-bed"></i> Bedridden</div><div class="stat-value" id="bedriddenTotal">—</div><div class="stat-sub">No backend field yet</div></div>
+      <div class="stat-card"><div class="stat-label"><i class="ti ti-bed"></i> Bedridden</div><div class="stat-value" id="bedriddenTotal">0</div><div class="stat-sub" id="bedriddenScope">Profiles marked bedridden</div></div>
       <div class="stat-card teal"><div class="stat-label"><i class="ti ti-cash"></i> Seniors with pension history</div><div class="stat-value" id="pensionerTotal">0</div><div class="stat-sub">At least one pension record</div></div>
       <div class="stat-card coral"><div class="stat-label"><i class="ti ti-user-x"></i> Non-pensioners</div><div class="stat-value" id="nonPensionerTotal">—</div><div class="stat-sub">No enrollment status field yet</div></div>
-      <div class="stat-card"><div class="stat-label"><i class="ti ti-pill"></i> Full booklets returned</div><div class="stat-value" id="bookletReturnTotal">—</div><div class="stat-sub">Totals recorded in OSCA database</div></div>
-      <div class="stat-card"><div class="stat-label"><i class="ti ti-shopping-bag"></i> Seniors who returned a booklet</div><div class="stat-value" id="bookletSeniorTotal">—</div><div class="stat-sub">Totals recorded in OSCA database</div></div>
+      <div class="stat-card"><div class="stat-label"><i class="ti ti-pill"></i> Full booklets returned this month</div><div class="stat-value" id="bookletReturnTotal">—</div><div class="stat-sub" id="bookletReturnScope">OSCA-wide aggregate</div></div>
+      <div class="stat-card"><div class="stat-label"><i class="ti ti-shopping-bag"></i> Seniors who returned a booklet</div><div class="stat-value" id="bookletSeniorTotal">—</div><div class="stat-sub">Detailed count limited to Ising staff</div></div>
     </div>
 
     <div class="analytics-grid" style="margin-top:14px">
@@ -114,7 +115,7 @@
         <div class="card-header"><div><div class="card-title">Residents vs. senior citizens</div><div class="card-subtitle" id="populationSubtitle">Population comparison</div></div></div>
         <div class="chart-area"><div class="population-bars" id="populationChart"></div></div>
         <div class="chart-legend"><span class="legend-item"><i class="legend-dot" style="background:var(--navy)"></i>Residents</span><span class="legend-item"><i class="legend-dot" style="background:var(--teal-600,var(--navy-light))"></i>Senior citizens</span></div>
-        <div class="chart-footnote">Senior counts come from registered backend records. Total resident population is not currently recorded.</div>
+        <div class="chart-footnote" id="populationFootnote">Residents come from verified OSCA snapshots; senior counts come from active registered records. The selected year appears in the chart subtitle.</div>
       </div>
 
       <div class="card wide">
@@ -129,16 +130,13 @@
         <div class="chart-footnote">A pension history is not the same as confirmed current pension enrollment.</div>
       </div>
       <div class="card wide">
-        <div class="card-header"><div><div class="card-title">Barangay record summary</div><div class="card-subtitle">Counts from connected records; unavailable fields are marked with a dash</div></div></div>
-        <div class="barangay-table-wrap"><table class="barangay-table"><thead><tr><th>Barangay</th><th>Verified deaths</th><th>Transfers</th><th>New members</th><th>Bedridden</th><th>Seniors with pension history</th><th>Non-pensioners</th></tr></thead><tbody id="barangaySummaryRows"></tbody></table></div>
-        <div class="chart-footnote">Verified death, transfer, and new-member counts use backend records. Bedridden and pension-enrollment fields are not available yet.</div>
+        <div class="card-header"><div><div class="card-title">Barangay record summary</div><div class="card-subtitle">Counts from connected records; resident figures use verified population snapshots</div></div></div>
+        <div class="barangay-table-wrap"><table class="barangay-table"><thead><tr><th>Barangay</th><th>Resident population</th><th>Active seniors</th><th>Verified deaths</th><th>Transfers</th><th>New members</th><th>Bedridden</th><th>Seniors with pension history</th><th>Non-pensioners</th></tr></thead><tbody id="barangaySummaryRows"></tbody></table></div>
+        <div class="chart-footnote">Bedridden counts include active and inactive profiles marked bedridden, excluding verified deaths. Pension history does not confirm current enrollment; non-pensioner enrollment status is not recorded.</div>
       </div>
       <div class="card wide">
-        <div class="card-header"><div><div class="card-title">Full physical booklets returned to OSCA</div><div class="card-subtitle" id="bookletChartSubtitle">Totals recorded in OSCA database</div></div></div>
-        <div class="chart-area"><div class="booklet-month-chart" id="bookletMonthChart"></div></div>
-        <div class="chart-legend"><span class="legend-item"><i class="legend-dot" style="background:var(--navy-light)"></i>Booklets returned</span></div>
-        <div class="chart-footnote">Each row is one full physical booklet received by OSCA; monthly totals show return volume.</div>
-        <div class="barangay-table-wrap"><table class="booklet-record-table"><thead><tr><th>Date returned</th><th>Barangay</th><th>OSCA ID</th><th>Senior citizen</th><th>Status</th><th>Recorded by</th></tr></thead><tbody id="bookletSummaryRows"></tbody></table><div id="bookletSummaryEmpty" class="empty-chart" style="display:none">No full booklet returns match these filters.</div></div>
+        <div class="card-header"><div><div class="card-title">Booklet returns</div><div class="card-subtitle" id="bookletChartSubtitle">OSCA-wide aggregate for this month</div></div></div>
+        <div class="card-body"><p id="bookletAggregateNote">Only the aggregate monthly count is available to Head Staff. Individual return records are restricted to the Ising staff account.</p></div>
       </div>
     </div>
   </div>
@@ -148,11 +146,12 @@
 <script>
   renderHeadStaffSidebar('analytics');
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  let analyticsData = { seniors: [], pensions: [], deaths: [], transfers: [], bookletReturns: [], barangays: [] };
+  let analyticsData = { seniors: [], pensions: [], deaths: [], transfers: [], bookletReturnSummary: null, populations: [], barangays: [] };
   const asArray = data => Array.isArray(data) ? data : (data && Array.isArray(data.results) ? data.results : []);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const yearOf = value => String(value || '').slice(0, 4);
   const monthOf = value => Number(String(value || '').slice(5, 7));
+  const mobilityStatusOf = row => String(row?.mobility_status || '').trim().toLowerCase().replace(/[\s-]+/g, '_');
 
   async function initAnalytics() {
     const notice = document.getElementById('analyticsNotice');
@@ -166,24 +165,26 @@
         select.value = context.user.barangay.name;
         select.disabled = true;
       } else select.disabled = false;
-      const [seniors, pensions, deaths, transfers, bookletReturns] = await Promise.all([
+      const [seniors, pensions, deaths, transfers, bookletReturnSummary, populations] = await Promise.all([
         ArkheionAPI.get('/api/seniors/'),
         ArkheionAPI.get('/api/pensions/'),
         ArkheionAPI.get('/api/deaths/'),
         ArkheionAPI.get('/api/transfers/'),
-        ArkheionAPI.get('/api/booklet-returns/'),
+        ArkheionAPI.get('/api/booklet-returns/summary/'),
+        ArkheionAPI.get('/api/barangay-population/'),
       ]);
       analyticsData = {
         seniors: asArray(seniors),
         pensions: asArray(pensions),
         deaths: asArray(deaths),
         transfers: asArray(transfers),
-        bookletReturns: asArray(bookletReturns),
+        bookletReturnSummary,
+        populations: asArray(populations),
         barangays: context.availableBarangays,
       };
       populateYearFilter();
       renderAnalytics();
-      notice.innerHTML = '<i class="ti ti-info-circle"></i><div><strong>Live OSCA data.</strong> Deaths, transfers, senior records, and pension history are loaded from the backend. Full booklets returned to the OSCA office are loaded from the backend. Resident population and bedridden status are not yet recorded.</div>';
+      notice.innerHTML = '<i class="ti ti-info-circle"></i><div><strong>Live OSCA data.</strong> Population figures come only from verified OSCA snapshots. Bedridden counts include profiles marked bedridden and exclude seniors with a verified death report. Booklet return totals are shared as an OSCA-wide monthly aggregate.</div>';
     } catch (error) {
       notice.innerHTML = `<i class="ti ti-alert-circle"></i><div><strong>Could not load analytics.</strong> ${esc(error.message || 'Check the server and staff login, then refresh this page.')}</div>`;
     }
@@ -196,7 +197,7 @@
       ...analyticsData.deaths.map(row => row.date_of_death),
       ...analyticsData.transfers.map(row => row.transfer_date),
       ...analyticsData.seniors.map(row => row.date_of_registration),
-      ...analyticsData.bookletReturns.map(row => row.date_returned),
+      ...analyticsData.populations.map(row => `${row.reference_year}-01-01`),
     ];
     const years = [...new Set(dates.map(yearOf).filter(year => /^\d{4}$/.test(year)))].sort().reverse();
     const currentYear = String(new Date().getFullYear());
@@ -227,6 +228,17 @@
     const seniorIdsInScope = new Set(allSeniors.map(row => Number(row.id)));
     const pensions = filterByYear(analyticsData.pensions.filter(row => seniorIdsInScope.has(Number(row.senior_citizen))), 'period');
     return { activeSeniors, allSeniors, deaths, transfers, seniorsForNewMembers, pensions };
+  }
+  function bedriddenSeniorsForScope() {
+    const barangay = document.getElementById('analyticsBarangay').value;
+    const verifiedDeathIds = new Set(analyticsData.deaths
+      .filter(row => row.review_status === 'verified')
+      .map(row => Number(row.senior_citizen)));
+    return analyticsData.seniors.filter(row =>
+      mobilityStatusOf(row) === 'bedridden' &&
+      (!barangay || row.barangay_name === barangay) &&
+      !verifiedDeathIds.has(Number(row.id))
+    );
   }
   function getAgeGroups(seniors) {
     const today = new Date();
@@ -261,17 +273,47 @@
       return `<div class="month-col" title="${month}: ${counts[index]} ${label}"><span class="month-value">${counts[index] || ''}</span><div class="month-bar-track"><div class="month-bar" style="height:${height}%;background:${color}"></div></div><span class="month-label">${month}</span></div>`;
     }).join('');
   }
+  function populationSnapshotsForScope() {
+    const year = document.getElementById('analyticsYear').value;
+    const barangay = document.getElementById('analyticsBarangay').value;
+    const rows = analyticsData.populations.filter(row => !barangay || row.barangay_name === barangay)
+      .filter(row => !year || String(row.reference_year) === year);
+    if (year) return rows;
+    const latestByBarangay = new Map();
+    rows.forEach(row => {
+      const previous = latestByBarangay.get(row.barangay_name);
+      if (!previous || Number(row.reference_year) > Number(previous.reference_year)) latestByBarangay.set(row.barangay_name, row);
+    });
+    return [...latestByBarangay.values()];
+  }
   function renderPopulation(seniors) {
-    document.getElementById('residentTotal').textContent = '—';
-    document.getElementById('residentScope').textContent = 'No resident population records';
+    const snapshots = populationSnapshotsForScope();
+    const residentTotal = snapshots.reduce((sum, row) => sum + Number(row.resident_population || 0), 0);
+    const snapshotYears = [...new Set(snapshots.map(row => String(row.reference_year)))].sort();
+    document.getElementById('residentTotal').textContent = snapshots.length ? residentTotal.toLocaleString() : '—';
+    document.getElementById('residentScope').textContent = snapshots.length
+      ? `${snapshots.length} verified ${snapshots.length === 1 ? 'barangay' : 'barangays'} · ${snapshotYears.join(', ')}`
+      : 'No verified snapshot for selected scope/year';
     document.getElementById('seniorTotal').textContent = seniors.length.toLocaleString();
     document.getElementById('seniorShare').textContent = 'Active registered senior records';
-    document.getElementById('populationSubtitle').textContent = document.getElementById('analyticsBarangay').value || 'All barangays';
-    document.getElementById('populationChart').innerHTML = `<div class="empty-chart" style="height:auto"><div>Resident population is not recorded in the backend yet.<br><br>Active senior citizens: <strong>${seniors.length.toLocaleString()}</strong></div></div>`;
+    const year = document.getElementById('analyticsYear').value || 'latest verified snapshot per barangay';
+    document.getElementById('populationSubtitle').textContent = `${document.getElementById('analyticsBarangay').value || 'All barangays'} · ${year}`;
+    const seniorCounts = new Map();
+    seniors.forEach(row => seniorCounts.set(row.barangay_name, (seniorCounts.get(row.barangay_name) || 0) + 1));
+    const max = Math.max(1, ...snapshots.map(row => Number(row.resident_population || 0)));
+    document.getElementById('populationChart').innerHTML = snapshots.length ? snapshots.map(row => {
+      const resident = Number(row.resident_population || 0);
+      const senior = seniorCounts.get(row.barangay_name) || 0;
+      const seniorWidth = Math.min(100, senior / max * 100);
+      return `<div class="population-row"><span class="population-label">${esc(row.barangay_name)}</span><div class="population-bars-stack" title="${resident.toLocaleString()} residents; ${senior.toLocaleString()} active seniors"><div class="population-track"><div class="population-fill" style="width:${resident / max * 100}%;background:var(--navy)"></div></div><div class="population-track"><div class="population-fill" style="width:${seniorWidth}%;background:var(--teal-600,var(--navy-light))"></div></div></div><span class="population-value">${resident.toLocaleString()} / ${senior.toLocaleString()}</span></div>`;
+    }).join('') : '<div class="empty-chart" style="height:auto">No verified resident population snapshots match this scope and year.</div>';
+    document.getElementById('populationFootnote').textContent = document.getElementById('analyticsYear').value
+      ? `Residents are verified OSCA totals for ${year}; senior counts use active registered records.`
+      : 'Residents use each barangay’s latest verified snapshot; reference years may differ. Senior counts use current active records.';
     const groups = getAgeGroups(seniors);
-    const max = Math.max(1, ...groups.map(row => row.value));
+    const maxAgeGroup = Math.max(1, ...groups.map(row => row.value));
     document.getElementById('ageChartSubtitle').textContent = `${seniors.length.toLocaleString()} active senior records`;
-    document.getElementById('ageGroupChart').innerHTML = groups.map(row => `<div class="age-col"><span class="age-value">${row.value.toLocaleString()}</span><div class="age-track"><div class="age-fill" style="height:${row.value ? Math.max(2, row.value / max * 100) : 0}%"></div></div><span class="age-label">${row.label}</span></div>`).join('');
+    document.getElementById('ageGroupChart').innerHTML = groups.map(row => `<div class="age-col"><span class="age-value">${row.value.toLocaleString()}</span><div class="age-track"><div class="age-fill" style="height:${row.value ? Math.max(2, row.value / maxAgeGroup * 100) : 0}%"></div></div><span class="age-label">${row.label}</span></div>`).join('');
   }
   function renderPensionHistory(pensions, seniors) {
     const pensionSeniorIds = new Set(pensions.map(row => Number(row.senior_citizen)));
@@ -284,26 +326,11 @@
     return seniors.filter(row => pensionSeniorIds.has(Number(row.id))).length;
   }
   function renderBookletReturns(year, barangay) {
-    const selectedYear = year === 'All years' ? '' : year;
-    const records = analyticsData.bookletReturns.filter(row =>
-      (!selectedYear || yearOf(row.date_returned) === selectedYear) &&
-      (barangay === 'All barangays' || row.barangay_name === barangay)
-    );
-    const seniorCount = new Set(records.map(row => Number(row.senior_citizen))).size;
-    document.getElementById('bookletChartSubtitle').textContent = `Returns received · ${year} · ${barangay}`;
-    document.getElementById('bookletSummaryEmpty').style.display = records.length ? 'none' : 'flex';
-    document.getElementById('bookletSummaryEmpty').textContent = 'No full booklet returns match these filters.';
-    document.getElementById('bookletSummaryRows').innerHTML = records.slice().sort((a,b) => b.date_returned.localeCompare(a.date_returned) || a.barangay_name.localeCompare(b.barangay_name)).map(row =>
-      `<tr><td>${esc(row.date_returned)}</td><td>${esc(row.barangay_name)}</td><td>${esc(row.senior_osca_id)}</td><td>${esc(row.senior_name)}</td><td>Full</td><td>${esc(row.recorded_by_name||'Unknown staff')}</td></tr>`
-    ).join('');
-    const monthly = Array(12).fill(0);
-    records.forEach(row => { const month = monthOf(row.date_returned); if (month >= 1 && month <= 12) monthly[month-1] += 1; });
-    const max = Math.max(1, ...monthly);
-    document.getElementById('bookletMonthChart').innerHTML = MONTHS.map((month,index) => {
-      const count=monthly[index], height=count?Math.max(2,count/max*100):0;
-      return `<div class="booklet-month-col" title="${month}: ${count} full booklets returned"><span class="month-value">${count||''}</span><div class="booklet-month-bars"><div class="booklet-month-bar" style="width:100%;height:${height}%;background:var(--navy-light)"></div></div><span class="booklet-month-label">${month}</span></div>`;
-    }).join('');
-    return {total:records.length, seniors:seniorCount};
+    const summary = analyticsData.bookletReturnSummary || {};
+    const month = summary.month || 'current month';
+    document.getElementById('bookletChartSubtitle').textContent = `OSCA-wide aggregate · ${month}`;
+    document.getElementById('bookletAggregateNote').textContent = `${Number(summary.returned_count || 0).toLocaleString()} full physical booklets were returned in ${month}. Individual return records and unique senior counts are restricted to the Ising staff account.`;
+    return {total: Number(summary.returned_count || 0), month};
   }
   function renderAnalytics() {
     const {activeSeniors, allSeniors, deaths, transfers, seniorsForNewMembers, pensions} = selectedRecords();
@@ -319,13 +346,17 @@
     document.getElementById('transferScope').textContent = `${year} · ${barangay}`;
     document.getElementById('newMemberTotal').textContent = seniorsForNewMembers.length.toLocaleString();
     document.getElementById('newMemberScope').textContent = `Registered ${year.toLowerCase()} · ${barangay}`;
-    document.getElementById('bedriddenTotal').textContent = '—';
+    const bedriddenSeniors = bedriddenSeniorsForScope();
+    document.getElementById('bedriddenTotal').textContent = bedriddenSeniors.length.toLocaleString();
+    const activeBedriddenCount = bedriddenSeniors.filter(row => row.is_active).length;
+    document.getElementById('bedriddenScope').textContent = `${barangay} · ${activeBedriddenCount} active, ${bedriddenSeniors.length - activeBedriddenCount} inactive`;
     document.getElementById('nonPensionerTotal').textContent = '—';
     const pensionCount = renderPensionHistory(pensions, activeSeniors);
     document.getElementById('pensionerTotal').textContent = pensionCount.toLocaleString();
     const bookletTotals = renderBookletReturns(year, barangay);
     document.getElementById('bookletReturnTotal').textContent = bookletTotals.total.toLocaleString();
-    document.getElementById('bookletSeniorTotal').textContent = bookletTotals.seniors.toLocaleString();
+    document.getElementById('bookletSeniorTotal').textContent = '—';
+    document.getElementById('bookletReturnScope').textContent = `All barangays · ${bookletTotals.month}`;
     renderPopulation(activeSeniors);
 
     document.getElementById('transferChartSubtitle').textContent = `Recorded transfers · ${year} · ${barangay}`;
@@ -341,11 +372,15 @@
         transferCounts.set(name, (transferCounts.get(name) || 0) + 1);
       });
     });
+    const populationByBarangay = new Map(populationSnapshotsForScope().map(row => [row.barangay_name, Number(row.resident_population || 0)]));
     const pensionSeniorIds = new Set(pensions.map(row => Number(row.senior_citizen)));
     document.getElementById('barangaySummaryRows').innerHTML = rows.length ? rows.map(row => {
       const pensionByBarangay = activeSeniors.filter(senior => senior.barangay_name === row.name && pensionSeniorIds.has(Number(senior.id))).length;
-      return `<tr><td>${esc(row.name)}</td><td>${deathCounts.get(row.name) || 0}</td><td>${transferCounts.get(row.name) || 0}</td><td>${newMemberCounts.get(row.name) || 0}</td><td>—</td><td>${pensionByBarangay}</td><td>—</td></tr>`;
-    }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--gray-500)">No barangays available.</td></tr>';
+      const seniorsByBarangay = activeSeniors.filter(senior => senior.barangay_name === row.name);
+      const bedriddenByBarangay = bedriddenSeniors.filter(senior => senior.barangay_name === row.name).length;
+      const population = populationByBarangay.has(row.name) ? populationByBarangay.get(row.name).toLocaleString() : '—';
+      return `<tr><td>${esc(row.name)}</td><td>${population}</td><td>${seniorsByBarangay.length}</td><td>${deathCounts.get(row.name) || 0}</td><td>${transferCounts.get(row.name) || 0}</td><td>${newMemberCounts.get(row.name) || 0}</td><td>${bedriddenByBarangay}</td><td>${pensionByBarangay}</td><td>—</td></tr>`;
+    }).join('') : '<tr><td colspan="9" style="text-align:center;color:var(--gray-500)">No barangays available.</td></tr>';
   }  function exportAnalytics() {
     const {activeSeniors, deaths, transfers, seniorsForNewMembers, pensions} = selectedRecords();
     const pensionSeniorIds = new Set(pensions.map(row => Number(row.senior_citizen)));
@@ -356,10 +391,10 @@
       ['Residence transfers',transfers.length,document.getElementById('analyticsYear').value || 'All years'],
       ['New members',seniorsForNewMembers.length,document.getElementById('analyticsYear').value || 'All years'],
       ['Seniors with pension history',activeSeniors.filter(row => pensionSeniorIds.has(Number(row.id))).length,'At least one pension record'],
-      ['Resident population','Not available','No backend data'],
-      ['Bedridden','Not available','No backend data'],
-      ['Full booklets returned',analyticsData.bookletReturns.filter(row => (!document.getElementById('analyticsYear').value || yearOf(row.date_returned) === document.getElementById('analyticsYear').value) && (!document.getElementById('analyticsBarangay').value || row.barangay_name === document.getElementById('analyticsBarangay').value)).length,document.getElementById('analyticsYear').value || 'All years'],
-      ['Seniors who returned a booklet',new Set(analyticsData.bookletReturns.filter(row => (!document.getElementById('analyticsYear').value || yearOf(row.date_returned) === document.getElementById('analyticsYear').value) && (!document.getElementById('analyticsBarangay').value || row.barangay_name === document.getElementById('analyticsBarangay').value)).map(row => Number(row.senior_citizen))).size,document.getElementById('analyticsYear').value || 'All years'],
+      ['Resident population',populationSnapshotsForScope().reduce((sum, row) => sum + Number(row.resident_population || 0), 0) || 'Not available',populationSnapshotsForScope().map(row => `${row.barangay_name} (${row.reference_year})`).join('; ') || 'No verified snapshot'],
+      ['Bedridden',bedriddenSeniorsForScope().length,'Profiles marked bedridden; verified deaths excluded'],
+      ['Full booklets returned this month',analyticsData.bookletReturnSummary?.returned_count ?? 'Not available',analyticsData.bookletReturnSummary?.month || 'Current month · OSCA-wide'],
+      ['Seniors who returned a booklet','Not available','Detailed data restricted to Ising staff'],
     ];
     const csv = rows.map(row => row.map(value => `"${String(value).replace(/"/g,'""')}"`).join(',')).join('\n');
     const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
